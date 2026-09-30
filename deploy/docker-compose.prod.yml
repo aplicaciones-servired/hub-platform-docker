@@ -1,0 +1,121 @@
+# ═════════════════════════════════════════════════════════════════════════════
+#  Override de PRODUCCIÓN. Se usa siempre junto al compose base:
+#      docker compose -p hub -f docker-compose.yml -f deploy/docker-compose.prod.yml ...
+#
+#  Diferencias con el compose base (que queda intacto para desarrollo local):
+#    1. Los servicios usan `image:` de Docker Hub (tag por commit). NO se
+#       construyen en el servidor; Jenkins los publica tras pasar los tests.
+#    2. Añade el servicio `edge` (nginx) como único punto de entrada.
+#    3. Une api/web/mobile/edge a la red externa `red-gane-int`, que es por
+#       donde entra el túnel de Cloudflare (contenedor) y el resto de
+#       infraestructura de la organización. Postgres NO se une: se queda en la
+#       red interna `db`.
+#    4. El tag viene de APP_VERSION, escrito por Jenkins en el `.env` del
+#       servidor (deploy/render-env.sh), de modo que este archivo versionado
+#       nunca queda atado a un commit concreto:
+#          APP_VERSION=<sha>  →  serviredgane/hub-api:<sha>
+#       Sin APP_VERSION se usa la etiqueta `latest`.
+#
+#  Requiere Docker Compose v2.24+ por el `!reset` de `build:`.
+#
+#  La red externa debe existir ANTES del primer deploy:
+#      docker network create red-gane-int
+#  Si falta, compose aborta con "network red-gane-int declared as external,
+#  but could not be found". El Jenkinsfile lo comprueba en la etapa Preparar.
+# ═════════════════════════════════════════════════════════════════════════════
+
+x-image-tag: &image-tag ${APP_VERSION:-latest}
+
+services:
+  # En cada servicio, `networks` se une (no reemplaza) al del compose base:
+  # api conserva `db` + `app` y suma `red-gane-int`.
+  api:
+    image: ${DOCKERHUB_NAMESPACE:-serviredgane}/hub-api:*image-tag
+    build: !reset null
+    networks:
+      - app
+      - db
+      - red-gane-int
+
+  web:
+    image: ${DOCKERHUB_NAMESPACE:-serviredgane}/hub-web:*image-tag
+    build: !reset null
+    networks:
+      - app
+      - red-gane-int
+
+  mobile:
+    image: ${DOCKERHUB_NAMESPACE:-serviredgane}/hub-mobile:*image-tag
+    build: !reset null
+    networks:
+      - app
+      - red-gane-int
+
+  edge:
+    image: nginx:1.27-alpine
+    container_name: hub-edge
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+      mobile:
+        condition: service_healthy
+    # Sin `ports`: el túnel de Cloudflare es un contenedor en red-gane-int y
+    # entra por DNS a http://hub-edge:8080. Publicar el puerto en el host solo
+    # haría falta si el túnel corriera en el host; si algún día hace falta,
+    # descomentar esto (loopback, nunca 0.0.0.0: expondría el backend sin TLS
+    # ni rate limit del edge).
+    # ports:
+    #   - "127.0.0.1:8080:8080"
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../nginx/conf.d:/etc/nginx/conf.d:ro
+      - ../nginx/snippets:/etc/nginx/snippets:ro
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # El master de nginx corre como root solo para bajarse al usuario nginx:
+    # hacen falta SETUID/SETGID/CHOWN. No se añade NET_BIND_SERVICE porque el
+    # edge escucha en 8080, por debajo de 1024 no hace falta privilegio.
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    networks:
+      - app
+      - red-gane-int
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      # /nginx-health solo responde desde 127.0.0.1: el wget del healthcheck corre
+      # dentro del contenedor, así que evita depender del Host del dominio
+      # (cualquier otro Host cae en el default_server y devuelve 444).
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/nginx-health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+
+networks:
+  # Red de la organización: la comparten el túnel de Cloudflare y el resto de
+  # servicios. `external: true` = compose no la crea ni la borra; es del host.
+  # El nombre va explícito para que el prefijo del proyecto no aplique.
+  red-gane-int:
+    external: true
+    name: red-gane-int

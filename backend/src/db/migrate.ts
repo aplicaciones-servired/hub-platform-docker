@@ -26,8 +26,10 @@ async function runMigrations() {
 }
 
 runMigrations().catch((err) => {
+  const cause = err instanceof Error ? (err as Error & { cause?: unknown }).cause : undefined;
   logger.error("Migration failed", {
     error: err instanceof Error ? err.message : err,
+    cause: cause instanceof Error ? cause.message : undefined,
   });
   process.exit(1);
 });

@@ -62,7 +62,7 @@ services:
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
       PORT: ${PORT:-3001}
       NODE_ENV: ${NODE_ENV:-development}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:8081}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:8081,https://soporte.serviredgane.cloud}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
       EXTERNAL_SYSTEMS_URL: ${EXTERNAL_SYSTEMS_URL:-}
