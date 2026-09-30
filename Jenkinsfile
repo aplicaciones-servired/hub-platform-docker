@@ -87,8 +87,7 @@ pipeline {
                     echo "Tag       : ${env.IMAGE_TAG}"
                     echo "Destino   : ${env.DEPLOY_DIR} (proyecto compose '${env.COMPOSE_PROJECT}')"
 
-                    sh '''
-                        #!/bin/bash
+                    sh '''#!/bin/bash
                         set -euo pipefail
                         echo "docker  : $(docker --version)"
                         echo "compose : $(docker compose version)"
@@ -123,8 +122,7 @@ pipeline {
                 // Los tests corren en node:22-alpine, la misma imagen base de
                 // los Dockerfiles: el agente no necesita Node instalado.
                 // -u uid:gid evita archivos propiedad de root en el workspace.
-                sh '''
-                    #!/bin/bash
+                sh '''#!/bin/bash
                     set -euo pipefail
                     uid=$(id -u); gid=$(id -g)
                     run_suite() {
@@ -151,8 +149,7 @@ pipeline {
         stage('Respaldar base de datos') {
             when { expression { return !params.SKIP_BACKUP && !params.DRY_RUN } }
             steps {
-                sh '''
-                    #!/bin/bash
+                sh '''#!/bin/bash
                     set -euo pipefail
                     if ! docker ps --format '{{.Names}}' | grep -qx hub-postgres; then
                         echo "Primer deploy: no hay Postgres en ejecucion, nada que respaldar."
@@ -175,8 +172,7 @@ pipeline {
                         passwordVariable: 'DOCKERHUB_TOKEN'
                     )
                 ]) {
-                    sh '''
-                        #!/bin/bash
+                    sh '''#!/bin/bash
                         set -euo pipefail
                         # DOCKER_CONFIG efímero: nada de tokens de Docker Hub en el
                         # ~/.docker/config.json del usuario del agente.
@@ -268,8 +264,7 @@ pipeline {
                     string(credentialsId: 'hub-expo-access-token',    variable: 'EXPO_ACCESS_TOKEN', required: false),
                     string(credentialsId: 'hub-external-systems-url', variable: 'EXTERNAL_SYSTEMS_URL', required: false)
                 ]) {
-                    sh '''
-                        #!/bin/bash
+                    sh '''#!/bin/bash
                         set -euo pipefail
 
                         # 1. Sincronizar el repo al directorio estable del
@@ -327,8 +322,7 @@ pipeline {
         stage('Verificar despliegue') {
             when { expression { return !params.DRY_RUN } }
             steps {
-                sh '''
-                    #!/bin/bash
+                sh '''#!/bin/bash
                     set -euo pipefail
                     cd "$DEPLOY_DIR"
                     DC="docker compose -p $COMPOSE_PROJECT -f $COMPOSE_FILES --env-file .env"
@@ -432,8 +426,7 @@ pipeline {
                 // deploy llegó a ejecutarse.
                 if (env.DRY_RUN != 'true' && fileExists("${env.DEPLOY_DIR}/.env")) {
                     echo "Deploy fallido: revirtiendo a la ultima version estable"
-                    sh '''
-                        #!/bin/bash
+                    sh '''#!/bin/bash
                         set -euo pipefail
                         cd "$DEPLOY_DIR"
                         DEPLOY_DIR="$DEPLOY_DIR" \
