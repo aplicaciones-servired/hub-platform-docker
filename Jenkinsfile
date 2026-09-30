@@ -52,12 +52,12 @@ pipeline {
         // lados o el contacto del bundle discrepa del runtime).
         string(
             name: 'SUPPORT_WHATSAPP',
-            defaultValue: 'https://wa.me/573000000000',
+            defaultValue: 'https://wa.me/573166166514',
             description: 'WhatsApp de soporte incrustado en el bundle (NEXT_PUBLIC_SUPPORT_WHATSAPP).'
         )
         string(
             name: 'SUPPORT_PHONE',
-            defaultValue: '+57 300 000 0000',
+            defaultValue: '+57 316 616 6514',
             description: 'Teléfono de soporte incrustado en el bundle (NEXT_PUBLIC_SUPPORT_PHONE).'
         )
     }
