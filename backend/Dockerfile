@@ -3,7 +3,7 @@ FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 COPY tsconfig.json ./
 COPY drizzle.config.json ./
@@ -18,7 +18,7 @@ WORKDIR /app
 RUN addgroup -S nodejs && adduser -S nodejs -G nodejs && apk add --no-cache postgresql-client
 
 COPY package*.json ./
-RUN npm ci && npm prune --omit=dev && chown -R nodejs:nodejs /app
+RUN npm ci --legacy-peer-deps && npm prune --omit=dev && chown -R nodejs:nodejs /app
 
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/drizzle ./drizzle
