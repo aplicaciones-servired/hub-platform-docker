@@ -139,7 +139,7 @@ pipeline {
                             "$NODE_IMAGE" sh -c "npm ci $extra && $cmd"
                     }
                     run_suite backend "npm test" "--legacy-peer-deps"
-                    run_suite web     "npx tsc --noEmit && npm run lint && npm test"
+                    run_suite web     "npx tsc --noEmit && npm run lint && npm test" "--legacy-peer-deps"
                     run_suite mobile  "npm test" "--legacy-peer-deps"
                 '''
             }
