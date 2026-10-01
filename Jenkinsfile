@@ -232,9 +232,7 @@ pipeline {
                     string(credentialsId: 'hub-postgres-password',    variable: 'POSTGRES_PASSWORD'),
                     string(credentialsId: 'hub-jwt-secret',           variable: 'JWT_SECRET'),
                     string(credentialsId: 'hub-jwt-refresh-secret',   variable: 'JWT_REFRESH_SECRET'),
-                    string(credentialsId: 'hub-seed-admin-password',  variable: 'SEED_ADMIN_PASSWORD'),
-                    string(credentialsId: 'hub-expo-access-token',    variable: 'EXPO_ACCESS_TOKEN', required: false),
-                    string(credentialsId: 'hub-external-systems-url', variable: 'EXTERNAL_SYSTEMS_URL', required: false)
+                    string(credentialsId: 'hub-seed-admin-password',  variable: 'SEED_ADMIN_PASSWORD')
                 ]) {
                     sh '''#!/bin/bash
                         set -euo pipefail
@@ -259,12 +257,32 @@ pipeline {
                               "$WORKSPACE/" "$DEPLOY_DIR/"
                         chmod +x "$DEPLOY_DIR/scripts/backup-db.sh" "$DEPLOY_DIR/deploy/"*.sh
 
-# 2. Materializar el .env (0600) desde las credenciales.
+                        # Lee una clave de un archivo KEY=VALUE sin fallar si no
+                        # existe. sed recorta el prefijo; `|| true` evita que
+                        # `set -e` mate el pipeline si el grep no encuentra nada.
+                        read_env() {
+                            local file="$1" key="$2"
+                            [ -f "$file" ] || return 0
+                            grep -m1 "^${key}=" "$file" 2>/dev/null | sed "s/^${key}=//" || true
+                        }
+
+# 2. Las integraciones opcionales NO son credenciales del job: se
+                        #    recuperan del .env ya desplegado para que un valor
+                        #    configurado a mano no se pierda al regenerar el
+                        #    archivo. Si nunca se configuraron, quedan vacías y
+                        #    el módulo correspondiente responde "no configurado".
+                        #    Usar withCredentials(required:false) no sirve para
+                        #    esto: el plugin falla igual si el ID no existe.
+                        EXTERNAL_SYSTEMS_URL="$(read_env "$DEPLOY_DIR/.env" EXTERNAL_SYSTEMS_URL)"
+                        EXPO_ACCESS_TOKEN="$(read_env "$DEPLOY_DIR/.env" EXPO_ACCESS_TOKEN)"
+
                         APP_VERSION="$IMAGE_TAG" \
                         POSTGRES_USER=hub_admin \
                         IMAGE_NAMESPACE="$IMAGE_NAMESPACE" \
                         APP_DASHBOARD_DOMAIN="$APP_DASHBOARD_DOMAIN" \
                         APP_MOBILE_DOMAIN="$APP_MOBILE_DOMAIN" \
+                        EXTERNAL_SYSTEMS_URL="$EXTERNAL_SYSTEMS_URL" \
+                        EXPO_ACCESS_TOKEN="$EXPO_ACCESS_TOKEN" \
                         NEXT_PUBLIC_SUPPORT_WHATSAPP="$SUPPORT_WHATSAPP" \
                         NEXT_PUBLIC_SUPPORT_PHONE="$SUPPORT_PHONE" \
                         DEPLOY_DIR="$DEPLOY_DIR" \

@@ -24,8 +24,15 @@ las imágenes ahí mismo y `docker compose` las levanta por tag, sin `push` ni
 | `hub-jwt-secret` | Secret text | Firma de los JWT (>= 32 chars) | `openssl rand -hex 32` |
 | `hub-jwt-refresh-secret` | Secret text | Firma de los refresh (**distinto** del anterior) | `openssl rand -hex 32` |
 | `hub-seed-admin-password` | Secret text | Contraseña inicial del admin `123456789` | `openssl rand -hex 16` |
-| `hub-expo-access-token` | Secret text | Push notifications Expo (opcional) | cuenta Expo → Access Token |
-| `hub-external-systems-url` | Secret text | URL de login del sistema externo (opcional) | la que.use el negocio |
+
+Las dos integraciones opcionales (`EXTERNAL_SYSTEMS_URL`, `EXPO_ACCESS_TOKEN`)
+**no son credenciales del job**: el pipeline las recupera del `.env` ya
+desplegado, de modo que un valor configurado a mano sobrevive a cada deploy.
+Vacías = módulo deshabilitado. Para cambiarlas, edita `/opt/hub-platform/.env`
+y relanza el pipeline.
+
+> No uses `withCredentials(..., required: false)` para esto: el plugin
+> `credentials-binding` aborta igual cuando el ID no existe.
 
 `DATABASE_URL` **no** es una credencial: la compone `render-env.sh` a partir de
 `POSTGRES_USER` + `POSTGRES_PASSWORD`. Así es imposible que la contraseña del
@@ -73,8 +80,8 @@ lista completa y su origen:
 | `NODE_ENV`, `PORT`, `MAX_LOGIN_ATTEMPTS`, `LOG_LEVEL` | constantes | sí |
 | `CORS_ORIGIN`, `ALLOWED_HOSTS` | derivadas de los dominios del job | sí |
 | `SEED_ADMIN_PASSWORD` | credencial `hub-seed-admin-password` | sí |
-| `EXTERNAL_SYSTEMS_URL` | credencial (opcional) | no |
-| `EXPO_ACCESS_TOKEN` | credencial (opcional) | no |
+| `EXTERNAL_SYSTEMS_URL` | preservada del `.env` previa (opcional) | no |
+| `EXPO_ACCESS_TOKEN` | preservada del `.env` previa (opcional) | no |
 | `EXPO_PUBLIC_API_URL` | constante (`/api`) — build arg del PWA | sí |
 | `NEXT_PUBLIC_SUPPORT_WHATSAPP` / `_PHONE` | parámetros del job | sí |
 | `APP_VERSION` | sha del commit / parámetro | sí |

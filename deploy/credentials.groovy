@@ -11,8 +11,9 @@
 //      HUB_JWT_SECRET=...
 //      HUB_JWT_REFRESH_SECRET=...
 //      HUB_SEED_ADMIN_PASSWORD=...
-//      HUB_EXPO_ACCESS_TOKEN=...        (opcional)
-//      HUB_EXTERNAL_SYSTEMS_URL=...     (opcional)
+//
+//  EXTERNAL_SYSTEMS_URL y EXPO_ACCESS_TOKEN no se gestionan aquí: no son
+//  credenciales del job, el pipeline las conserva del .env ya desplegado.
 //
 //  Alternativa sin Script Console: crear cada credencial a mano en
 //  Manage Jenkins → Credentials → System → Global credentials, con los IDs
@@ -33,10 +34,6 @@ def required = [
     'HUB_JWT_SECRET'          : 'hub-jwt-secret',
     'HUB_JWT_REFRESH_SECRET'  : 'hub-jwt-refresh-secret',
     'HUB_SEED_ADMIN_PASSWORD' : 'hub-seed-admin-password',
-]
-def optional = [
-    'HUB_EXPO_ACCESS_TOKEN'   : 'hub-expo-access-token',
-    'HUB_EXTERNAL_SYSTEMS_URL': 'hub-external-systems-url',
 ]
 
 def upsert = { String id, String value, String comment ->
@@ -75,15 +72,6 @@ required.each { envVar, id ->
         report[id] = upsert(id, value.trim(), "HUB AI Assistant — ${envVar} (deploy)")
     } else {
         report[id] = note
-    }
-}
-
-optional.each { envVar, id ->
-    def value = System.getenv(envVar)
-    if (value?.trim()) {
-        report[id] = upsert(id, value.trim(), "HUB AI Assistant — ${envVar} (opcional)")
-    } else {
-        report[id] = 'omitida (el pipeline la trata como opcional)'
     }
 }
 
