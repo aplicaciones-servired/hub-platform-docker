@@ -361,8 +361,13 @@ pipeline {
                     DC="docker compose -p $COMPOSE_PROJECT -f $COMPOSE_FILES --env-file .env"
 
                     echo "──────── API ────────"
+                    # El header x-forwarded-proto es necesario: en producción
+                    # src/index.ts devuelve 400 o redirige a HTTPS si la
+                    # petición no llega como https, así que un curl en HTTP
+                    # plano a 127.0.0.1 nunca vería un 200.
                     for i in $(seq 1 40); do
-                        if curl -sf --max-time 5 http://127.0.0.1:3001/api/health >/dev/null 2>&1; then
+                        if curl -sf --max-time 5 -H 'x-forwarded-proto: https' \
+                               http://127.0.0.1:3001/api/health >/dev/null 2>&1; then
                             echo "api OK (intento $i)"; break
                         fi
                         if [ "$i" -eq 40 ]; then
