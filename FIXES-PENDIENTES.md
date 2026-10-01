@@ -51,7 +51,7 @@
 
 ## 🔴 PENDIENTES — Requieren decisión de diseño
 
-- **CSP unsafe-inline** — `backend/src/index.ts` styleSrc + `mobile/nginx.conf` (script-src y style-src). Requiere auditar estilos inline del frontend y verificar visualmente; riesgo de romper la UI.
+- **CSP unsafe-inline** — `mobile/nginx.conf` **resuelto**: `style-src 'self' 'unsafe-inline'`. React Native Web inyecta los estilos en runtime (`createSheet`, `configureWebLayoutAnimations`) y el `@font-face` vía `loadSingleFontAsync`; como `app/_layout.tsx` hace `return null` hasta que `useFonts` resuelve, bloquearlos dejaba la PWA en blanco. El `<style>`/`<script>` inline estático sí se externaliza en el build (`extract-inline.sh`), y `script-src 'self'` se mantiene estricto. Pendiente solo `backend/src/index.ts:56` `styleSrc`, que es inerte mientras el backend sirva únicamente JSON.
 
 ## 🟡 PENDIENTES — Mejoras no urgentes
 
