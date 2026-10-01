@@ -440,9 +440,59 @@ pipeline {
                     esac
 
                     echo "──────── público (vía Cloudflare Tunnel) ────────"
-                    curl -sf --max-time 20 "https://$APP_DASHBOARD_DOMAIN/api/health" >/dev/null \
-                        || { echo "dashboard no responde por HTTPS"; exit 1; }
-                    curl -sf --max-time 20 -o /dev/null "https://$APP_MOBILE_DOMAIN/" \
+                    # El túnel es un contenedor ajeno a este compose, así que
+                    # "no responde por HTTPS" no dice nada. Se descompone el
+                    # camino completo: DNS -> TCP 443 -> TLS -> respuesta, y en
+                    # cada paso se reporta el error concreto.
+                    check_public() {
+                        local host="$1" path="$2" label="$3"
+
+                        echo "── $label ($host) ──"
+
+                        local ip
+                        if ! ip="$(getent hosts "$host" 2>/dev/null | awk '{print $1}' | head -1)" || [ -z "$ip" ]; then
+                            echo "  FALLO: $host no resuelve (DNS). Revisa el registro en Cloudflare"
+                            return 1
+                        fi
+                        echo "  DNS   -> $ip"
+
+                        if ! timeout 10 bash -c "cat < /dev/null > /dev/tcp/$host/443" 2>/dev/null; then
+                            echo "  FALLO: no hay conexion TLS en $host:443"
+                            return 1
+                        fi
+                        echo "  TCP   -> 443 abierto"
+
+                        # -w imprime el status; si curl no completa la peticion
+                        # devuelve != 0 y out lleva el mensaje de error.
+                        local out rc=0
+                        out="$(curl -sS -o /dev/null --max-time 20 \
+                                  -w '%{http_code}' \
+                                  "https://$host$path" 2>&1)" || rc=$?
+                        if [ "$rc" -ne 0 ]; then
+                            echo "  FALLO: curl no pudo completar la peticion (rc=$rc): $out"
+                            echo "  (si es un error de certificado, el origen no coincide con el del túnel)"
+                            return 1
+                        fi
+                        case "$out" in
+                            2*|3*) echo "  HTTPS -> $out OK"; return 0 ;;
+                            403|404) echo "  HTTPS -> $out: el túnel enruta pero el edge no encuentra el host"; return 1 ;;
+                            502|503|504) echo "  HTTPS -> $out: el túnel responde pero el edge NO es accesible desde el túnel"; return 1 ;;
+                            *) echo "  HTTPS -> $out inesperado"; return 1 ;;
+                        esac
+                    }
+
+                    check_public "$APP_DASHBOARD_DOMAIN" /api/health dashboard \
+                        || { echo; echo "════ Diagnóstico del túnel ════";
+                             echo "Contenedores de túnel/Cloudflare en el host:"
+                             docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}' \
+                                 | grep -iE 'cloudflare|tunnel|NAME' || echo "  (no hay ningún contenedor de túnel)"
+                             echo
+                             echo "Comprobar a mano desde el host:"
+                             echo "  docker network inspect red-gane-int --format '{{json .Containers}}'"
+                             echo "  docker exec <tunel> wget -qO- http://hub-edge:8080/api/health -H 'Host: $APP_DASHBOARD_DOMAIN'";
+                             exit 1; }
+
+                    check_public "$APP_MOBILE_DOMAIN" / PWA \
                         || { echo "PWA no responde por HTTPS"; exit 1; }
                     echo "ambos hostnames sirven por HTTPS"
 
