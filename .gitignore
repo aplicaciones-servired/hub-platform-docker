@@ -23,6 +23,15 @@ ota-server/data/
 backend/uploads/
 backups/
 
+# Secretos: nunca versionar .env. Los ejemplos sí se versionan para documentar
+# qué variables existen. El .dockerignore hace lo mismo para que los builds no
+# los vean nunca. Los secretos de producción los genera deploy/render-env.sh
+# en el servidor desde las credenciales de Jenkins, no salen de este repo.
+.env
+.env.*
+!.env.example
+!**/.env.example
+
 # IDE
 .idea/
 
