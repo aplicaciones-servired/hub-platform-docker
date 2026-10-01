@@ -3,8 +3,10 @@
 #      docker compose -p hub -f docker-compose.yml -f deploy/docker-compose.prod.yml ...
 #
 #  Diferencias con el compose base (que queda intacto para desarrollo local):
-#    1. Los servicios usan `image:` de Docker Hub (tag por commit). NO se
-#       construyen en el servidor; Jenkins los publica tras pasar los tests.
+#    1. Los servicios usan `image:` con tag por commit, resueltas contra el
+#       daemon LOCAL del servidor. No hay registro: Jenkins construye las
+#       imágenes ahí mismo tras pasar los tests y este compose las levanta sin
+#       `pull`. IMAGE_NAMESPACE es solo un prefijo de nombre de imagen.
 #    2. Añade el servicio `edge` (nginx) como único punto de entrada.
 #    3. Une api/web/mobile/edge a la red externa `red-gane-int`, que es por
 #       donde entra el túnel de Cloudflare (contenedor) y el resto de
@@ -13,7 +15,7 @@
 #    4. El tag viene de APP_VERSION, escrito por Jenkins en el `.env` del
 #       servidor (deploy/render-env.sh), de modo que este archivo versionado
 #       nunca queda atado a un commit concreto:
-#          APP_VERSION=<sha>  →  serviredgane/hub-api:<sha>
+#       APP_VERSION=<sha>  →  hub-platform/hub-api:<sha>
 #       Sin APP_VERSION se usa la etiqueta `latest`.
 #
 #  Requiere Docker Compose v2.24+ por el `!reset` de `build:`.
@@ -30,7 +32,7 @@ services:
   # En cada servicio, `networks` se une (no reemplaza) al del compose base:
   # api conserva `db` + `app` y suma `red-gane-int`.
   api:
-    image: ${DOCKERHUB_NAMESPACE:-serviredgane}/hub-api:*image-tag
+    image: ${IMAGE_NAMESPACE:-hub-platform}/hub-api:*image-tag
     build: !reset null
     networks:
       - app
@@ -38,14 +40,14 @@ services:
       - red-gane-int
 
   web:
-    image: ${DOCKERHUB_NAMESPACE:-serviredgane}/hub-web:*image-tag
+    image: ${IMAGE_NAMESPACE:-hub-platform}/hub-web:*image-tag
     build: !reset null
     networks:
       - app
       - red-gane-int
 
   mobile:
-    image: ${DOCKERHUB_NAMESPACE:-serviredgane}/hub-mobile:*image-tag
+    image: ${IMAGE_NAMESPACE:-hub-platform}/hub-mobile:*image-tag
     build: !reset null
     networks:
       - app

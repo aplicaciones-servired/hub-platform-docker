@@ -109,11 +109,11 @@ NEXT_PUBLIC_SUPPORT_WHATSAPP=${NEXT_PUBLIC_SUPPORT_WHATSAPP:-https://wa.me/57300
 NEXT_PUBLIC_SUPPORT_PHONE=${NEXT_PUBLIC_SUPPORT_PHONE:-+57 300 000 0000}
 
 # ── Deploy ───────────────────────────────────────────────────────────────
-# APP_VERSION es el tag de las imágenes en Docker Hub. Lo escribe Jenkins con
+# APP_VERSION es el tag de las imágenes. Lo escribe Jenkins con
 # el sha del commit; docker compose lo usa para resolver la clave image: en
 # deploy/docker-compose.prod.yml (sin ella usaría la etiqueta latest).
 APP_VERSION=${APP_VERSION:-latest}
-DOCKERHUB_NAMESPACE=${DOCKERHUB_NAMESPACE:-serviredgane}
+IMAGE_NAMESPACE=${IMAGE_NAMESPACE:-hub-platform}
 EOF
 
 mv "$TMP_FILE" "$ENV_FILE"
@@ -127,7 +127,7 @@ trap - EXIT
 REQUIRED_KEYS="POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB DATABASE_URL \
 JWT_SECRET JWT_REFRESH_SECRET JWT_EXPIRES_IN NODE_ENV PORT CORS_ORIGIN \
 ALLOWED_HOSTS MAX_LOGIN_ATTEMPTS LOG_LEVEL SEED_ADMIN_PASSWORD APP_VERSION \
-DOCKERHUB_NAMESPACE EXPO_PUBLIC_API_URL NEXT_PUBLIC_API_URL \
+IMAGE_NAMESPACE EXPO_PUBLIC_API_URL NEXT_PUBLIC_API_URL \
 NEXT_PUBLIC_SUPPORT_WHATSAPP NEXT_PUBLIC_SUPPORT_PHONE"
 
 missing=0

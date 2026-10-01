@@ -3,8 +3,13 @@
 //  Jenkins corre en el MISMO servidor que la app, con acceso al socket de
 //  Docker (el usuario del agente debe estar en el grupo `docker`).
 //
-//  Flujo: verificar → backup → construir/publicar en Docker Hub → desplegar
-//  desde Docker Hub → verificar salud pública → (si falla) revertir.
+//  Flujo: verificar → backup → construir imágenes en el daemon local →
+//  desplegar desde esas imágenes → verificar salud pública → (si falla)
+//  revertir.
+//
+//  No hay registro de imágenes: Jenkins y la app comparten el mismo daemon
+//  Docker, así que construir y desplegar es un paso local, no un push/pull.
+//  Consecuencia: el rollback solo alcanza a tags que sigan en el daemon.
 //
 //  Los secretos NO están en el repo: se leen de credenciales del job, se
 //  escriben en /opt/hub-platform/.env (600) y nunca se imprimen.
@@ -31,11 +36,6 @@ pipeline {
             name: 'RUN_TESTS',
             defaultValue: true,
             description: 'Ejecutar los tests de backend/web/mobile antes de publicar.'
-        )
-        booleanParam(
-            name: 'REGISTRY_CACHE',
-            defaultValue: true,
-            description: 'Cache de build en Docker Hub (inline cache).'
         )
         booleanParam(
             name: 'SKIP_BACKUP',
@@ -65,7 +65,11 @@ pipeline {
     environment {
         DEPLOY_DIR           = '/opt/hub-platform'
         COMPOSE_PROJECT      = 'hub'
-        DOCKERHUB_NAMESPACE  = 'serviredgane'
+        // Prefijo de las imágenes en el daemon LOCAL. No es un registro: no hay
+        // push ni pull, `docker compose` resuelve el tag contra el daemon del
+        // servidor. Se llama IMAGE_NAMESPACE (no DOCKERHUB_NAMESPACE) para que
+        // nadie intente un `docker compose pull` esperando un repo remoto.
+        IMAGE_NAMESPACE      = 'hub-platform'
         COMPOSE_FILES        = 'docker-compose.yml -f deploy/docker-compose.prod.yml'
         APP_DASHBOARD_DOMAIN = 'soporte.serviredgane.cloud'
         APP_MOBILE_DOMAIN    = 'app.serviredgane.cloud'
@@ -79,7 +83,6 @@ pipeline {
                 script {
                     env.GIT_COMMIT = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
                     env.IMAGE_TAG = params.APP_VERSION?.trim() ?: env.GIT_COMMIT.take(12)
-                    env.REGISTRY = env.DOCKERHUB_NAMESPACE
                     env.DRY_RUN = params.DRY_RUN.toString()
                     currentBuild.displayName = "#${env.BUILD_NUMBER} ${env.IMAGE_TAG}"
 
@@ -163,87 +166,57 @@ pipeline {
         }
 
         // ───────────────────────────────────────────────────────────────────
-        stage('Construir y publicar') {
+        stage('Construir imágenes') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'hub-dockerhub',
-                        usernameVariable: 'DOCKERHUB_USER',
-                        passwordVariable: 'DOCKERHUB_TOKEN'
-                    )
-                ]) {
-                    sh '''#!/bin/bash
-                        set -euo pipefail
-                        # DOCKER_CONFIG efímero: nada de tokens de Docker Hub en el
-                        # ~/.docker/config.json del usuario del agente.
-                        export DOCKER_CONFIG="$PWD/.docker-$BUILD_NUMBER"
-                        trap 'rm -rf "$DOCKER_CONFIG"' EXIT
-                        echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USER" --password-stdin
+                // Build local con `docker build`: Jenkins y la app comparten el
+                // mismo daemon (Jenkins corre en el servidor), así que las
+                // imágenes no necesitan viajar a ningún registro. El stage
+                // "Desplegar" las resuelve por tag contra este mismo daemon.
+                // Consecuencia: el rollback solo alcanza a tags que sigan en el
+                // daemon local (ver deploy/rollback.sh).
+                sh '''#!/bin/bash
+                    set -euo pipefail
 
-                        if ! docker buildx inspect hub-builder >/dev/null 2>&1; then
-                            docker buildx create --name hub-builder --driver docker-container --use
-                        fi
-                        docker buildx inspect hub-builder --bootstrap >/dev/null
+                    build_img() {
+                        local svc="$1" dockerfile="$2"; shift 2
+                        echo "──────── build $svc ────────"
 
-                        build_and_push() {
-                            local svc="$1" dockerfile="$2"; shift 2
-                            echo "──────── build $svc ────────"
+                        # Arrays, no strings: el teléfono de soporte es
+                        # "+57 300 000 0000" y con word-splitting se
+                        # convertiría en cuatro --build-arg distintos.
+                        local build_args=()
+                        for arg in "$@"; do build_args+=(--build-arg "$arg"); done
 
-                            local cache_args=()
-                            if [ "$REGISTRY_CACHE" = "true" ]; then
-                                # ${arr[@]+...} evita el error de "unbound variable"
-                                # de bash < 4.4 cuando el array está vacío.
-                                cache_args=(
-                                    --cache-from "type=registry,ref=$REGISTRY/hub-$svc:buildcache"
-                                    --cache-to   "type=registry,ref=$REGISTRY/hub-$svc:buildcache,mode=max"
-                                )
-                            fi
+                        docker build \
+                            ${build_args[@]+"${build_args[@]}"} \
+                            -f "$dockerfile" \
+                            -t "$IMAGE_NAMESPACE/hub-$svc:$IMAGE_TAG" \
+                            -t "$IMAGE_NAMESPACE/hub-$svc:latest" \
+                            .
+                    }
 
-                            # Arrays, no strings: el teléfono de soporte es
-                            # "+57 300 000 0000" y con word-splitting se
-                            # convertiría en cuatro --build-arg distintos.
-                            local build_args=()
-                            for arg in "$@"; do build_args+=(--build-arg "$arg"); done
+                    # OJO: web/Dockerfile y mobile/Dockerfile.web construyen
+                    # desde la raíz (necesitan shared/), no desde su carpeta.
+                    # Los build args de los frontends son obligatorios: si
+                    # llegan vacíos, el bundle se publica roto (de ahí el
+                    # fail-fast de mobile/Dockerfile.web y el smoke test).
+                    build_img api    backend/Dockerfile
+                    build_img web    web/Dockerfile \
+                        "NEXT_PUBLIC_SUPPORT_WHATSAPP=$SUPPORT_WHATSAPP" \
+                        "NEXT_PUBLIC_SUPPORT_PHONE=$SUPPORT_PHONE"
+                    build_img mobile mobile/Dockerfile.web \
+                        "EXPO_PUBLIC_API_URL=/api"
 
-                            docker buildx build \
-                                --builder hub-builder \
-                                --platform linux/amd64 \
-                                --push \
-                                ${cache_args[@]+"${cache_args[@]}"} \
-                                ${build_args[@]+"${build_args[@]}"} \
-                                -f "$dockerfile" \
-                                -t "$REGISTRY/hub-$svc:$IMAGE_TAG" \
-                                .
-                        }
-
-                        # OJO: web/Dockerfile y mobile/Dockerfile.web construyen
-                        # desde la raíz (necesitan shared/), no desde su carpeta.
-                        # Los build args de los frontends son obligatorios: si
-                        # llegan vacíos, el bundle se publica roto (de ahí el
-                        # fail-fast de mobile/Dockerfile.web y el smoke test).
-                        build_and_push api    backend/Dockerfile
-                        build_and_push web    web/Dockerfile \
-                            "NEXT_PUBLIC_SUPPORT_WHATSAPP=$SUPPORT_WHATSAPP" \
-                            "NEXT_PUBLIC_SUPPORT_PHONE=$SUPPORT_PHONE"
-                        build_and_push mobile mobile/Dockerfile.web \
-                            "EXPO_PUBLIC_API_URL=/api"
-
-                        # `latest` solo desde la rama estable: una rama de trabajo
-                        # nunca debe sobreescribir la etiqueta de producción.
-                        case "${BRANCH_NAME:-}" in
-                            main|master)
-                                for svc in api web mobile; do
-                                    docker buildx imagetools create \
-                                        -t "$REGISTRY/hub-$svc:latest" \
-                                        "$REGISTRY/hub-$svc:$IMAGE_TAG"
-                                done
-                                ;;
-                            *) echo "Rama '${BRANCH_NAME:-desconocida}': no se actualiza la etiqueta latest" ;;
-                        esac
-
-                        docker buildx imagetools inspect "$REGISTRY/hub-api:$IMAGE_TAG" | head -5
-                    '''
-                }
+                    # Comprobación de que la imagen existe y es usable: un build
+                    # que "termina bien" pero no deja capa utilizable falla
+                    # aquí, no tres minutos después en el compose up.
+                    for svc in api web mobile; do
+                        docker image inspect "$IMAGE_NAMESPACE/hub-$svc:$IMAGE_TAG" \
+                            >/dev/null || { echo "no se construyo $IMAGE_NAMESPACE/hub-$svc:$IMAGE_TAG"; exit 1; }
+                    done
+                    docker image inspect "$IMAGE_NAMESPACE/hub-api:$IMAGE_TAG" \
+                        --format 'api: {{.Id}} {{.Size}} bytes'
+                '''
             }
         }
 
@@ -252,11 +225,6 @@ pipeline {
             when { expression { return !params.DRY_RUN } }
             steps {
                 withCredentials([
-                    usernamePassword(
-                        credentialsId: 'hub-dockerhub',
-                        usernameVariable: 'DOCKERHUB_USER',
-                        passwordVariable: 'DOCKERHUB_TOKEN'
-                    ),
                     string(credentialsId: 'hub-postgres-password',    variable: 'POSTGRES_PASSWORD'),
                     string(credentialsId: 'hub-jwt-secret',           variable: 'JWT_SECRET'),
                     string(credentialsId: 'hub-jwt-refresh-secret',   variable: 'JWT_REFRESH_SECRET'),
@@ -287,17 +255,10 @@ pipeline {
                               "$WORKSPACE/" "$DEPLOY_DIR/"
                         chmod +x "$DEPLOY_DIR/scripts/backup-db.sh" "$DEPLOY_DIR/deploy/"*.sh
 
-                        # 2. Login de Docker Hub solo para este bloque: los pulls
-                        #    anónimos están limitados a 100 por 6 h y las imágenes
-                        #    pueden ser privadas.
-                        export DOCKER_CONFIG="$PWD/.docker-$BUILD_NUMBER"
-                        trap 'rm -rf "$DOCKER_CONFIG"' EXIT
-                        echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USER" --password-stdin
-
-                        # 3. Materializar el .env (0600) desde las credenciales.
+# 2. Materializar el .env (0600) desde las credenciales.
                         APP_VERSION="$IMAGE_TAG" \
                         POSTGRES_USER=hub_admin \
-                        DOCKERHUB_NAMESPACE="$DOCKERHUB_NAMESPACE" \
+                        IMAGE_NAMESPACE="$IMAGE_NAMESPACE" \
                         APP_DASHBOARD_DOMAIN="$APP_DASHBOARD_DOMAIN" \
                         APP_MOBILE_DOMAIN="$APP_MOBILE_DOMAIN" \
                         NEXT_PUBLIC_SUPPORT_WHATSAPP="$SUPPORT_WHATSAPP" \
@@ -305,13 +266,15 @@ pipeline {
                         DEPLOY_DIR="$DEPLOY_DIR" \
                         "$DEPLOY_DIR/deploy/render-env.sh"
 
-                        # 4. Pull + recreate. Sin migraciones manuales: el
-                        #    entrypoint de `api` corre migrate + seed en cada
-                        #    arranque (deben seguir siendo idempotentes).
+                        # 3. Recrear los contenedores desde las imágenes que
+                        #    acaba de construir el stage anterior, ya presentes
+                        #    en este mismo daemon. Sin `pull`: no hay registro.
+                        #    Sin migraciones manuales: el entrypoint de `api`
+                        #    corre migrate + seed en cada arranque (deben
+                        #    seguir siendo idempotentes).
                         cd "$DEPLOY_DIR"
                         DC="docker compose -p $COMPOSE_PROJECT -f $COMPOSE_FILES --env-file .env"
                         $DC config -q
-                        $DC pull
                         $DC up -d --no-build --remove-orphans
                     '''
                 }
@@ -431,7 +394,7 @@ pipeline {
                         cd "$DEPLOY_DIR"
                         DEPLOY_DIR="$DEPLOY_DIR" \
                         COMPOSE_PROJECT="$COMPOSE_PROJECT" \
-                        DOCKERHUB_NAMESPACE="$DOCKERHUB_NAMESPACE" \
+                        IMAGE_NAMESPACE="$IMAGE_NAMESPACE" \
                         ./deploy/rollback.sh \
                           || echo "ATENCION: el rollback automatico fallo; revisa los contenedores a mano"
                     '''
@@ -439,9 +402,6 @@ pipeline {
                     echo "El build fallo antes de tocar produccion: no hace falta revertir."
                 }
             }
-        }
-        always {
-            sh 'rm -rf "$WORKSPACE/.docker-$BUILD_NUMBER" 2>/dev/null || true'
         }
         cleanup {
             // Solo imágenes sin usar de hace una semana: nunca toca las que

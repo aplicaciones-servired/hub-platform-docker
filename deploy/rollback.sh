@@ -19,7 +19,7 @@ DEPLOY_DIR="${DEPLOY_DIR:-/opt/hub-platform}"
 COMPOSE_PROJECT="${COMPOSE_PROJECT:-hub}"
 ENV_FILE="$DEPLOY_DIR/.env"
 LAST_GOOD_FILE="$DEPLOY_DIR/.last-good"
-NAMESPACE="${DOCKERHUB_NAMESPACE:-serviredgane}"
+NAMESPACE="${IMAGE_NAMESPACE:-hub-platform}"
 SERVICES=(api web mobile)
 
 fail() { echo "ERROR: $1" >&2; exit 1; }
@@ -37,8 +37,9 @@ CURRENT="$(grep -E '^APP_VERSION=' "$ENV_FILE" | cut -d= -f2- || true)"
 
 echo "Revirtiendo $CURRENT → $TARGET"
 
-# Las imagenes anteriores deben seguir en el daemon: el pipeline no hace prune
-# de imagenes en uso y Jenkins conserva los ultimos tags por 30 dias.
+# Las imagenes anteriores deben seguir en el daemon. No hay registro del que
+# volver a bajarlas: si el prune las borro, el rollback es imposible y hay que
+# re-ejecutar el pipeline sobre el sha viejo (APP_VERSION=<sha>).
 missing=0
 for svc in "${SERVICES[@]}"; do
   if ! docker image inspect "${NAMESPACE}/hub-${svc}:${TARGET}" >/dev/null 2>&1; then
@@ -46,7 +47,7 @@ for svc in "${SERVICES[@]}"; do
     missing=1
   fi
 done
-[ "$missing" -eq 0 ] || fail "no se puede revertir: imagenes anteriores ausentes (hacen falta pulls o un redeploy manual)"
+[ "$missing" -eq 0 ] || fail "no se puede revertir: imagenes anteriores ausentes (el prune las borro; relanza el pipeline con APP_VERSION=$TARGET)"
 
 # Backup antes de tocar nada: revertir tambien puede ejecutar migraciones.
 if [ "${SKIP_BACKUP:-0}" != "1" ] && docker ps --format '{{.Names}}' | grep -qx 'hub-postgres'; then

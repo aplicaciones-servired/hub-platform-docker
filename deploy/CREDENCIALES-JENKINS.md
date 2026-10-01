@@ -9,19 +9,23 @@ Los secretos **no viven en el repo**. Jenkins los entrega al pipeline con
 
 *Manage Jenkins → Credentials → System → Global credentials → Add Credentials*
 
+Todas son *Secret text* marcadas como **Sensitive**, en scope **Global** (o en
+la carpeta del job, si prefieres aislarlas; entonces ajusta los IDs en el
+`Jenkinsfile`).
+
+**No hace falta ninguna credencial de Docker Hub**: Jenkins corre en el mismo
+servidor que la app y comparte su daemon Docker, así que el pipeline construye
+las imágenes ahí mismo y `docker compose` las levanta por tag, sin `push` ni
+`pull`.
+
 | ID (credentialsId) | Tipo | Qué es | Cómo generarlo |
 |--------------------|------|--------|----------------|
-| `hub-dockerhub` | Username with password | Usuario de Docker Hub + **Access Token** (no la contraseña de la cuenta) | Docker Hub → Account Settings → Personal access tokens → Read/Write |
-| `hub-postgres-password` | Secret text | Contraseña de PostgreSQL | `openssl rand -base64 24` |
+| `hub-postgres-password` | Secret text | Contraseña de PostgreSQL | `openssl rand -hex 24` |
 | `hub-jwt-secret` | Secret text | Firma de los JWT (>= 32 chars) | `openssl rand -hex 32` |
 | `hub-jwt-refresh-secret` | Secret text | Firma de los refresh (**distinto** del anterior) | `openssl rand -hex 32` |
 | `hub-seed-admin-password` | Secret text | Contraseña inicial del admin `123456789` | `openssl rand -hex 16` |
 | `hub-expo-access-token` | Secret text | Push notifications Expo (opcional) | cuenta Expo → Access Token |
 | `hub-external-systems-url` | Secret text | URL de login del sistema externo (opcional) | la que.use el negocio |
-
-Marca las de tipo *Secret text* como **Sensitive** para que Jenkins no las
-permita en la consola, y déjalas en scope **Global** (o en la carpeta del job,
-si prefieres aislarlas por job; entonces ajusta los IDs en el `Jenkinsfile`).
 
 `DATABASE_URL` **no** es una credencial: la compone `render-env.sh` a partir de
 `POSTGRES_USER` + `POSTGRES_PASSWORD`. Así es imposible que la contraseña del
@@ -31,8 +35,7 @@ compose y la de la URL diverjan.
 
 `deploy/credentials.groovy` las crea o actualiza desde el Script Console, leyendo
 los valores de propiedades globales de Jenkins (`HUB_POSTGRES_PASSWORD`,
-`HUB_JWT_SECRET`, …). Es idempotente. `hub-dockerhub` hay que crearla a mano
-porque requiere usuario + token.
+`HUB_JWT_SECRET`, …). Es idempotente.
 
 ## 2. Variables que NO son secretas (parámetros del job)
 
@@ -41,11 +44,10 @@ Ya están como `parameters` del `Jenkinsfile`, se cambian desde
 
 | Parámetro | Por defecto | Para qué |
 |-----------|-------------|-----------|
-| `APP_VERSION` | (vacío → sha del commit) | Tag a desplegar. Allows rollback manual a un sha anterior |
-| `RUN_TESTS` | `true` | Backend + web + mobile antes de publicar |
-| `REGISTRY_CACHE` | `true` | Inline cache en Docker Hub (acelera builds) |
+| `APP_VERSION` | (vacío → sha del commit) | Tag a construir. Permite relanzar el pipeline sobre un sha anterior, que es la vía de rollback cuando el prune ya borró la imagen |
+| `RUN_TESTS` | `true` | Backend + web + mobile antes de construir |
 | `SKIP_BACKUP` | `false` | Saltar el `pg_dump` previo |
-| `DRY_RUN` | `false` | Publica imágenes sin tocar producción |
+| `DRY_RUN` | `false` | Construye imágenes sin tocar producción |
 | `SUPPORT_WHATSAPP` | `https://wa.me/573000000000` | **Va incrustado en el bundle** |
 | `SUPPORT_PHONE` | `+57 300 000 0000` | **Va incrustado en el bundle** |
 
@@ -53,7 +55,7 @@ Los dos últimos son build args: cambian el bundle del frontend, así que
 **cambiarlos exige un rebuild**, no solo un reinicio de contenedores.
 
 Si prefieres sacarlos del job, están como constantes en el bloque `environment`
-del `Jenkinsfile`: `DEPLOY_DIR`, `COMPOSE_PROJECT`, `DOCKERHUB_NAMESPACE`,
+del `Jenkinsfile`: `DEPLOY_DIR`, `COMPOSE_PROJECT`, `IMAGE_NAMESPACE`,
 `COMPOSE_FILES`, `APP_DASHBOARD_DOMAIN`, `APP_MOBILE_DOMAIN`, `NODE_IMAGE`.
 
 ## 3. Variables que write el pipeline en `/opt/hub-platform/.env`
@@ -76,7 +78,7 @@ lista completa y su origen:
 | `EXPO_PUBLIC_API_URL` | constante (`/api`) — build arg del PWA | sí |
 | `NEXT_PUBLIC_SUPPORT_WHATSAPP` / `_PHONE` | parámetros del job | sí |
 | `APP_VERSION` | sha del commit / parámetro | sí |
-| `DOCKERHUB_NAMESPACE` | constante (`serviredgane`) | sí |
+| `IMAGE_NAMESPACE` | constante (`hub-platform`) | sí |
 
 `CORS_ORIGIN` y `ALLOWED_HOSTS` se derivan de `APP_DASHBOARD_DOMAIN` y
 `APP_MOBILE_DOMAIN`: si añades un dominio, cambia **las dos variables** en el

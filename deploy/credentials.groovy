@@ -87,12 +87,6 @@ optional.each { envVar, id ->
     }
 }
 
-// La de Docker Hub se crea aparte: es la única tipo "username + password" con
-// usuario real, y su token se puede rotar desde Docker Hub sin tocar el código.
-report['hub-dockerhub'] = store.getCredentials(domain).any { it.id == 'hub-dockerhub' }
-    ? 'ya existe (no se modificó)'
-    : 'PENDIENTE: crear manualmente (Credentials → Add Credentials → Username with password; usuario = tu usuario de Docker Hub, contraseña = Access Token)'
-
 store.save()
 
 report.each { id, status -> println "${id.padRight(28)} ${status}" }
