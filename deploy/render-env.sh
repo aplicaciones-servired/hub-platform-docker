@@ -66,22 +66,41 @@ TMP_FILE="$(mktemp "${ENV_FILE}.XXXXXX")"
 trap 'rm -f "$TMP_FILE"' EXIT
 
 umask 077
-cat > "$TMP_FILE" <<EOF
-# GENERADO por deploy/render-env.sh — Jenkins $(date -u +%Y-%m-%dT%H:%M:%SZ)
-# No editar a mano: se sobreescribe en cada deploy. Los secretos viven en las
-# credenciales del job de Jenkins (deploy/CREDENCIALES-JENKINS.md).
+
+# El bloque estático va en un heredoc CON comillas ('EOF'): bash no expande
+# nada, así que un backtick o un $ en un comentario no puede romper el script.
+# Solo las líneas de variables van en el heredoc sin comillas. No mezcles
+# texto fijo dentro del que sí expande.
+cat > "$TMP_FILE" <<'STATIC'
+# GENERADO por deploy/render-env.sh. No editar a mano: se sobreescribe en cada
+# deploy. Los secretos viven en las credenciales del job de Jenkins
+# (deploy/CREDENCIALES-JENKINS.md).
 
 # ── PostgreSQL ───────────────────────────────────────────────────────────
+# ── JWT ──────────────────────────────────────────────────────────────────
+# ── API ──────────────────────────────────────────────────────────────────
+# ── Seed del admin (documento 123456789); solo si la BD aun no tiene admin ─
+# ── Integraciones (vacias = modulo deshabilitado) ────────────────────────
+# ── Build args de los frontends (publicables: viajan en el bundle) ───────
+# EXPO_PUBLIC_API_URL llega como build arg a mobile/Dockerfile.web (tiene
+# fail-fast si llega vacio). El navegador usa la ruta relativa /api.
+# NEXT_PUBLIC_API_URL NO es publico: solo es el destino del rewrite /api de
+# Next (web/next.config.ts), que se hornea en el build. El edge enruta /api
+# directo a api:3001, asi que solo importa si se accede al contenedor web sin
+# el edge.
+# ── Deploy ───────────────────────────────────────────────────────────────
+# APP_VERSION es el tag de las imagenes. Lo escribe Jenkins con
+# el sha del commit; docker compose lo usa para resolver la clave image: en
+# deploy/docker-compose.prod.yml (sin ella usaria la etiqueta latest).
+STATIC
+
+cat >> "$TMP_FILE" <<EOF
 POSTGRES_USER=${POSTGRES_USER}
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 POSTGRES_DB=${POSTGRES_DB}
-
-# ── JWT ──────────────────────────────────────────────────────────────────
 JWT_SECRET=${JWT_SECRET}
 JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
 JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
-
-# ── API ──────────────────────────────────────────────────────────────────
 NODE_ENV=production
 PORT=3001
 DATABASE_URL=${DATABASE_URL}
@@ -89,31 +108,13 @@ CORS_ORIGIN=${CORS_ORIGIN}
 ALLOWED_HOSTS=${ALLOWED_HOSTS}
 MAX_LOGIN_ATTEMPTS=${MAX_LOGIN_ATTEMPTS}
 LOG_LEVEL=${LOG_LEVEL}
-
-# ── Seed del admin (documento 123456789); solo si la BD aun no tiene admin ─
 SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD}
-
-# ── Integraciones (vacias = modulo deshabilitado) ────────────────────────
 EXTERNAL_SYSTEMS_URL=${EXTERNAL_SYSTEMS_URL:-}
 EXPO_ACCESS_TOKEN=${EXPO_ACCESS_TOKEN:-}
-
-# ── Build args de los frontends (publicables: viajan en el bundle) ───────
-# EXPO_PUBLIC_API_URL llega como build arg a mobile/Dockerfile.web (tiene
-# fail-fast si llega vacío). El navegador usa la ruta relativa /api.
-# NEXT_PUBLIC_API_URL NO es público: solo es el destino del rewrite /api de
-# Next (web/next.config.ts), que se hornea en el build. El edge enruta /api
-# directo a api:3001, así que solo importa si se accede al contenedor web sin
-# el edge. OJO: sin backticks en este bloque; el heredoc de abajo no lleva
-# comillas (necesita expandir $VARIABLES) y bash ejecutaría lo que enclose.
 EXPO_PUBLIC_API_URL=/api
 NEXT_PUBLIC_API_URL=http://api:3001/api
 NEXT_PUBLIC_SUPPORT_WHATSAPP=${NEXT_PUBLIC_SUPPORT_WHATSAPP:-https://wa.me/573000000000}
 NEXT_PUBLIC_SUPPORT_PHONE=${NEXT_PUBLIC_SUPPORT_PHONE:-+57 300 000 0000}
-
-# ── Deploy ───────────────────────────────────────────────────────────────
-# APP_VERSION es el tag de las imágenes. Lo escribe Jenkins con
-# el sha del commit; docker compose lo usa para resolver la clave image: en
-# deploy/docker-compose.prod.yml (sin ella usaría la etiqueta latest).
 APP_VERSION=${APP_VERSION:-latest}
 IMAGE_NAMESPACE=${IMAGE_NAMESPACE:-hub-platform}
 EOF
