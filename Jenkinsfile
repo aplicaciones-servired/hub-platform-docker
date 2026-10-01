@@ -178,8 +178,8 @@ pipeline {
                     set -euo pipefail
 
                     build_img() {
-                        local svc="$1" dockerfile="$2"; shift 2
-                        echo "──────── build $svc ────────"
+                        local svc="$1" context="$2" dockerfile="$3"; shift 3
+                        echo "──────── build $svc ($context) ────────"
 
                         # Arrays, no strings: el teléfono de soporte es
                         # "+57 300 000 0000" y con word-splitting se
@@ -192,19 +192,23 @@ pipeline {
                             -f "$dockerfile" \
                             -t "$IMAGE_NAMESPACE/hub-$svc:$IMAGE_TAG" \
                             -t "$IMAGE_NAMESPACE/hub-$svc:latest" \
-                            .
+                            "$context"
                     }
 
-                    # OJO: web/Dockerfile y mobile/Dockerfile.web construyen
-                    # desde la raíz (necesitan shared/), no desde su carpeta.
+                    # OJO: el contexto NO es la raiz en todos los casos.
+                    # backend/Dockerfile hace COPY package*.json / src/ / scripts/
+                    # con rutas relativas al backend, asi que su contexto es
+                    # backend/ y el Dockerfile se referencia como
+                    # backend/Dockerfile. web/Dockerfile y mobile/Dockerfile.web
+                    # si necesitan shared/ y construyen desde la raiz.
                     # Los build args de los frontends son obligatorios: si
-                    # llegan vacíos, el bundle se publica roto (de ahí el
+                    # llegan vacios, el bundle se publica roto (de ahi el
                     # fail-fast de mobile/Dockerfile.web y el smoke test).
-                    build_img api    backend/Dockerfile
-                    build_img web    web/Dockerfile \
+                    build_img api    backend  backend/Dockerfile
+                    build_img web    .        web/Dockerfile \
                         "NEXT_PUBLIC_SUPPORT_WHATSAPP=$SUPPORT_WHATSAPP" \
                         "NEXT_PUBLIC_SUPPORT_PHONE=$SUPPORT_PHONE"
-                    build_img mobile mobile/Dockerfile.web \
+                    build_img mobile .        mobile/Dockerfile.web \
                         "EXPO_PUBLIC_API_URL=/api"
 
                     # Comprobación de que la imagen existe y es usable: un build
