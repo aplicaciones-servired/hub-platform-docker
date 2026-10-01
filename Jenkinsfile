@@ -237,12 +237,38 @@ pipeline {
                     sh '''#!/bin/bash
                         set -euo pipefail
 
-                        # 1. Sincronizar el repo al directorio estable del
-                        #    servidor. Se preservan .env, backups y .last-good,
+                        # 1.0. El directorio de despliegue tiene que existir y ser escribible por
+                        #     el usuario del agente. El error del run anterior
+                        #     fue `install -d -m` devolviendo ENOENT
+                        #     ("cannot change permissions"), que en la practica
+                        #     es una de estas tres cosas: ruta que es un symlink
+                        #     colgado, padre (/opt) sin permiso para el agente, o
+                        #     el agente dentro de un contenedor que no ve /opt.
+                        #     Cada caso se reporta por separado con su arreglo.
+                        if [ -L "$DEPLOY_DIR" ] && [ ! -e "$DEPLOY_DIR" ]; then
+                            echo "ERROR: $DEPLOY_DIR es un symlink colgado -> $(readlink "$DEPLOY_DIR")"
+                            echo "Arreglo: sudo rm $DEPLOY_DIR && sudo mkdir -p $DEPLOY_DIR"
+                            exit 1
+                        fi
+                        mkdir -p "$DEPLOY_DIR" 2>/dev/null || {
+                            echo "ERROR: no se pudo crear $DEPLOY_DIR."
+                            echo "  padre        : $(dirname "$DEPLOY_DIR")"
+                            echo "  existe?      : $([ -d "$(dirname "$DEPLOY_DIR")" ] && echo sí || echo NO EXISTE)"
+                            echo "  escribible?  : $([ -w "$(dirname "$DEPLOY_DIR")" ] && echo sí || echo NO)"
+                            echo "Arreglo: sudo mkdir -p $DEPLOY_DIR && sudo chown \$(id -un):\$(id -gn) $DEPLOY_DIR && sudo chmod 750 $DEPLOY_DIR"
+                            exit 1;
+                        }
+                        [ -w "$DEPLOY_DIR" ] || {
+                            echo "ERROR: $DEPLOY_DIR existe pero el agente no puede escribir (owner $(stat -c '%U:%G' "$DEPLOY_DIR"), modo $(stat -c '%a' "$DEPLOY_DIR"))."
+                            echo "Arreglo: sudo chown -R \$(id -un):\$(id -gn) $DEPLOY_DIR"
+                            exit 1;
+                        }
+
+                        # 1.1. Sincronizar el repo al directorio estable del
+                        #    servidor. Se preserva .env, backups y .last-good,
                         #    y se excluyen los artefactos que el stage de tests
                         #    dejó en el workspace (node_modules puede pesar
                         #    cientos de MB y no sirve en el servidor).
-                        install -d -m 750 "$DEPLOY_DIR"
                         rsync -a --delete \
                               --exclude '.git' \
                               --exclude '.env' \

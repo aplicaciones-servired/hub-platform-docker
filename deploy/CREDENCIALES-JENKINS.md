@@ -155,6 +155,11 @@ sudo mkdir -p /opt/hub-platform && sudo chown -R jenkins:jenkins /opt/hub-platfo
 
 # 2. Crear las credenciales en Jenkins (sección 1).
 
+# 2b. Si Jenkins corre en un contenedor, /opt debe ser un bind mount del host:
+#     /opt/hub-platform:/opt/hub-platform
+#     Sin esto, el deploy escribe el compose DENTRO del contenedor y los
+#     volúmenes (pgdata, uploads) no sobreviven a un reinicio del agente.
+
 # 3. Lanzar el job. Si DNS/Túnel aún no apuntan al servidor, el stage
 #    "Verificar despliegue" falla en las comprobaciones públicas: es esperado.
 #    Usa DRY_RUN=true para publicar imágenes sin tocar nada.
