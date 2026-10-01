@@ -102,7 +102,9 @@ EXPO_ACCESS_TOKEN=${EXPO_ACCESS_TOKEN:-}
 # fail-fast si llega vacío). El navegador usa la ruta relativa /api.
 # NEXT_PUBLIC_API_URL NO es público: solo es el destino del rewrite /api de
 # Next (web/next.config.ts), que se hornea en el build. El edge enruta /api
-# directo a api:3001, así que solo importa si se accede a `web` sin el edge.
+# directo a api:3001, así que solo importa si se accede al contenedor web sin
+# el edge. OJO: sin backticks en este bloque; el heredoc de abajo no lleva
+# comillas (necesita expandir $VARIABLES) y bash ejecutaría lo que enclose.
 EXPO_PUBLIC_API_URL=/api
 NEXT_PUBLIC_API_URL=http://api:3001/api
 NEXT_PUBLIC_SUPPORT_WHATSAPP=${NEXT_PUBLIC_SUPPORT_WHATSAPP:-https://wa.me/573000000000}

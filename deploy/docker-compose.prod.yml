@@ -72,12 +72,13 @@ services:
     #   - "127.0.0.1:8080:8080"
     volumes:
       # Rutas relativas al PROJECT DIRECTORY, que es la carpeta del PRIMER
-      # compose (-f docker-compose.yml), no la de este override. Con
-      # `../nginx` Compose resolvería /opt/nginx y montaría directorios vacíos:
-      # nginx arrancaría sin configuración y el healthcheck del edge fallaría.
-      - nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - nginx/conf.d:/etc/nginx/conf.d:ro
-      - nginx/snippets:/etc/nginx/snippets:ro
+      # compose (-f docker-compose.yml en DEPLOY_DIR), no la de este override.
+      # El prefijo ./ es obligatorio: sin él Compose interpreta "nginx/..." como
+      # el NOMBRE de un volumen, no como una ruta del host, y aborta con
+      # 'refers to undefined volume nginx/nginx.conf'.
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/snippets:/etc/nginx/snippets:ro
     security_opt:
       - no-new-privileges:true
     cap_drop:

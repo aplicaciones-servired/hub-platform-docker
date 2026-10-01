@@ -433,9 +433,14 @@ pipeline {
     post {
         failure {
             script {
-                // Un fallo en tests/build no tocó producción: revertir solo si el
-                // deploy llegó a ejecutarse.
-                if (env.DRY_RUN != 'true' && fileExists("${env.DEPLOY_DIR}/.env")) {
+                // Un fallo en tests/build no tocó producción: revertir solo si hubo un
+                // deploy previo exitoso. La condición es `.last-good` (lo
+                // escribe el stage final solo si todo pasó), NO `.env`: este
+                // lo crea render-env.sh al principio del stage Desplegar, así
+                // que un fallo posterior a eso —incluso antes de levantar un
+                // contenedor— cumpliría con la condición y dispararía un
+                // rollback sin ningún despliegue al que volver.
+                if (env.DRY_RUN != 'true' && fileExists("${env.DEPLOY_DIR}/.last-good")) {
                     echo "Deploy fallido: revirtiendo a la ultima version estable"
                     sh '''#!/bin/bash
                         set -euo pipefail
