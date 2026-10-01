@@ -26,13 +26,11 @@
 #  but could not be found". El Jenkinsfile lo comprueba en la etapa Preparar.
 # ═════════════════════════════════════════════════════════════════════════════
 
-x-image-tag: &image-tag ${APP_VERSION:-latest}
-
 services:
   # En cada servicio, `networks` se une (no reemplaza) al del compose base:
   # api conserva `db` + `app` y suma `red-gane-int`.
   api:
-    image: ${IMAGE_NAMESPACE:-hub-platform}/hub-api:*image-tag
+    image: ${IMAGE_NAMESPACE:-hub-platform}/hub-api:${APP_VERSION:-latest}
     build: !reset null
     networks:
       - app
@@ -40,14 +38,14 @@ services:
       - red-gane-int
 
   web:
-    image: ${IMAGE_NAMESPACE:-hub-platform}/hub-web:*image-tag
+    image: ${IMAGE_NAMESPACE:-hub-platform}/hub-web:${APP_VERSION:-latest}
     build: !reset null
     networks:
       - app
       - red-gane-int
 
   mobile:
-    image: ${IMAGE_NAMESPACE:-hub-platform}/hub-mobile:*image-tag
+    image: ${IMAGE_NAMESPACE:-hub-platform}/hub-mobile:${APP_VERSION:-latest}
     build: !reset null
     networks:
       - app
