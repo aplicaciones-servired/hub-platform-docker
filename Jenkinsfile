@@ -323,7 +323,29 @@ pipeline {
                         cd "$DEPLOY_DIR"
                         DC="docker compose -p $COMPOSE_PROJECT -f $COMPOSE_FILES --env-file .env"
                         $DC config -q
-                        $DC up -d --no-build --remove-orphans
+
+                        # Si `up -d` falla (tipicamente un healthcheck que no
+                        # llega a healthy) no dice por que. Antes de morir vuelca
+                        # el estado y los logs de todos los servicios: sin esto
+                        # cada fallo cuesta un pipeline completo a ciegas.
+                        dump_diag() {
+                            echo
+                            echo "════════ DIAGNÓSTICO (fallo en compose up) ════════"
+                            echo "──── estado ────"
+                            $DC ps -a --format 'table {{.Service}}\t{{.State}}\t{{.Status}}' 2>&1 || true
+                            for svc in postgres api web mobile edge; do
+                                echo
+                                echo "──── logs $svc (últimas 80) ────"
+                                $DC logs --tail=80 --no-color "$svc" 2>&1 || true
+                            done
+                            echo
+                            echo "════ FIN DIAGNÓSTICO ════"
+                        }
+
+                        if ! $DC up -d --no-build --remove-orphans; then
+                            dump_diag
+                            exit 1
+                        fi
                     '''
                 }
             }
