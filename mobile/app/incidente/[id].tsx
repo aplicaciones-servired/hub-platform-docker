@@ -36,8 +36,25 @@ export default function IncidentDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // `router.back()` es un no-op silencioso cuando el historial está vacío. Desde
+  // la pantalla de éxito se llega con `router.replace` (exito.tsx), que sustituye
+  // la entrada en vez de apilar, así que el botón Volver quedaba muerto en ese
+  // camino. Desde historial se llega con `push` y ahí sí funciona; con este
+  // fallback ambos caminos hacen algo.
+  const goBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/historial");
+    }
+  };
+
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      setError("No se recibió el identificador del ticket");
+      setLoading(false);
+      return;
+    }
     api
       .get<IncidentDetail>(`/incidents/${id}`)
       .then(setIncident)
@@ -62,7 +79,7 @@ export default function IncidentDetailScreen() {
         className="flex-1 bg-[#F5F5F5]"
       >
         <View className="flex-row items-center px-5 py-4 border-b border-gray-200 bg-white">
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <TouchableOpacity onPress={goBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <ArrowLeft size={22} color="#1F2366" strokeWidth={2} />
           </TouchableOpacity>
           <Text className="text-lg font-bold text-[#1F2366] font-inter ml-4">
@@ -76,7 +93,7 @@ export default function IncidentDetailScreen() {
               {error}
             </Text>
             <TouchableOpacity
-              onPress={() => router.back()}
+              onPress={goBack}
               className="mt-6 px-6 py-3 bg-[#3B348B] rounded-lg"
             >
               <Text className="text-white font-inter font-semibold">Volver</Text>
@@ -99,7 +116,7 @@ export default function IncidentDetailScreen() {
         className="bg-white border-b border-gray-200"
       >
         <View className="flex-row items-center px-5 py-4">
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <TouchableOpacity onPress={goBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <ArrowLeft size={22} color="#1F2366" strokeWidth={2} />
           </TouchableOpacity>
           <Text className="text-lg font-bold text-[#1F2366] font-inter ml-4">

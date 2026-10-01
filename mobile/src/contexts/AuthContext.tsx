@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
-import { Alert } from "react-native";
+import { Alert, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import {
   api,
@@ -42,7 +42,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async function restore() {
       try {
         const token = await initToken();
-        if (token) {
+        // En web el token vive solo en memoria (services/storage.ts), así que un
+        // reload lo deja en null aunque la cookie mobile_token siga vigente. La
+        // sesión real está en esa cookie httpOnly, que viaja con cada request
+        // vía credentials:"include" + X-Auth-Client: mobile, así que hay que
+        // preguntarle al servidor siempre. En nativo el token persiste en
+        // SecureStore y el gate original se mantiene intacto.
+        if (token || Platform.OS === "web") {
           const savedUser = await getSavedUser();
           if (savedUser) {
             setUser(savedUser as AuthUser);

@@ -12,11 +12,29 @@ export default function ExitoPage() {
   const ticketId = searchParams.get("ticketId") || "";
   const userId = ticketId ? formatTicketId(ticketId) : "Ticket no disponible";
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState("");
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(userId).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    // `navigator.clipboard` no existe en contexto no seguro (http sin TLS), y
+    // acceder a `.writeText` ahí lanza de forma síncrona, fuera del alcance del
+    // `.catch`. Por eso el try/catch va alrededor del acceso completo.
+    try {
+      const clipboard = navigator.clipboard;
+      if (!clipboard) {
+        setCopyError("El navegador no permite copiar aquí");
+        return;
+      }
+      clipboard.writeText(userId).then(
+        () => {
+          setCopied(true);
+          setCopyError("");
+          setTimeout(() => setCopied(false), 2000);
+        },
+        () => setCopyError("No se pudo copiar")
+      );
+    } catch {
+      setCopyError("El navegador no permite copiar aquí");
+    }
   };
 
   return (
@@ -56,6 +74,7 @@ export default function ExitoPage() {
             </button>
           </div>
           {copied && <p className="text-xs text-green-500 text-center mt-2">Copiado ✓</p>}
+          {copyError && <p className="text-xs text-red-500 text-center mt-2">{copyError}</p>}
         </div>
 
         <div className="bg-white border border-[#D9DCE8] rounded-xl p-4 w-full max-w-sm mb-4 shadow-sm">

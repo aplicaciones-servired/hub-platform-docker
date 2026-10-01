@@ -50,6 +50,18 @@ export default function ReportScreen() {
   const router = useRouter();
   const { user } = useAuth();
 
+  // `router.back()` es un no-op silencioso si el historial está vacío, y
+  // `/reportar` siempre se entra con `replace` (historial, ajustes, exito y la
+  // tab bar), así que nunca queda una entrada que popping. Con este fallback el
+  // botón siempre lleva a algún lado.
+  const goBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/chat");
+    }
+  };
+
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState("");
@@ -333,7 +345,7 @@ export default function ReportScreen() {
           </View>
 
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={goBack}
             className="flex-row items-center justify-center mt-5"
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
