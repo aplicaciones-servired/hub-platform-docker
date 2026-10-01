@@ -10,7 +10,7 @@ services:
       - CHOWN
       - SETUID
       - SETGID
-      - DAC_READ_ACCESS
+      - DAC_READ_SEARCH
     read_only: true
     tmpfs:
       - /var/run/postgresql
