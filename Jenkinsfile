@@ -361,13 +361,22 @@ pipeline {
                     DC="docker compose -p $COMPOSE_PROJECT -f $COMPOSE_FILES --env-file .env"
 
                     echo "──────── API ────────"
-                    # El header x-forwarded-proto es necesario: en producción
-                    # src/index.ts devuelve 400 o redirige a HTTPS si la
-                    # petición no llega como https, así que un curl en HTTP
-                    # plano a 127.0.0.1 nunca vería un 200.
+                    # En producción el compose NO publica el puerto de la api
+                    # (ver deploy/docker-compose.prod.yml: el acceso es por el
+                    # edge), así que la prueba se hace desde un contenedor en
+                    # la red `app`, igual que haría el edge. El header
+                    # x-forwarded-proto es obligatorio: en producción
+                    # src/index.ts devuelve 400 o redirige a HTTPS sin él.
+                    # El DNS por container_name es "hub-api" (lo fija el compose
+                    # base), no el nombre con prefijo de proyecto.
+                    probe_api() {
+                        docker run --rm --network "${COMPOSE_PROJECT}_app" \
+                            curlimages/curl:latest -sf --max-time 5 \
+                            -H 'x-forwarded-proto: https' \
+                            "http://hub-api:3001/api/health" >/dev/null 2>&1
+                    }
                     for i in $(seq 1 40); do
-                        if curl -sf --max-time 5 -H 'x-forwarded-proto: https' \
-                               http://127.0.0.1:3001/api/health >/dev/null 2>&1; then
+                        if probe_api; then
                             echo "api OK (intento $i)"; break
                         fi
                         if [ "$i" -eq 40 ]; then

@@ -32,6 +32,11 @@ services:
   api:
     image: ${IMAGE_NAMESPACE:-hub-platform}/hub-api:${APP_VERSION:-latest}
     build: !reset null
+    # El compose base publica 3001 para poder ver los logs desde el host
+    # (docker logs ya los da) y probar con curl. En produccion no hace
+    # falta: el trafico entra por el edge. Publicarlo ademas abre el
+    # backend a cualquier proceso del host que escuche ese puerto.
+    ports: !reset []
     networks:
       - app
       - db
@@ -40,6 +45,8 @@ services:
   web:
     image: ${IMAGE_NAMESPACE:-hub-platform}/hub-web:${APP_VERSION:-latest}
     build: !reset null
+    # Igual que api: 3000 solo se usa en desarrollo local.
+    ports: !reset []
     networks:
       - app
       - red-gane-int
@@ -47,6 +54,10 @@ services:
   mobile:
     image: ${IMAGE_NAMESPACE:-hub-platform}/hub-mobile:${APP_VERSION:-latest}
     build: !reset null
+    # 8081 choca con lo que ya escuche en el host: el despliegue entero
+    # fallaba con 'port is already allocated' sin que el servicio tuviera
+    # nada malo. En produccion el unico acceso es el edge.
+    ports: !reset []
     networks:
       - app
       - red-gane-int
