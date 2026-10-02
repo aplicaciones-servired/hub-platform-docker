@@ -72,13 +72,13 @@ export default function SettingsEmpresaTab({ settings, isTecnico, onSettingsChan
           <h2 className="font-inter font-bold text-[#1F2937] dark:text-gray-100 mb-6 self-start text-[30px] leading-[1.2]">
             Logo Corporativo
           </h2>
-          <div className="w-[140px] h-[140px] bg-[#F8FAFC] dark:bg-gray-800 border-2 border-dashed border-[#CBD5E1] dark:border-gray-600 rounded-full flex items-center justify-center">
+          <div className="w-full max-w-[260px] h-[100px] bg-[#F8FAFC] dark:bg-gray-800 border-2 border-dashed border-[#CBD5E1] dark:border-gray-600 rounded-xl flex items-center justify-center p-3">
             <Image
               src={logoImg}
               alt="Logo de la empresa"
-              width={80}
-              height={80}
-              className="rounded-md object-contain"
+              width={200}
+              height={58}
+              className="w-auto h-auto max-w-full object-contain"
             />
           </div>
         </div>

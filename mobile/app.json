@@ -23,7 +23,7 @@
       "package": "com.hubplatform.aiapp",
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
-        "backgroundColor": "#F5F6FA",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -31,7 +31,7 @@
     },
     "web": {
       "bundler": "metro",
-      "favicon": "./assets/icon-512.png",
+      "favicon": "./assets/favicon.png",
       "backgroundColor": "#F5F6FA",
       "themeColor": "#F5F6FA",
       "description": "HUB AI Assistant - App de soporte"

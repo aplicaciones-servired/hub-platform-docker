@@ -2,51 +2,64 @@ import sharp from "sharp";
 import fs from "fs";
 import path from "path";
 
-const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#25207E"/>
-  <text x="256" y="330" font-family="Arial, sans-serif" font-size="240" font-weight="bold" fill="white" text-anchor="middle">H</text>
-</svg>`;
+// Lockup horizontal de marca: se centra sobre un lienzo cuadrado blanco.
+// El PNG de origen es el logo horizontal; los iconos deben ser cuadrados.
+const LOGO_SRC = path.join(process.cwd(), "src", "assets", "servired.png");
+const LOGO_WIDTH_RATIO = 0.82;
+
+const SIZES = [
+  { file: "icon-192.png", size: 192 },
+  { file: "icon-512.png", size: 512 },
+  { file: "apple-touch-icon-180.png", size: 180 },
+];
 
 async function generateIcons() {
   const iconsDir = path.join(process.cwd(), "public", "icons");
   fs.mkdirSync(iconsDir, { recursive: true });
 
-  // Generate 192x192 PNG
-  await sharp(Buffer.from(svgContent))
-    .resize(192, 192)
-    .png()
-    .toFile(path.join(iconsDir, "icon-192.png"));
+  if (!fs.existsSync(LOGO_SRC)) {
+    throw new Error(`No existe el logo de origen: ${LOGO_SRC}`);
+  }
 
-  console.log("Generated icon-192.png");
+  const meta = await sharp(LOGO_SRC).metadata();
+  const aspect = meta.height / meta.width;
 
-  // Generate 512x512 PNG
-  await sharp(Buffer.from(svgContent))
-    .resize(512, 512)
-    .png()
-    .toFile(path.join(iconsDir, "icon-512.png"));
+  for (const { file, size } of SIZES) {
+    const logoWidth = Math.round(size * LOGO_WIDTH_RATIO);
+    const logoHeight = Math.round(logoWidth * aspect);
 
-  console.log("Generated icon-512.png");
+    const logo = await sharp(LOGO_SRC)
+      .resize({ width: logoWidth, height: logoHeight, fit: "contain" })
+      .png()
+      .toBuffer();
 
-  // Generate SVG sources referenced by manifest
-  await fs.promises.writeFile(path.join(iconsDir, "icon-192.svg"), svgContent);
-  await fs.promises.writeFile(path.join(iconsDir, "icon-512.svg"), svgContent);
+    await sharp({
+      create: {
+        width: size,
+        height: size,
+        channels: 4,
+        background: "#FFFFFF",
+      },
+    })
+      .composite([
+        {
+          input: logo,
+          left: Math.round((size - logoWidth) / 2),
+          top: Math.round((size - logoHeight) / 2),
+        },
+      ])
+      .png()
+      .toFile(path.join(iconsDir, file));
 
-  console.log("Generated icon-192.svg / icon-512.svg");
+    console.log(`Generated ${file} (${size}x${size})`);
+  }
 
-  // Update manifest.json
-  const manifestPath = path.join(process.cwd(), "public", "manifest.json");
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
-
-  manifest.icons = [
-    { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-    { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
-    { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
-    { src: "/icons/icon-192.svg", sizes: "192x192", type: "image/svg+xml" },
-    { src: "/icons/icon-512.svg", sizes: "512x512", type: "image/svg+xml" },
-  ];
-
-  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-  console.log("Updated manifest.json");
+  console.log(
+    "favicon.ico no se regenera aqui (sharp no escribe .ico); se mantiene el asset versionado"
+  );
 }
 
-generateIcons().catch(console.error);
+generateIcons().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

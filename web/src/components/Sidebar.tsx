@@ -56,12 +56,12 @@ export default function Sidebar({ onLogout }: SidebarProps) {
           <div className="flex items-center gap-2.5">
             <Image
               src={logoImg}
-              alt="Logo"
-              width={32}
-              height={32}
-              className="rounded-md"
+              alt="Servired"
+              width={82}
+              height={24}
+              className="w-auto h-[24px] shrink-0"
             />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 font-inter">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 font-inter whitespace-nowrap">
               Admin Dashboard
             </span>
           </div>

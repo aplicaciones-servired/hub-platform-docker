@@ -56,9 +56,9 @@ export default function LoginPage() {
         <div className="flex justify-center mb-6">
           <Image
             src={logoImg}
-            alt="HUB Logo"
-            width={80}
-            height={80}
+            alt="Servired"
+            width={220}
+            height={64}
             priority
           />
         </div>

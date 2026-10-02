@@ -8,23 +8,24 @@ const LOGO_SOURCE = (() => {
   }
 })();
 
+const LOGO_ASPECT = 648 / 189;
+
 interface LogoProps {
   size?: number;
 }
 
 export default function Logo({ size = 72 }: LogoProps) {
-  const containerSize = size;
-  const imageSize = size * 0.75;
+  const imageHeight = size;
+  const imageWidth = Math.round(size * LOGO_ASPECT);
 
   if (LOGO_SOURCE) {
     return (
       <Image
         source={LOGO_SOURCE}
         style={{
-          width: imageSize,
-          height: imageSize,
+          width: imageWidth,
+          height: imageHeight,
           alignSelf: "center",
-          borderRadius: imageSize * 0.15,
         }}
         resizeMode="contain"
       />
@@ -34,10 +35,10 @@ export default function Logo({ size = 72 }: LogoProps) {
   return (
     <View
       style={{
-        width: containerSize,
-        height: containerSize,
+        width: imageWidth,
+        height: imageHeight,
         backgroundColor: "#3B348B",
-        borderRadius: containerSize * 0.25,
+        borderRadius: imageHeight * 0.15,
         alignItems: "center",
         justifyContent: "center",
       }}
@@ -45,7 +46,7 @@ export default function Logo({ size = 72 }: LogoProps) {
       <Text
         style={{
           color: "#FFFFFF",
-          fontSize: size * 0.3,
+          fontSize: imageHeight * 0.4,
           fontFamily: "Inter_700Bold",
         }}
       >
