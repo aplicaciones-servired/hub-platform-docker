@@ -88,6 +88,22 @@ describe("updateIncidentSchema", () => {
     expect(result).toEqual({});
   });
 
+  describe("listIncidentsQuerySchema", () => {
+    it("supports the assigned-technician tickets view", () => {
+      const result = listIncidentsQuerySchema.query.parse({
+        assignedOnly: "true",
+      });
+
+      expect(result.assignedOnly).toBe(true);
+    });
+
+    it("keeps the normal tickets view unfiltered by assignment", () => {
+      const result = listIncidentsQuerySchema.query.parse({});
+
+      expect(result.assignedOnly).toBe(false);
+    });
+  });
+
   it("accepts valid estado", () => {
     const result = updateIncidentSchema.parse({ estado: "resuelto" });
     expect(result.estado).toBe("resuelto");

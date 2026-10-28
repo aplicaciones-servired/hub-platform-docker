@@ -82,6 +82,7 @@ export default function TicketsPage() {
     const params = new URLSearchParams();
     params.set("page", String(page));
     params.set("limit", String(LIMIT));
+    if (isTechnicianQueue) params.set("assignedOnly", "true");
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (estadoFilter !== "Todos") params.set("estado", estadoFilter);
 
@@ -101,7 +102,7 @@ export default function TicketsPage() {
         logger.error("Error fetching tickets", { error: err instanceof Error ? err.message : err })
       )
       .finally(() => setLoading(false));
-  }, [page, debouncedSearch, estadoFilter, dateFilter]);
+  }, [page, debouncedSearch, estadoFilter, dateFilter, isTechnicianQueue]);
 
   const fetchStats = useCallback(() => {
     if (!isAdmin) {
@@ -228,6 +229,7 @@ export default function TicketsPage() {
     const params = new URLSearchParams();
     if (range.start) params.set("start", range.start);
     if (range.end) params.set("end", range.end);
+    if (isTechnicianQueue) params.set("assignedOnly", "true");
     const qs = params.toString() ? `?${params.toString()}` : "";
 
     let items: IncidentItem[] = [];
@@ -294,7 +296,7 @@ export default function TicketsPage() {
     a.click();
     URL.revokeObjectURL(url);
     showToast(`Exportación lista: ${items.length} tickets`);
-  }, [dateFilter, showToast]);
+  }, [dateFilter, isTechnicianQueue, showToast]);
 
   const mappedTickets = useMemo(
     () => {
@@ -314,9 +316,10 @@ export default function TicketsPage() {
         fechaCierre: inc.fecha_cierre ? formatDateShort(inc.fecha_cierre) : null,
         agente: inc.agente,
         tecnico_id: inc.tecnico_id,
+        canChangeStatus: isAdmin || (user?.rol === "tecnico" && inc.tecnico_id === user.id),
       }));
     },
-    [incidents]
+    [incidents, isAdmin, user]
   );
 
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));

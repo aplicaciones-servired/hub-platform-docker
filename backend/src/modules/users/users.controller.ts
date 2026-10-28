@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { eq, ne, and, sql, ilike, or, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../../db";
-import { users } from "../../db/schema";
+import { incidents, users } from "../../db/schema";
 import { escapeLike } from "../../lib/like";
 import { isUniqueViolation } from "../../lib/pg";
 import { logger } from "../../lib/logger";
@@ -279,6 +279,7 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
           return;
         }
       }
+
     }
 
     if (documento !== undefined) {
@@ -337,5 +338,54 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
     }
     logger.error("Update user error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al actualizar usuario" });
+  }
+}
+
+export async function deleteUser(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params as { id: string };
+
+    if (id === req.user!.userId) {
+      res.status(403).json({ error: "No puedes eliminar tu propia cuenta" });
+      return;
+    }
+
+    const [targetUser] = await db
+      .select({ id: users.id, rol: users.rol })
+      .from(users)
+      .where(and(eq(users.id, id), isNull(users.deleted_at)))
+      .limit(1);
+
+    if (!targetUser) {
+      res.status(404).json({ error: "Usuario no encontrado" });
+      return;
+    }
+
+    if (targetUser.rol === "admin") {
+      res.status(403).json({ error: "No se puede eliminar una cuenta de administrador" });
+      return;
+    }
+
+    await db.transaction(async (tx) => {
+      if (targetUser.rol === "tecnico") {
+        await tx
+          .update(incidents)
+          .set({ tecnico_id: null, updated_at: new Date() })
+          .where(eq(incidents.tecnico_id, id));
+      }
+
+      await tx
+        .update(users)
+        .set({
+          deleted_at: new Date(),
+          token_version: sql`${users.token_version} + 1`,
+        })
+        .where(and(eq(users.id, id), isNull(users.deleted_at)));
+    });
+
+    res.json({ message: "Usuario eliminado" });
+  } catch (error) {
+    logger.error("Delete user error", { error: (error as Error).message });
+    res.status(500).json({ error: "Error al eliminar usuario" });
   }
 }

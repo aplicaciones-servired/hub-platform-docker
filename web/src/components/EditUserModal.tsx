@@ -75,6 +75,8 @@ export default function EditUserModal({ user, onClose, onSaved }: EditUserModalP
           >
             <option value="tecnico">Técnico</option>
             <option value="asesor">Asesor</option>
+            <option value="admin">Administrador</option>
+            <option value="user">Usuario</option>
           </select>
         </div>
 

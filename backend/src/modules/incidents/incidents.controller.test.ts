@@ -227,28 +227,40 @@ describe("Incidents Controller", () => {
       expect(jsonMock).toHaveBeenCalledWith({ error: "Acceso denegado" });
     });
 
-    it("technician cannot read a ticket assigned to a different technician", async () => {
-      const selectChain = {
+    it("technician can view an unassigned ticket in the general tickets view", async () => {
+      const incidentSelect = {
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue([{
               id: "incident-id",
               user_id: "requester",
-              tecnico_id: "other-technician",
+              tecnico_id: null,
               estado: "pendiente",
               cerrado_por: null,
             }]),
           }),
         }),
       };
-      (db.select as ReturnType<typeof vi.fn>).mockReturnValue(selectChain);
+      const commentsSelect = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            orderBy: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      };
+      (db.select as ReturnType<typeof vi.fn>)
+        .mockReturnValueOnce(incidentSelect)
+        .mockReturnValueOnce(commentsSelect);
       req.params = { id: "incident-id" };
       req.user = { userId: "technician-1", rol: "tecnico" } as any;
 
       await getIncident(req as Request, res as Response);
 
-      expect(statusMock).toHaveBeenCalledWith(403);
-      expect(jsonMock).toHaveBeenCalledWith({ error: "Acceso denegado" });
+      expect(statusMock).not.toHaveBeenCalled();
+      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
+        id: "incident-id",
+        comments: [],
+      }));
     });
 
     it("should return incident with comments if user has access", async () => {

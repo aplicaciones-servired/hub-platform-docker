@@ -142,7 +142,7 @@ export async function listIncidents(
 
     const conditions = [isNull(incidents.deleted_at)];
 
-    if (req.user!.rol === "tecnico") {
+    if (req.user!.rol === "tecnico" && q.assignedOnly) {
       conditions.push(eq(incidents.tecnico_id, req.user!.userId));
     } else if (req.user!.rol !== "admin") {
       conditions.push(eq(incidents.user_id, req.user!.userId));
@@ -227,9 +227,8 @@ export async function getIncident(
 
     const canAccessIncident =
       req.user!.rol === "admin" ||
-      (req.user!.rol === "tecnico"
-        ? incident.tecnico_id === req.user!.userId
-        : incident.user_id === req.user!.userId);
+      req.user!.rol === "tecnico" ||
+      incident.user_id === req.user!.userId;
     if (!canAccessIncident) {
       res.status(403).json({ error: "Acceso denegado" });
       return;
@@ -532,7 +531,7 @@ export async function exportIncidents(
     const offset = (page - 1) * limit;
     const conditions = [isNull(incidents.deleted_at)];
 
-    if (req.user!.rol === "tecnico") {
+    if (req.user!.rol === "tecnico" && req.validatedQuery?.assignedOnly) {
       conditions.push(eq(incidents.tecnico_id, req.user!.userId));
     }
 
@@ -641,7 +640,7 @@ export async function getStats(
     if (agente) {
       conditions.push(eq(incidents.agente, agente));
     }
-    if (req.user!.rol === "tecnico") {
+    if (req.user!.rol === "tecnico" && req.validatedQuery?.assignedOnly) {
       conditions.push(eq(incidents.tecnico_id, req.user!.userId));
     }
 

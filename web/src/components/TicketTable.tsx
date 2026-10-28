@@ -21,6 +21,7 @@ interface TicketRow {
   fechaCierre: string | null;
   agente?: string | null;
   tecnico_id?: string | null;
+  canChangeStatus?: boolean;
 }
 
 const STATUS_BADGES: Record<string, string> = {
@@ -37,6 +38,7 @@ interface TicketTableProps {
   onResolve?: (ticketId: string) => void;
   technicians?: Technician[];
   canAssign?: boolean;
+  canChangeStatus?: boolean;
   techniciansLoading?: boolean;
   techniciansError?: boolean;
 }
@@ -48,6 +50,7 @@ function ActionMenu({
   currentTecnicoId,
   technicians,
   canAssign,
+  canChangeStatus,
   techniciansLoading,
   techniciansError,
   onStatusChange,
@@ -61,6 +64,7 @@ function ActionMenu({
   currentTecnicoId?: string | null;
   technicians: Technician[];
   canAssign: boolean;
+  canChangeStatus: boolean;
   techniciansLoading: boolean;
   techniciansError: boolean;
   onStatusChange: (id: string, status: string) => void;
@@ -173,7 +177,7 @@ function ActionMenu({
                 </section>
               )}
 
-              {safeStatus !== "resuelto" && (
+              {canChangeStatus && safeStatus !== "resuelto" && (
                 <section>
                   <h3 className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-100">Cambiar estado</h3>
                   <div className="flex flex-wrap gap-2">
@@ -210,6 +214,7 @@ export default function TicketTable({
   onResolve,
   technicians = [],
   canAssign = false,
+  canChangeStatus = false,
   techniciansLoading = false,
   techniciansError = false,
 }: TicketTableProps) {
@@ -287,6 +292,7 @@ export default function TicketTable({
               currentTecnicoId={ticket.tecnico_id}
               technicians={technicians}
               canAssign={canAssign}
+              canChangeStatus={ticket.canChangeStatus ?? canChangeStatus}
               techniciansLoading={techniciansLoading}
               techniciansError={techniciansError}
               onStatusChange={onStatusChange}

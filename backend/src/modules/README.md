@@ -214,8 +214,10 @@ Gestión de usuarios (admin/técnico).
 | PATCH | `/api/users/:id` | Sí | Sí | Actualizar rol/nombre/email/documento |
 | PATCH | `/api/users/:id/toggle-status` | Sí | Sí | Bloquear/desbloquear |
 | PATCH | `/api/users/:id/reset-password` | Sí | Sí | Reset password + desbloqueo |
+| DELETE | `/api/users/:id` | Sí | Sí | Soft delete; libera tickets del técnico |
 
 **Comportamiento clave:**
 - No se puede degradar al único administrador (403) ni bloquear admins.
+- No se puede borrar la propia cuenta ni una cuenta admin.
 - Documento duplicado → 409.
 - `reset-password` reinicia `intentos_fallidos` y pone el usuario `activo`.

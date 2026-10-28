@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Request, Response } from "express";
-import { createUser, listUsers, toggleUserStatus, resetPassword, updateUser } from "./users.controller";
+import { createUser, listUsers, toggleUserStatus, resetPassword, updateUser, deleteUser } from "./users.controller";
 import { db } from "../../db";
 import { users } from "../../db/schema";
 import bcrypt from "bcryptjs";
@@ -10,6 +10,7 @@ vi.mock("../../db", () => ({
     select: vi.fn(),
     insert: vi.fn(),
     update: vi.fn(),
+    transaction: vi.fn(),
   },
 }));
 
@@ -196,6 +197,72 @@ describe("Users Controller", () => {
 
       expect(statusMock).toHaveBeenCalledWith(409);
       expect(jsonMock).toHaveBeenCalledWith({ error: "El documento ya está registrado por otro usuario" });
+    });
+
+    describe("deleteUser", () => {
+      it("does not allow deleting the current account", async () => {
+        req.params = { id: "admin-123" };
+
+        await deleteUser(req as Request, res as Response);
+
+        expect(statusMock).toHaveBeenCalledWith(403);
+        expect(db.transaction).not.toHaveBeenCalled();
+      });
+
+      it("does not allow deleting an admin account", async () => {
+        const selectChain = {
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([{ id: "admin-2", rol: "admin" }]),
+            }),
+          }),
+        };
+        (db.select as ReturnType<typeof vi.fn>).mockReturnValue(selectChain);
+        req.params = { id: "admin-2" };
+
+        await deleteUser(req as Request, res as Response);
+
+        expect(statusMock).toHaveBeenCalledWith(403);
+        expect(db.transaction).not.toHaveBeenCalled();
+      });
+
+      it("soft deletes a technician and releases assigned tickets transactionally", async () => {
+        const selectChain = {
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([{ id: "tech-1", rol: "tecnico" }]),
+            }),
+          }),
+        };
+        const incidentUpdateChain = {
+          set: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]),
+          }),
+        };
+        const userUpdateChain = {
+          set: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]),
+          }),
+        };
+        const tx = {
+          update: vi.fn()
+            .mockReturnValueOnce(incidentUpdateChain)
+            .mockReturnValueOnce(userUpdateChain),
+        };
+        (db.select as ReturnType<typeof vi.fn>).mockReturnValue(selectChain);
+        (db.transaction as ReturnType<typeof vi.fn>).mockImplementation(async (callback) => callback(tx));
+        req.params = { id: "tech-1" };
+
+        await deleteUser(req as Request, res as Response);
+
+        expect(incidentUpdateChain.set).toHaveBeenCalledWith(expect.objectContaining({
+          tecnico_id: null,
+        }));
+        expect(userUpdateChain.set).toHaveBeenCalledWith(expect.objectContaining({
+          deleted_at: expect.any(Date),
+        }));
+        expect(jsonMock).toHaveBeenCalledWith({ message: "Usuario eliminado" });
+      });
     });
   });
 });

@@ -45,6 +45,7 @@ export const listIncidentsQuerySchema = {
       .transform(Number)
       .pipe(z.number().int().min(1).max(100)),
     search: z.string().max(100).optional(),
+    assignedOnly: z.enum(["true", "false"]).optional().transform((value) => value === "true"),
     estado: z.enum(["pendiente", "en_proceso", "resuelto"]).optional(),
     urgencia: z.enum(["baja", "media", "alta"]).optional(),
     start: z
@@ -72,6 +73,7 @@ export const exportQuerySchema = {
       .default("1000")
       .transform(Number)
       .pipe(z.number().int().min(1).max(2000)),
+    assignedOnly: z.enum(["true", "false"]).optional().transform((value) => value === "true"),
     start: z
       .string()
       .optional()

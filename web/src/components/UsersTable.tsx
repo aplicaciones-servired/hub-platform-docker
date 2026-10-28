@@ -21,15 +21,17 @@ function formatLastActivity(date: string | null): string {
 
 interface UsersTableProps {
   users: ApiUser[];
+  currentUserId: string;
+  canManageUsers: boolean;
   onEdit: (user: ApiUser) => void;
   onToggleStatus: (user: ApiUser) => void;
   onResetPassword: (user: ApiUser) => void;
+  onDelete: (user: ApiUser) => void;
 }
 
-function UserActionsMenu({ user, onEdit, onToggleStatus, onResetPassword }: { user: ApiUser; onEdit: (u: ApiUser) => void; onToggleStatus: (u: ApiUser) => void; onResetPassword: (u: ApiUser) => void }) {
+function UserActionsMenu({ user, currentUserId, canManageUsers, onEdit, onToggleStatus, onResetPassword, onDelete }: { user: ApiUser; currentUserId: string; canManageUsers: boolean; onEdit: (u: ApiUser) => void; onToggleStatus: (u: ApiUser) => void; onResetPassword: (u: ApiUser) => void; onDelete: (u: ApiUser) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const isAdmin = user.rol === "admin" || user.rol === "tecnico";
 
   useEffect(() => {
     if (!open) return;
@@ -40,10 +42,12 @@ function UserActionsMenu({ user, onEdit, onToggleStatus, onResetPassword }: { us
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
-  if (isAdmin) {
+  if (!canManageUsers || user.id === currentUserId) {
     return (
       <div className="flex justify-end py-3 px-2">
-        <span className="text-[11px] text-gray-400 dark:text-gray-500 font-inter italic">Fijo</span>
+        <span className="text-[11px] text-gray-400 dark:text-gray-500 font-inter italic">
+          {user.id === currentUserId ? "Tu cuenta" : "Solo administrador"}
+        </span>
       </div>
     );
   }
@@ -57,28 +61,44 @@ function UserActionsMenu({ user, onEdit, onToggleStatus, onResetPassword }: { us
         <MoreVertical size={16} color="#6B7280" strokeWidth={2} />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-[999] py-1">
+        <div className="absolute right-0 top-full mt-1 w-44 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-[999] py-1">
+          <button
+            onClick={() => { setOpen(false); onEdit(user); }}
+            className="w-full text-left px-4 py-2 text-[13px] font-inter text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+          >
+            Editar usuario
+          </button>
           <button
             onClick={() => { setOpen(false); onResetPassword(user); }}
             className="w-full text-left px-4 py-2 text-[13px] font-inter text-orange-700 dark:text-orange-400 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
           >
             Resetear contraseña
           </button>
-          <button
-            onClick={() => { setOpen(false); onToggleStatus(user); }}
-            className={`w-full text-left px-4 py-2 text-[13px] font-inter cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 ${
-              user.estado === "activo" ? "text-red-700 dark:text-red-400" : "text-green-700 dark:text-green-400"
-            }`}
-          >
-            {user.estado === "activo" ? "Bloquear" : "Activar"}
-          </button>
+          {user.rol !== "admin" && (
+            <button
+              onClick={() => { setOpen(false); onToggleStatus(user); }}
+              className={`w-full text-left px-4 py-2 text-[13px] font-inter cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                user.estado === "activo" ? "text-red-700 dark:text-red-400" : "text-green-700 dark:text-green-400"
+              }`}
+            >
+              {user.estado === "activo" ? "Bloquear" : "Activar"}
+            </button>
+          )}
+          {user.rol !== "admin" && (
+            <button
+              onClick={() => { setOpen(false); onDelete(user); }}
+              className="w-full text-left px-4 py-2 text-[13px] font-inter text-red-700 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+            >
+              Eliminar usuario
+            </button>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-export default function UsersTable({ users, onEdit, onToggleStatus, onResetPassword }: UsersTableProps) {
+export default function UsersTable({ users, currentUserId, canManageUsers, onEdit, onToggleStatus, onResetPassword, onDelete }: UsersTableProps) {
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-visible">
       <div className="grid grid-cols-[1fr_100px_110px_120px_120px_60px] bg-[#EEF2FF] dark:bg-gray-800 px-5">
@@ -154,7 +174,15 @@ export default function UsersTable({ users, onEdit, onToggleStatus, onResetPassw
           </div>
 
           <div className="py-3 px-2 flex justify-end">
-            <UserActionsMenu user={user} onEdit={onEdit} onToggleStatus={onToggleStatus} onResetPassword={onResetPassword} />
+            <UserActionsMenu
+              user={user}
+              currentUserId={currentUserId}
+              canManageUsers={canManageUsers}
+              onEdit={onEdit}
+              onToggleStatus={onToggleStatus}
+              onResetPassword={onResetPassword}
+              onDelete={onDelete}
+            />
           </div>
         </div>
       ))}

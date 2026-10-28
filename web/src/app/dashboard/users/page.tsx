@@ -9,9 +9,12 @@ import UsersTable from "@/components/UsersTable";
 import EditUserModal from "@/components/EditUserModal";
 import CreateUserModal from "@/components/CreateUserModal";
 import ResetPasswordModal from "@/components/ResetPasswordModal";
+import Modal from "@/components/Modal";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import { useToast } from "@/contexts/ToastContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useModal } from "@/hooks/useModal";
 import Pagination from "@/components/Pagination";
 import type { ApiUser } from "@hub/shared/types/user";
 
@@ -31,6 +34,8 @@ export default function UsersPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { showToast } = useToast();
+  const { user: currentUser } = useAuth();
+  const { modal, showAlert, showConfirm, closeModal } = useModal();
   const [users, setUsers] = useState<ApiUser[]>([]);
   const [counts, setCounts] = useState({ total: 0, admin: 0, user: 0, tecnico: 0, asesor: 0 });
   const [serverTotal, setServerTotal] = useState(0);
@@ -107,6 +112,27 @@ export default function UsersPage() {
     fetchPage(page, debouncedSearch);
   }, [page, debouncedSearch, fetchPage]);
 
+  const handleDelete = useCallback((target: ApiUser) => {
+    showConfirm(
+      "Eliminar usuario",
+      `¿Deseas eliminar a ${target.nombre}? Esta acción desactivará su cuenta y no podrá iniciar sesión. Los tickets que tenga asignados quedarán sin técnico.`,
+      async () => {
+        setActionLoading(target.id);
+        try {
+          await api.delete(`/users/${target.id}`);
+          fetchPage(page, debouncedSearch);
+          showToast("Usuario eliminado");
+        } catch (err) {
+          logger.error("Delete user error", { error: err instanceof Error ? err.message : err });
+          showAlert("No se pudo eliminar el usuario", err instanceof Error ? err.message : "Intenta de nuevo.", "error");
+        } finally {
+          setActionLoading(null);
+        }
+      },
+      "Eliminar"
+    );
+  }, [debouncedSearch, fetchPage, page, showAlert, showConfirm, showToast]);
+
   return (
     <div className="bg-[#F8F8FC] dark:bg-gray-950 min-h-[calc(100vh-72px)] p-8">
       <UserSummaryCards
@@ -138,7 +164,15 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <UsersTable users={users} onEdit={setEditingUser} onToggleStatus={handleToggleStatus} onResetPassword={setResetPasswordUser} />
+      <UsersTable
+        users={users}
+        currentUserId={currentUser?.id ?? ""}
+        canManageUsers={currentUser?.rol === "admin"}
+        onEdit={setEditingUser}
+        onToggleStatus={handleToggleStatus}
+        onResetPassword={setResetPasswordUser}
+        onDelete={handleDelete}
+      />
 
       <Pagination
         page={page}
@@ -184,6 +218,17 @@ export default function UsersPage() {
           }}
         />
       )}
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        onConfirm={modal.onConfirm}
+        confirmText={modal.confirmText}
+        cancelText={modal.cancelText}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 }
