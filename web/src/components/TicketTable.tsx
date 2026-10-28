@@ -220,8 +220,8 @@ export default function TicketTable({
 }: TicketTableProps) {
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-visible">
-      <div className="grid grid-cols-[100px_1fr_140px_110px_110px_110px_60px] bg-[#EEF2FF] dark:bg-gray-800 px-5">
-        {["ID TICKET", "ASUNTO", "SOLICITANTE", "ESTADO", "CREADO", "CIERRE", "ACCIONES"].map(
+      <div className="grid grid-cols-[90px_minmax(150px,1fr)_120px_110px_140px_100px_100px_90px] bg-[#EEF2FF] dark:bg-gray-800 px-5">
+        {["ID TICKET", "ASUNTO", "SOLICITANTE", "ESTADO", "ASIGNADO A", "CREADO", "CIERRE", "ACCIONES"].map(
           (col) => (
             <div
               key={col}
@@ -241,7 +241,7 @@ export default function TicketTable({
       {(Array.isArray(tickets) ? tickets : []).map((ticket) => (
         <div
           key={ticket.id}
-          className="grid grid-cols-[100px_1fr_140px_110px_110px_110px_60px] px-5 border-t border-gray-100 dark:border-gray-700 items-center min-h-[56px]"
+          className="grid grid-cols-[90px_minmax(150px,1fr)_120px_110px_140px_100px_100px_90px] px-5 border-t border-gray-100 dark:border-gray-700 items-center min-h-[56px]"
         >
           <div className="py-3 px-2">
             <span className="text-[13px] font-medium text-[var(--brand)] font-inter">
@@ -269,6 +269,12 @@ export default function TicketTable({
               className={`inline-block px-2.5 py-[3px] rounded-full text-[11px] font-semibold font-inter ${STATUS_BADGES[ticket.estado] || "bg-gray-100 text-gray-600"}`}
             >
               {ticket.estado}
+            </span>
+          </div>
+
+          <div className="py-3 px-2">
+            <span className="block truncate text-[12px] text-gray-700 dark:text-gray-300 font-inter" title={ticket.agente || "Sin asignar"}>
+              {ticket.agente || "Sin asignar"}
             </span>
           </div>
 

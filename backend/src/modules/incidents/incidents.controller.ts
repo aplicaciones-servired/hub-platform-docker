@@ -144,7 +144,7 @@ export async function listIncidents(
 
     if (req.user!.rol === "tecnico" && q.assignedOnly) {
       conditions.push(eq(incidents.tecnico_id, req.user!.userId));
-    } else if (req.user!.rol !== "admin") {
+    } else if (req.user!.rol !== "admin" && req.user!.rol !== "tecnico") {
       conditions.push(eq(incidents.user_id, req.user!.userId));
     }
 

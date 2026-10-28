@@ -11,7 +11,7 @@ const mockTickets = [
     estado: "Abierto",
     createdAt: "2024-01-01",
     fechaCierre: null,
-    agente: null,
+    agente: "Técnico Uno",
   },
   {
     id: "2",
@@ -40,6 +40,8 @@ describe("TicketTable", () => {
     expect(screen.getByText("Another Issue")).toBeInTheDocument();
     expect(screen.getByText("John Doe")).toBeInTheDocument();
     expect(screen.getByText("Jane Doe")).toBeInTheDocument();
+    expect(screen.getByText("Técnico Uno")).toBeInTheDocument();
+    expect(screen.getByText("Sin asignar")).toBeInTheDocument();
   });
 
   it("renders action buttons for each ticket", () => {
