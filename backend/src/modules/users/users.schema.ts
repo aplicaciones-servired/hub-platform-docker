@@ -24,8 +24,8 @@ export const listUsersQuerySchema = {
 };
 
 export const createUserSchema = z.object({
-  documento: z.string().min(1, "El documento es requerido").max(20),
-  nombre: z.string().min(1, "El nombre es requerido").max(100),
+  documento: z.string().trim().min(1, "El documento es requerido").max(20, "El documento no puede superar 20 caracteres"),
+  nombre: z.string().trim().min(1, "El nombre es requerido").max(100, "El nombre no puede superar 100 caracteres"),
   contrasena: z.string().min(8, "Mínimo 8 caracteres"),
   rol: roles.optional().default("tecnico"),
 });

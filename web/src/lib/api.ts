@@ -171,6 +171,33 @@ async function request<T>(
         : "";
     logger.warn("API error", { endpoint, status: res.status, detail: rawMsg });
 
+    if (
+      rawMsg === "Datos inválidos" &&
+      typeof data === "object" &&
+      data !== null &&
+      "details" in data &&
+      typeof data.details === "object" &&
+      data.details !== null
+    ) {
+      const fieldLabels: Record<string, string> = {
+        documento: "Documento",
+        nombre: "Nombre",
+        contrasena: "Contraseña",
+        rol: "Rol",
+      };
+      const details = Object.entries(data.details)
+        .flatMap(([field, messages]) =>
+          Array.isArray(messages)
+            ? messages
+                .filter((message): message is string => typeof message === "string")
+                .map((message) => `${fieldLabels[field] ?? field}: ${message}`)
+            : []
+        );
+      if (details.length > 0) {
+        throw new Error(details.join(". "));
+      }
+    }
+
     // Mensajes conocidos del backend se muestran tal cual; el resto se
     // generaliza para no exponer detalles internos al usuario
     const KNOWN_ERRORS = [

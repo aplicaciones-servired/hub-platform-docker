@@ -84,6 +84,25 @@ describe("api.get", () => {
     );
   });
 
+  it("shows field validation details from the backend", async () => {
+    const fetchMock = createFetch({
+      ok: false,
+      status: 400,
+      json: vi.fn().mockResolvedValue({
+        error: "Datos inválidos",
+        details: {
+          contrasena: ["Mínimo 8 caracteres"],
+          documento: ["El documento no puede superar 20 caracteres"],
+        },
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(api.post("/users", {})).rejects.toThrow(
+      "Contraseña: Mínimo 8 caracteres. Documento: El documento no puede superar 20 caracteres"
+    );
+  });
+
   it("throws generic error when no error message", async () => {
     const fetchMock = createFetch({
       ok: false,

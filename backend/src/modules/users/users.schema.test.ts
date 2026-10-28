@@ -65,6 +65,35 @@ describe("createUserSchema", () => {
     expect(result.rol).toBe("admin");
   });
 
+  it("trims documento and nombre", () => {
+    const result = createUserSchema.parse({
+      documento: " 12345678 ",
+      nombre: " New User ",
+      contrasena: "password",
+    });
+
+    expect(result.documento).toBe("12345678");
+    expect(result.nombre).toBe("New User");
+  });
+
+  it("rejects documento and nombre over their maximum lengths", () => {
+    expect(() =>
+      createUserSchema.parse({
+        documento: "1".repeat(21),
+        nombre: "New User",
+        contrasena: "password",
+      })
+    ).toThrow("El documento no puede superar 20 caracteres");
+
+    expect(() =>
+      createUserSchema.parse({
+        documento: "12345678",
+        nombre: "N".repeat(101),
+        contrasena: "password",
+      })
+    ).toThrow("El nombre no puede superar 100 caracteres");
+  });
+
   it("rejects short contrasena", () => {
     expect(() =>
       createUserSchema.parse({

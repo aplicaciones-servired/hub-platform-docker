@@ -72,6 +72,7 @@ export default function CreateUserModal({ onClose, onCreated }: CreateUserModalP
               type="text"
               value={documento}
               onChange={(e) => setDocumento(e.target.value)}
+              maxLength={20}
               className="w-full h-11 px-3.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter text-gray-800 dark:text-gray-100 outline-none focus:border-[var(--brand)]"
               placeholder="123456789"
               required
@@ -86,6 +87,7 @@ export default function CreateUserModal({ onClose, onCreated }: CreateUserModalP
               type="text"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
+              maxLength={100}
               className="w-full h-11 px-3.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter text-gray-800 dark:text-gray-100 outline-none focus:border-[var(--brand)]"
               placeholder="Nombre completo"
               required
