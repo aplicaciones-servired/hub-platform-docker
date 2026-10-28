@@ -65,6 +65,7 @@ export const incidents = pgTable(
     urgencia: urgenciaEnum("urgencia").notNull().default("media"),
     estado: estadoEnum("estado").notNull().default("pendiente"),
     agente: varchar("agente", { length: 100 }),
+    tecnico_id: uuid("tecnico_id").references(() => users.id, { onDelete: "set null" }),
     solucion: text("solucion"),
     imagen_url: varchar("imagen_url", { length: 500 }),
     cerrado_por: uuid("cerrado_por").references(() => users.id, { onDelete: "set null" }),
@@ -81,6 +82,7 @@ export const incidents = pgTable(
     index("incidents_created_at_idx").on(table.created_at),
     index("incidents_user_estado_idx").on(table.user_id, table.estado),
     index("incidents_agente_idx").on(table.agente),
+    index("incidents_tecnico_id_idx").on(table.tecnico_id),
     index("incidents_cerrado_por_idx").on(table.cerrado_por),
     index("incidents_deleted_at_idx").on(table.deleted_at),
   ]

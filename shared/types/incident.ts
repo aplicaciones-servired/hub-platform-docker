@@ -12,6 +12,7 @@ export interface Incident {
   urgencia: IncidentUrgency;
   estado: IncidentStatus;
   agente: string | null;
+  tecnico_id?: string | null;
   solucion: string | null;
   imagen_url: string | null;
   cerrado_por: string | null;
@@ -42,6 +43,7 @@ export interface CreateIncidentInput {
 export interface UpdateIncidentInput {
   estado?: IncidentStatus;
   agente?: string;
+  tecnico_id?: string | null;
   solucion?: string;
   imagen_url?: string | null;
 }

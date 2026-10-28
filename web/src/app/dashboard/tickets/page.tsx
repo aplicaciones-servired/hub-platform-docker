@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { PlusCircle } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import TicketSummaryCards from "@/components/TicketSummaryCards";
 import TicketFilters from "@/components/TicketFilters";
 import TicketTable from "@/components/TicketTable";
@@ -20,7 +22,14 @@ import type { Incident } from "@hub/shared/types/incident";
 type IncidentItem = Incident;
 
 export default function TicketsPage() {
+  const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const isTechnicianQueue = searchParams.get("view") === "technicians";
+  const isAdmin = user?.rol === "admin";
   const [incidents, setIncidents] = useState<IncidentItem[]>([]);
+  const [technicians, setTechnicians] = useState<{ id: string; nombre: string; documento: string }[]>([]);
+  const [techniciansLoading, setTechniciansLoading] = useState(false);
+  const [techniciansError, setTechniciansError] = useState(false);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -48,8 +57,25 @@ export default function TicketsPage() {
 
   // Mark unread tickets as seen when viewing the page
   useEffect(() => {
+    if (!isAdmin) return;
     api.patch("/incidents/mark-seen").catch((err) => logger.error("Error marking incidents as seen", { error: (err as Error).message }));
-  }, []);
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setTechnicians([]);
+      return;
+    }
+    setTechniciansLoading(true);
+    setTechniciansError(false);
+    api.get<{ id: string; nombre: string; documento: string }[]>("/incidents/technicians")
+      .then(setTechnicians)
+      .catch((err) => {
+        logger.error("Error fetching technicians", { error: err instanceof Error ? err.message : err });
+        setTechniciansError(true);
+      })
+      .finally(() => setTechniciansLoading(false));
+  }, [isAdmin]);
 
   const fetchTickets = useCallback(() => {
     setLoading(true);
@@ -78,6 +104,10 @@ export default function TicketsPage() {
   }, [page, debouncedSearch, estadoFilter, dateFilter]);
 
   const fetchStats = useCallback(() => {
+    if (!isAdmin) {
+      setStats({ pendientes: 0, enProceso: 0, resueltos: 0 });
+      return;
+    }
     const range = getDateRange(dateFilter);
     const params = new URLSearchParams();
     if (range.start) params.set("start", range.start);
@@ -97,7 +127,7 @@ export default function TicketsPage() {
       .catch((err) =>
         logger.error("Error fetching stats", { error: err instanceof Error ? err.message : err })
       );
-  }, [dateFilter]);
+  }, [dateFilter, isAdmin]);
 
   useEffect(() => {
     fetchTickets();
@@ -131,7 +161,7 @@ export default function TicketsPage() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [showAlert, fetchTickets, showToast]
+    [showAlert, fetchTickets, showToast, technicians]
   );
 
   const handleViewDetail = useCallback(
@@ -167,16 +197,17 @@ export default function TicketsPage() {
   );
 
   const handleAssignAgent = useCallback(
-    async (ticketId: string, agent: string) => {
+    async (ticketId: string, technicianId: string | null) => {
       try {
         const updated = await api.patch<IncidentItem>(
           `/incidents/${ticketId}`,
-          { agente: agent }
+          { tecnico_id: technicianId }
         );
         setIncidents((prev) =>
           (Array.isArray(prev) ? prev : []).map((inc) => (inc.id === ticketId ? updated : inc))
         );
-        showToast(`Agente ${agent} asignado`);
+        const technicianName = technicians.find((technician) => technician.id === technicianId)?.nombre;
+        showToast(technicianName ? `Ticket asignado a ${technicianName}` : "Asignación de técnico quitada");
       } catch (err) {
         const msg = err instanceof Error ? err.message : "";
         logger.error("Assign agent error", { error: msg });
@@ -282,6 +313,7 @@ export default function TicketsPage() {
         createdAt: formatDateShort(inc.created_at),
         fechaCierre: inc.fecha_cierre ? formatDateShort(inc.fecha_cierre) : null,
         agente: inc.agente,
+        tecnico_id: inc.tecnico_id,
       }));
     },
     [incidents]
@@ -295,32 +327,36 @@ export default function TicketsPage() {
       <div className="flex items-start justify-between mb-7">
         <div>
           <h1 className="text-[42px] font-bold text-gray-900 dark:text-white font-inter leading-tight">
-            Gestión de Tickets
+            {isTechnicianQueue ? "Tickets técnicos" : "Gestión de Tickets"}
           </h1>
           <p className="mt-1.5 text-sm text-[#6B7280] dark:text-gray-400 font-inter max-w-[650px]">
-            Administre las solicitudes de soporte, supervise el progreso del
-            equipo y mantenga altos estándares de resolución para sus clientes
-            externos e internos.
+            {isTechnicianQueue
+              ? isAdmin
+                ? "Consulte todos los tickets y revise el técnico asignado a cada uno."
+                : "Consulta y gestiona los tickets que te han sido asignados."
+              : "Administre las solicitudes de soporte, supervise el progreso del equipo y mantenga altos estándares de resolución para sus clientes externos e internos."}
           </p>
         </div>
 
-        <button
+        {isAdmin && <button
           onClick={() => setShowCreateModal(true)}
           className="flex items-center gap-2 h-11 px-[18px] bg-[#25207E] border-none rounded-[10px] cursor-pointer font-inter text-[13px] font-semibold text-white"
         >
           <PlusCircle size={18} strokeWidth={2} />
           Abrir Nuevo Ticket
-        </button>
+        </button>}
       </div>
 
       {/* Summary Cards */}
-      <TicketSummaryCards
-        total={total}
-        pendientes={stats.pendientes}
-        enProceso={stats.enProceso}
-        resueltos={stats.resueltos}
-        loading={loading}
-      />
+      {isAdmin && (
+        <TicketSummaryCards
+          total={total}
+          pendientes={stats.pendientes}
+          enProceso={stats.enProceso}
+          resueltos={stats.resueltos}
+          loading={loading}
+        />
+      )}
 
       {/* Filter Bar */}
       <TicketFilters
@@ -340,7 +376,17 @@ export default function TicketsPage() {
       />
 
       {/* Table */}
-      <TicketTable tickets={mappedTickets} onStatusChange={handleStatusChange} onViewDetail={handleViewDetail} onAssignAgent={handleAssignAgent} onResolve={handleResolve} />
+      <TicketTable
+        tickets={mappedTickets}
+        onStatusChange={handleStatusChange}
+        onViewDetail={handleViewDetail}
+        onAssignAgent={handleAssignAgent}
+        onResolve={handleResolve}
+        technicians={technicians}
+        canAssign={isAdmin}
+        techniciansLoading={techniciansLoading}
+        techniciansError={techniciansError}
+      />
 
       <Pagination
         page={page}

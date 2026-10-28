@@ -142,8 +142,9 @@ export async function listIncidents(
 
     const conditions = [isNull(incidents.deleted_at)];
 
-    // Non-admin users only see their own incidents
-    if (req.user!.rol !== "admin" && req.user!.rol !== "tecnico") {
+    if (req.user!.rol === "tecnico") {
+      conditions.push(eq(incidents.tecnico_id, req.user!.userId));
+    } else if (req.user!.rol !== "admin") {
       conditions.push(eq(incidents.user_id, req.user!.userId));
     }
 
@@ -224,8 +225,12 @@ export async function getIncident(
       return;
     }
 
-    // Non-admin users can only see their own incidents
-    if (req.user!.rol !== "admin" && req.user!.rol !== "tecnico" && incident.user_id !== req.user!.userId) {
+    const canAccessIncident =
+      req.user!.rol === "admin" ||
+      (req.user!.rol === "tecnico"
+        ? incident.tecnico_id === req.user!.userId
+        : incident.user_id === req.user!.userId);
+    if (!canAccessIncident) {
       res.status(403).json({ error: "Acceso denegado" });
       return;
     }
@@ -265,7 +270,51 @@ export async function updateIncident(
 ): Promise<void> {
   try {
     const { id } = req.params as { id: string };
-    const { estado, agente, solucion, imagen_url } = req.body;
+    const { estado, agente, tecnico_id, solucion, imagen_url } = req.body;
+
+    if (tecnico_id !== undefined && req.user!.rol !== "admin") {
+      res.status(403).json({ error: "Solo un administrador puede asignar técnicos" });
+      return;
+    }
+    if (agente !== undefined && req.user!.rol !== "admin") {
+      res.status(403).json({ error: "Solo un administrador puede asignar técnicos" });
+      return;
+    }
+
+    let technician: { id: string; nombre: string } | undefined;
+    if (tecnico_id !== undefined && tecnico_id !== null) {
+      const [activeTechnician] = await db
+        .select({ id: users.id, nombre: users.nombre })
+        .from(users)
+        .where(
+          and(
+            eq(users.id, tecnico_id),
+            eq(users.rol, "tecnico"),
+            eq(users.estado, "activo"),
+            isNull(users.deleted_at)
+          )
+        )
+        .limit(1);
+
+      if (!activeTechnician) {
+        res.status(404).json({ error: "Técnico no encontrado o inactivo" });
+        return;
+      }
+      technician = activeTechnician;
+    }
+
+    if (req.user!.rol === "tecnico") {
+      const [assignedIncident] = await db
+        .select({ tecnico_id: incidents.tecnico_id })
+        .from(incidents)
+        .where(and(eq(incidents.id, id), isNull(incidents.deleted_at)))
+        .limit(1);
+
+      if (!assignedIncident || assignedIncident.tecnico_id !== req.user!.userId) {
+        res.status(403).json({ error: "Solo puedes modificar tickets asignados a ti" });
+        return;
+      }
+    }
 
     let previousEstado: "pendiente" | "en_proceso" | "resuelto" | undefined;
 
@@ -291,7 +340,12 @@ export async function updateIncident(
 
     const updateData: Record<string, unknown> = { updated_at: new Date() };
     if (estado) updateData.estado = estado;
-    if (agente !== undefined) updateData.agente = agente;
+    if (tecnico_id !== undefined) {
+      updateData.tecnico_id = tecnico_id;
+      updateData.agente = technician?.nombre ?? null;
+    } else if (agente !== undefined) {
+      updateData.agente = agente;
+    }
     if (solucion !== undefined) updateData.solucion = solucion;
     if (imagen_url !== undefined) updateData.imagen_url = imagen_url;
 
@@ -395,7 +449,12 @@ export async function addComment(
       return;
     }
 
-    if (req.user!.rol !== "admin" && req.user!.rol !== "tecnico" && incident.user_id !== req.user!.userId) {
+    const canComment =
+      req.user!.rol === "admin" ||
+      (req.user!.rol === "tecnico"
+        ? incident.tecnico_id === req.user!.userId
+        : incident.user_id === req.user!.userId);
+    if (!canComment) {
       res.status(403).json({ error: "No puedes comentar incidentes de otros usuarios" });
       return;
     }
@@ -473,6 +532,10 @@ export async function exportIncidents(
     const offset = (page - 1) * limit;
     const conditions = [isNull(incidents.deleted_at)];
 
+    if (req.user!.rol === "tecnico") {
+      conditions.push(eq(incidents.tecnico_id, req.user!.userId));
+    }
+
     if (start) {
       conditions.push(gte(incidents.created_at, colombiaDayStart(start)));
     }
@@ -536,6 +599,34 @@ export async function getAgentes(
   }
 }
 
+export async function getTechnicians(
+  _req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const technicians = await db
+      .select({
+        id: users.id,
+        documento: users.documento,
+        nombre: users.nombre,
+      })
+      .from(users)
+      .where(
+        and(
+          eq(users.rol, "tecnico"),
+          eq(users.estado, "activo"),
+          isNull(users.deleted_at)
+        )
+      )
+      .orderBy(users.nombre);
+
+    res.json(technicians);
+  } catch (error) {
+    logger.error("Get technicians error", { error: (error as Error).message });
+    res.status(500).json({ error: "Error al listar técnicos" });
+  }
+}
+
 export async function getStats(
   req: Request,
   res: Response
@@ -549,6 +640,9 @@ export async function getStats(
 
     if (agente) {
       conditions.push(eq(incidents.agente, agente));
+    }
+    if (req.user!.rol === "tecnico") {
+      conditions.push(eq(incidents.tecnico_id, req.user!.userId));
     }
 
     if (start) {

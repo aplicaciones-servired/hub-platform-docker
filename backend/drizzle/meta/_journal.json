@@ -141,6 +141,13 @@
       "when": 1787330000670,
       "tag": "0019_melted_lilandra",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793217656820,
+      "tag": "0020_heavy_magneto",
+      "breakpoints": true
     }
   ]
 }

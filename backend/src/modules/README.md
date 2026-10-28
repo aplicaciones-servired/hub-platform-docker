@@ -52,19 +52,20 @@ CRUD de tickets/incidentes con comentarios, estadísticas y notificaciones push/
 |--------|------|:---:|:---:|---|
 | POST | `/api/incidents` | Sí | No | Crear incidente |
 | GET | `/api/incidents` | Sí | No | Listar (paginado + filtros) |
+| GET | `/api/incidents/technicians` | Sí | Sí | Listar técnicos activos para asignación |
 | GET | `/api/incidents/agentes` | Sí | Sí | Lista de agentes |
 | GET | `/api/incidents/stats` | Sí | Sí | Estadísticas (timeline, distribución, estados) |
 | GET | `/api/incidents/export-data` | Sí | Sí | Exportar incidentes + comentarios |
 | GET | `/api/incidents/unread-count` | Sí | Sí | No leídos (pendientes sin ver) |
 | PATCH | `/api/incidents/mark-seen` | Sí | Sí | Marcar pendientes como vistos |
 | GET | `/api/incidents/:id` | Sí | No | Detalle + comentarios |
-| PATCH | `/api/incidents/:id` | Sí | Sí | Cambiar estado/agente/solución |
+| PATCH | `/api/incidents/:id` | Sí | Parcial | Admin asigna técnicos; técnico actualiza sus tickets asignados |
 | DELETE | `/api/incidents/:id` | Sí | Sí | Soft delete |
 | POST | `/api/incidents/:id/comments` | Sí | No | Agregar comentario |
 
 **Comportamiento clave:**
 - Transiciones de estado validadas: `pendiente → en_proceso/resuelto`, `en_proceso → resuelto`.
-- Usuarios no-admin/técnico solo ven/comentan sus propios incidentes (403 en el resto).
+- Administradores ven todos los incidentes; cada técnico solo ve y comenta los que tiene asignados. Los demás usuarios ven y comentan los propios.
 - Al resolver o comentar (admin/técnico): inserta mensaje del bot en el chat y envía push al dueño vía Expo.
 - `visto_por_admin` controla el contador de notificaciones del dashboard.
 

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSearchParams } from "next/navigation";
 
 interface NavItem {
   icon: typeof LayoutDashboard;
@@ -36,7 +37,12 @@ interface SidebarProps {
 
 export default function Sidebar({ onLogout }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
+  const navItems =
+    user?.rol === "admin" || user?.rol === "tecnico"
+      ? [...NAV_ITEMS, { icon: Ticket, label: "Tickets técnicos", path: "/dashboard/tickets?view=technicians" }]
+      : NAV_ITEMS;
 
   const initials = user?.nombre
     ? user.nombre
@@ -68,8 +74,12 @@ export default function Sidebar({ onLogout }: SidebarProps) {
         </div>
 
         <nav className="flex-1 flex flex-col px-3 gap-0.5">
-          {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.path;
+          {navItems.map((item) => {
+            const isTechnicianQueue = item.path.includes("?view=technicians");
+            const isActive =
+              isTechnicianQueue
+                ? pathname === "/dashboard/tickets" && searchParams.get("view") === "technicians"
+                : pathname === item.path && !(item.path === "/dashboard/tickets" && searchParams.has("view"));
 
             return (
               <Link

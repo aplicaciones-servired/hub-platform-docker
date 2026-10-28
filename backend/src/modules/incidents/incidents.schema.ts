@@ -14,6 +14,7 @@ export const createIncidentSchema = z.object({
 export const updateIncidentSchema = z.object({
   estado: z.enum(["pendiente", "en_proceso", "resuelto"]).optional(),
   agente: z.string().min(1, "El agente no puede estar vacío").max(100).optional(),
+  tecnico_id: z.string().uuid().nullable().optional(),
   solucion: z.string().max(5000).optional(),
   imagen_url: z
     .string()

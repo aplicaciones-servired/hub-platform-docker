@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Request, Response } from "express";
-import { createIncident, getIncident, deleteIncident } from "./incidents.controller";
+import { createIncident, getIncident, getTechnicians, updateIncident, deleteIncident } from "./incidents.controller";
 import { db } from "../../db";
 import { incidents } from "../../db/schema";
 
@@ -227,6 +227,30 @@ describe("Incidents Controller", () => {
       expect(jsonMock).toHaveBeenCalledWith({ error: "Acceso denegado" });
     });
 
+    it("technician cannot read a ticket assigned to a different technician", async () => {
+      const selectChain = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{
+              id: "incident-id",
+              user_id: "requester",
+              tecnico_id: "other-technician",
+              estado: "pendiente",
+              cerrado_por: null,
+            }]),
+          }),
+        }),
+      };
+      (db.select as ReturnType<typeof vi.fn>).mockReturnValue(selectChain);
+      req.params = { id: "incident-id" };
+      req.user = { userId: "technician-1", rol: "tecnico" } as any;
+
+      await getIncident(req as Request, res as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(403);
+      expect(jsonMock).toHaveBeenCalledWith({ error: "Acceso denegado" });
+    });
+
     it("should return incident with comments if user has access", async () => {
       const incidentSelect = {
         from: vi.fn().mockReturnValue({
@@ -264,6 +288,69 @@ describe("Incidents Controller", () => {
           comments: [],
         })
       );
+    });
+  });
+
+  describe("updateIncident technician assignment", () => {
+    it("admin assigns an active technician by user id", async () => {
+      const technicianSelect = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ id: "tech-1", nombre: "Técnico Uno" }]),
+          }),
+        }),
+      };
+      const updateChain = {
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([{ id: "incident-1", tecnico_id: "tech-1", agente: "Técnico Uno" }]),
+          }),
+        }),
+      };
+      (db.select as ReturnType<typeof vi.fn>).mockReturnValue(technicianSelect);
+      (db.update as ReturnType<typeof vi.fn>).mockReturnValue(updateChain);
+
+      req.user = { userId: "admin-1", rol: "admin" } as any;
+      req.params = { id: "incident-1" };
+      req.body = { tecnico_id: "tech-1" };
+
+      await updateIncident(req as Request, res as Response);
+
+      expect(statusMock).not.toHaveBeenCalled();
+      expect(updateChain.set).toHaveBeenCalledWith(expect.objectContaining({
+        tecnico_id: "tech-1",
+        agente: "Técnico Uno",
+      }));
+      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ tecnico_id: "tech-1" }));
+    });
+
+    describe("getTechnicians", () => {
+      it("returns active technicians for assignment", async () => {
+        const technicians = [{ id: "tech-1", documento: "12345", nombre: "Técnico Uno" }];
+        const selectChain = {
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockResolvedValue(technicians),
+            }),
+          }),
+        };
+        (db.select as ReturnType<typeof vi.fn>).mockReturnValue(selectChain);
+
+        await getTechnicians(req as Request, res as Response);
+
+        expect(jsonMock).toHaveBeenCalledWith(technicians);
+      });
+    });
+
+    it("technician cannot change assignments", async () => {
+      req.user = { userId: "tech-1", rol: "tecnico" } as any;
+      req.params = { id: "incident-1" };
+      req.body = { tecnico_id: "tech-2" };
+
+      await updateIncident(req as Request, res as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(403);
+      expect(db.update).not.toHaveBeenCalled();
     });
   });
 
