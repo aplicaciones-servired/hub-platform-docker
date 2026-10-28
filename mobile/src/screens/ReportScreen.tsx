@@ -1,24 +1,17 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  TextInput,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
-  Modal,
-  FlatList,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
   Send,
   MessageSquare,
-  ChevronDown,
-  X,
-  Search,
-  MapPin,
 } from "lucide-react-native";
 import BottomTab from "../components/BottomTab";
 import Animated, {
@@ -73,20 +66,11 @@ export default function ReportScreen() {
   const [telefono, setTelefono] = useState("");
   const [descripcion, setDescripcion] = useState("");
 
-  const [pvList, setPvList] = useState<string[]>([]);
-  const [showPvModal, setShowPvModal] = useState(false);
-  const [pvSearch, setPvSearch] = useState("");
-
-  const filteredPvList = useMemo(() => {
-    if (!pvSearch.trim()) return pvList;
-    const q = pvSearch.toLowerCase();
-    return pvList.filter((pv) => pv.toLowerCase().includes(q));
-  }, [pvList, pvSearch]);
-
   useEffect(() => {
     if (user) {
       setNombre(user.nombre);
       setDocumento(user.documento);
+      setPuntoVenta(user.nombre);
     }
     api.get<{ items: { telefono: string }[]; total: number }>("/incidents?limit=1").then((data) => {
       if (data?.items?.length > 0) {
@@ -99,11 +83,6 @@ export default function ReportScreen() {
       logger.error("ReportScreen: error fetching incidents", { error: (err as Error).message });
     });
 
-    api.get<{ nombre: string }[]>("/puntos-venta").then((list) => {
-      setPvList(list.map((p) => p.nombre));
-    }).catch((err) => {
-      logger.error("ReportScreen: error fetching puntos-venta", { error: (err as Error).message });
-    });
   }, [user]);
 
   const scale = useSharedValue(1);
@@ -246,40 +225,13 @@ export default function ReportScreen() {
               editable={false}
             />
 
-            <TouchableOpacity
-              onPress={() => setShowPvModal(true)}
-              style={{
-                width: "100%", marginBottom: 16,
-              }}
-            >
-              <Text style={{ fontSize: 13, fontWeight: "600", color: "#374151", fontFamily: "Inter_700Bold", marginBottom: 6 }}>
-                Punto de Venta
-              </Text>
-              <View
-                style={{
-                  flexDirection: "row", alignItems: "center",
-                  height: 52, borderRadius: 12,
-                  borderWidth: 1, borderColor: errors.puntoVenta ? "#EF4444" : "#E5E7EB",
-                  backgroundColor: "#F9FAFB", paddingHorizontal: 14,
-                }}
-              >
-                <MapPin size={18} color="#9CA3AF" strokeWidth={2} style={{ marginRight: 10 }} />
-                <Text
-                  style={{
-                    flex: 1, fontSize: 15, color: puntoVenta ? "#1F2937" : "#9CA3AF",
-                    fontFamily: "Inter_400Regular",
-                  }}
-                >
-                  {puntoVenta || "Selecciona un punto de venta"}
-                </Text>
-                <ChevronDown size={18} color="#9CA3AF" strokeWidth={2} />
-              </View>
-              {errors.puntoVenta && (
-                <Text style={{ fontSize: 12, color: "#EF4444", fontFamily: "Inter_400Regular", marginTop: 4 }}>
-                  {errors.puntoVenta}
-                </Text>
-              )}
-            </TouchableOpacity>
+            <TextField
+              label="Punto de Venta"
+              placeholder="Punto de venta del usuario"
+              value={puntoVenta}
+              onChangeText={setPuntoVenta}
+              editable={false}
+            />
 
             <TextField
               label="Número de Teléfono"
@@ -367,76 +319,6 @@ export default function ReportScreen() {
         }}
       />
 
-      <Modal
-        visible={showPvModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowPvModal(false)}
-      >
-        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" }}>
-          <View style={{ backgroundColor: "#FFF", borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: "80%", paddingBottom: 30 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, borderBottomWidth: 1, borderBottomColor: "#E5E7EB" }}>
-              <Text style={{ fontSize: 18, fontWeight: "700", color: "#1F2366", fontFamily: "Inter_700Bold" }}>
-                Seleccionar punto de venta
-              </Text>
-              <TouchableOpacity onPress={() => setShowPvModal(false)}>
-                <X size={22} color="#6B7280" strokeWidth={2} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#F3F4F6", borderRadius: 10, height: 44, paddingHorizontal: 12 }}>
-                <Search size={18} color="#9CA3AF" strokeWidth={2} />
-                <TextInput
-                  style={{ flex: 1, marginLeft: 8, fontSize: 15, color: "#1F2937", fontFamily: "Inter_400Regular" }}
-                  placeholder="Buscar punto de venta..."
-                  placeholderTextColor="#9CA3AF"
-                  value={pvSearch}
-                  onChangeText={setPvSearch}
-                  autoFocus
-                />
-                {pvSearch ? (
-                  <TouchableOpacity onPress={() => setPvSearch("")}>
-                    <X size={18} color="#9CA3AF" strokeWidth={2} />
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-            </View>
-
-            <FlatList
-              data={filteredPvList}
-              keyExtractor={(item) => item}
-              style={{ maxHeight: 400 }}
-              contentContainerStyle={{ paddingHorizontal: 16 }}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => {
-                    setPuntoVenta(item);
-                    setPvSearch("");
-                    setShowPvModal(false);
-                    if (errors.puntoVenta) setErrors({ ...errors, puntoVenta: undefined });
-                  }}
-                  style={{
-                    paddingVertical: 14, paddingHorizontal: 12,
-                    borderBottomWidth: 1, borderBottomColor: "#F3F4F6",
-                    backgroundColor: puntoVenta === item ? "#F3F0FF" : "transparent",
-                    borderRadius: 8, marginBottom: 2,
-                  }}
-                >
-                  <Text style={{ fontSize: 15, color: puntoVenta === item ? "#25207E" : "#1F2937", fontFamily: "Inter_400Regular", fontWeight: puntoVenta === item ? "600" : "400" }}>
-                    {item}
-                  </Text>
-                </TouchableOpacity>
-              )}
-              ListEmptyComponent={
-                <Text style={{ textAlign: "center", color: "#9CA3AF", fontFamily: "Inter_400Regular", paddingVertical: 20, fontSize: 14 }}>
-                  {pvList.length === 0 ? "Cargando puntos de venta..." : "No se encontraron resultados"}
-                </Text>
-              }
-            />
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }

@@ -111,7 +111,7 @@ export async function createIncident(
         user_id: owner.id,
         nombre: owner.nombre,
         documento: owner.documento,
-        punto_venta: req.body.punto_venta,
+        punto_venta: targetDocumento ? req.body.punto_venta : owner.nombre,
         telefono: req.body.telefono || "",
         descripcion: req.body.descripcion,
         urgencia: req.body.urgencia || "media",

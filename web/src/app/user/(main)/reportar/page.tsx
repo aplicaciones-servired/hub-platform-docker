@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
-import { Send, MapPin, ChevronDown, Search, X, MessageSquare } from "lucide-react";
+import { Send, MessageSquare } from "lucide-react";
 
 export default function ReportarPage() {
   const router = useRouter();
@@ -21,20 +21,11 @@ export default function ReportarPage() {
   const [telefono, setTelefono] = useState("");
   const [descripcion, setDescripcion] = useState("");
 
-  const [pvList, setPvList] = useState<string[]>([]);
-  const [showPvModal, setShowPvModal] = useState(false);
-  const [pvSearch, setPvSearch] = useState("");
-
-  const filteredPvList = useMemo(() => {
-    if (!pvSearch.trim()) return pvList;
-    const q = pvSearch.toLowerCase();
-    return pvList.filter((pv) => pv.toLowerCase().includes(q));
-  }, [pvList, pvSearch]);
-
   useEffect(() => {
     if (user) {
       setNombre(user.nombre);
       setDocumento(user.documento);
+      setPuntoVenta(user.nombre);
     }
     api.get<{ items: { telefono: string }[]; total: number }>("/incidents?limit=1")
       .then((data) => {
@@ -45,9 +36,6 @@ export default function ReportarPage() {
           setHasHistory(true);
         }
       }).catch((err) => logger.error("Error fetching incident history", { error: err instanceof Error ? err.message : err }));
-    api.get<{ nombre: string }[]>("/puntos-venta")
-      .then((list) => setPvList(list.map((p) => p.nombre)))
-      .catch((err) => logger.error("Error fetching puntos de venta", { error: err instanceof Error ? err.message : err }));
   }, [user]);
 
   const validate = () => {
@@ -120,18 +108,9 @@ export default function ReportarPage() {
 
           <div>
             <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">Punto de Venta</label>
-            <button
-              onClick={() => setShowPvModal(true)}
-              className={`flex items-center gap-2 w-full h-[52px] rounded-input border bg-[#F9FAFB] px-4 text-left ${
-                errors.puntoVenta ? "border-red-500" : "border-input-border"
-              }`}
-            >
-              <MapPin size={18} color="#9CA3AF" strokeWidth={2} />
-              <span className={`flex-1 text-[15px] ${puntoVenta ? "text-[#1F2937]" : "text-[#9CA3AF]"}`}>
-                {puntoVenta || "Selecciona un punto de venta"}
-              </span>
-              <ChevronDown size={18} color="#9CA3AF" strokeWidth={2} />
-            </button>
+            <div className="flex items-center h-[52px] rounded-input border border-input-border bg-gray-50 px-4">
+              <span className="text-[15px] text-[#1F2937]">{puntoVenta}</span>
+            </div>
             {errors.puntoVenta && <p className="text-xs text-red-500 mt-1">{errors.puntoVenta}</p>}
           </div>
 
@@ -180,49 +159,6 @@ export default function ReportarPage() {
         </button>
       </div>
 
-      {showPvModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center" onClick={() => setShowPvModal(false)}>
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h2 className="text-lg font-bold text-[#1F2366]">Seleccionar punto de venta</h2>
-              <button onClick={() => setShowPvModal(false)}><X size={22} color="#6B7280" /></button>
-            </div>
-            <div className="p-4">
-              <div className="flex items-center gap-2 bg-gray-100 rounded-lg h-11 px-3">
-                <Search size={18} color="#9CA3AF" />
-                <input
-                  type="text"
-                  value={pvSearch}
-                  onChange={(e) => setPvSearch(e.target.value)}
-                  placeholder="Buscar punto de venta..."
-                  autoFocus
-                  className="flex-1 bg-transparent text-[15px] text-[#1F2937] outline-none"
-                />
-                {pvSearch && <button onClick={() => setPvSearch("")}><X size={18} color="#9CA3AF" /></button>}
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto px-4 pb-4">
-              {filteredPvList.length === 0 ? (
-                <p className="text-center text-[#9CA3AF] text-sm py-5">
-                  {pvList.length === 0 ? "Cargando puntos de venta..." : "No se encontraron resultados"}
-                </p>
-              ) : (
-                filteredPvList.map((pv) => (
-                  <button
-                    key={pv}
-                    onClick={() => { setPuntoVenta(pv); setPvSearch(""); setShowPvModal(false); if (errors.puntoVenta) setErrors((p) => ({ ...p, puntoVenta: undefined })); }}
-                    className={`w-full text-left py-3.5 px-3 border-b border-gray-100 rounded-lg mb-0.5 ${
-                      puntoVenta === pv ? "bg-[#F3F0FF] text-[#25207E] font-semibold" : "text-[#1F2937] hover:bg-gray-50"
-                    }`}
-                  >
-                    {pv}
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

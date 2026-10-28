@@ -107,7 +107,7 @@ describe("Incidents Controller", () => {
       // Usuario rol "user" intenta atribuir a otro documento: se ignora
       req.body = {
         documento: "999999999",
-        punto_venta: "PV-001",
+        punto_venta: "Punto enviado por el cliente",
         descripcion: "Test description",
       };
 
@@ -116,6 +116,7 @@ describe("Incidents Controller", () => {
       const insertValues = insertChain.values.mock.calls[0][0];
       expect(insertValues.user_id).toBe("user-123");
       expect(insertValues.documento).toBe("123456789");
+      expect(insertValues.punto_venta).toBe("Test User");
     });
 
     it("admin con documento en el body: atribuye el ticket al usuario dueño del documento", async () => {
