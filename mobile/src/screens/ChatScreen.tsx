@@ -8,10 +8,9 @@ import {
   Modal,
   Alert,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ticket, ArrowRight, ChevronDown } from "lucide-react-native";
-import ChatHeader from "../components/ChatHeader";
+import AppHeader from "../components/AppHeader";
 import BotMessageCard from "../components/BotMessageCard";
 import ChatBubble from "../components/ChatBubble";
 import TypingIndicator from "../components/TypingIndicator";
@@ -63,7 +62,6 @@ function getTimeString(): string {
 }
 
 export default function ChatScreen() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, initializing } = useAuth();
   const flatListRef = useRef<FlatList<Message>>(null);
@@ -336,9 +334,10 @@ export default function ChatScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
-      <View style={{ paddingTop: insets.top }}>
-        <ChatHeader />
-      </View>
+      <AppHeader
+        title="Asistente de soporte"
+        subtitle="Elige una opción o escribe tu problema"
+      />
 
       <View style={{ flex: 1 }}>
         {loadingHistory ? (

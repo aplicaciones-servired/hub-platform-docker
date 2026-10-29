@@ -19,10 +19,9 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from "react-native-reanimated";
-import ReportHeader from "../components/ReportHeader";
+import AppHeader from "../components/AppHeader";
 import TextField from "../components/TextField";
 import TextAreaField from "../components/TextAreaField";
-import Logo from "../components/Logo";
 import { api } from "../services/api";
 import { logger } from "../services/logger";
 import { useAuth } from "../contexts/AuthContext";
@@ -146,9 +145,10 @@ export default function ReportScreen() {
 
   return (
     <View className="flex-1 bg-[#F5F6FA]">
-      <View style={{ paddingTop: insets.top }}>
-        <ReportHeader />
-      </View>
+            <AppHeader 
+            title="Reporte de Incidente" 
+            subtitle="Cuentanos qué pasó"
+            />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -164,15 +164,12 @@ export default function ReportScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View className="items-center mb-4">
-            <Logo size={80} />
-          </View>
 
           <Text
-            className="text-[34px] text-[#1F2366] text-center mb-2"
+            className="text-[24px] text-[#1F2366] text-center mb-2"
             style={{ fontFamily: "Inter_700Bold", fontWeight: "700" }}
           >
-            Reportar un Incidente
+            Reportar incidente
           </Text>
 
           <Text className="text-[15px] font-inter text-[#6B7280] text-center mb-6 max-w-[300px]">
