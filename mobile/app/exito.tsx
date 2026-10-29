@@ -104,16 +104,6 @@ export default function SuccessScreen() {
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <Logo size={32} />
-            <Text
-              style={{
-                fontSize: 22,
-                fontWeight: "700",
-                color: "#25207E",
-                fontFamily: "Inter_700Bold",
-              }}
-            >
-              CorpSupport
-            </Text>
           </View>
           <View
             style={{
@@ -392,7 +382,7 @@ export default function SuccessScreen() {
                 fontFamily: "Inter_600SemiBold",
               }}
             >
-              Ver detalle del ticket
+              Ver detalle del Reporte
             </Text>
           </TouchableOpacity>
         </Animated.View>

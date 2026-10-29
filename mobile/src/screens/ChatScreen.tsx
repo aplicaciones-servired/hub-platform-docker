@@ -335,7 +335,7 @@ export default function ChatScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
       <AppHeader
-        title="Asistente de soporte"
+        title="Asistente virtual de soporte"
         subtitle="Elige una opción o escribe tu problema"
       />
 

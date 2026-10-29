@@ -9,9 +9,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { MessageSquare, History, AlertCircle } from "lucide-react-native";
+import { History, AlertCircle } from "lucide-react-native";
 import { api } from "../src/services/api";
 import BottomTab from "../src/components/BottomTab";
+import AppHeader from "../src/components/AppHeader";
 import { URGENCIA_COLORS, ESTADO_LABELS, ESTADO_COLORS, COLORS } from "../src/constants/colors";
 
 interface Incident {
@@ -90,52 +91,11 @@ export default function HistorialScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      {/* Header */}
-      <View
-        style={{
-          paddingTop: insets.top,
-          paddingHorizontal: 20,
-          paddingBottom: 16,
-          backgroundColor: COLORS.white,
-          borderBottomWidth: 1,
-          borderBottomColor: COLORS.border,
-        }}
-      >
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 24,
-              fontWeight: "700",
-              color: "#1F2366",
-              fontFamily: "Inter_700Bold",
-            }}
-          >
-            Historial
-          </Text>
-          <TouchableOpacity
-            onPress={() => router.push("/chat")}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <MessageSquare size={22} color="#1F2366" strokeWidth={2} />
-          </TouchableOpacity>
-        </View>
-        <Text
-          style={{
-            fontSize: 14,
-            color: COLORS.textMedium,
-            fontFamily: "Inter_400Regular",
-            marginTop: 4,
-          }}
-        >
-          Tus incidentes reportados
-        </Text>
-      </View>
+      
+      <AppHeader
+        title="Mis reportes"
+        subtitle="Aquí ves el estado de cada reporte de incidente que enviaste."
+      />
 
       {loading ? (
         <View

@@ -18,8 +18,8 @@ import {
   Database,
 } from "lucide-react-native";
 import BottomTab from "../src/components/BottomTab";
+import AppHeader from "../src/components/AppHeader";
 import { useAuth } from "../src/contexts/AuthContext";
-import Logo from "../src/components/Logo";
 
 function confirmAction(title: string, message: string): Promise<boolean> {
   if (Platform.OS === "web") {
@@ -92,62 +92,11 @@ export default function SettingsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F5F6FA" }}>
-      {/* Header */}
-      <View
-        style={{
-          paddingTop: insets.top,
-          backgroundColor: "#FFFFFF",
-          borderBottomWidth: 1,
-          borderBottomColor: "#E5E7EB",
-        }}
-      >
-        <View
-          style={{
-            height: 72,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            paddingHorizontal: 20,
-          }}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <Logo size={32} />
-            <Text
-              style={{
-                fontSize: 22,
-                fontWeight: "700",
-                color: "#25207E",
-                fontFamily: "Inter_700Bold",
-              }}
-            >
-              CorpSupport
-            </Text>
-          </View>
-          <View
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: "#DCD4FF",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: "600",
-                color: "#25207E",
-                fontFamily: "Inter_700Bold",
-              }}
-            >
-              {user?.nombre
-                ? user.nombre.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
-                : "??"}
-            </Text>
-          </View>
-        </View>
-      </View>
+     
+      <AppHeader
+        title="Ajustes"
+        subtitle="Opciones de la aplicacion y cierre de sesión"
+      />
 
       {/* Content */}
       <ScrollView

@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, Clock, User, Phone, MapPin, AlertCircle, Shield, MessageSquare, XCircle } from "lucide-react-native";
+import { Clock, User, Phone, MapPin, AlertCircle, Shield, MessageSquare, XCircle } from "lucide-react-native";
 import { api } from "../../src/services/api";
+import AppHeader from "../../src/components/AppHeader";
 import { URGENCIA_COLORS, ESTADO_LABELS, ESTADO_COLORS, COLORS } from "../../src/constants/colors";
 import { formatTicketId, formatDate } from "../../src/lib/format";
 
@@ -29,7 +29,6 @@ interface IncidentDetail {
 }
 
 export default function IncidentDetailScreen() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [incident, setIncident] = useState<IncidentDetail | null>(null);
@@ -74,18 +73,11 @@ export default function IncidentDetailScreen() {
 
   if (!incident) {
     return (
-      <View
-        style={{ paddingTop: insets.top }}
-        className="flex-1 bg-[#F5F5F5]"
-      >
-        <View className="flex-row items-center px-5 py-4 border-b border-gray-200 bg-white">
-          <TouchableOpacity onPress={goBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <ArrowLeft size={22} color="#1F2366" strokeWidth={2} />
-          </TouchableOpacity>
-          <Text className="text-lg font-bold text-[#1F2366] font-inter ml-4">
-            {error ? "Error" : "Incidente no encontrado"}
-          </Text>
-        </View>
+        <View className="flex-1 bg-[#F5F5F5]">
+        <AppHeader
+          title={error ? "No se pudo cargar el reporte" : "Reporte no encontrado"}
+          onBack={goBack}
+        />
         {error && (
           <View className="flex-1 items-center justify-center px-8">
             <XCircle size={48} color="#EF4444" strokeWidth={1.5} />
@@ -110,20 +102,12 @@ export default function IncidentDetailScreen() {
 
   return (
     <View className="flex-1 bg-[#F5F5F5]">
-      {/* Header */}
-      <View
-        style={{ paddingTop: insets.top }}
-        className="bg-white border-b border-gray-200"
-      >
-        <View className="flex-row items-center px-5 py-4">
-          <TouchableOpacity onPress={goBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <ArrowLeft size={22} color="#1F2366" strokeWidth={2} />
-          </TouchableOpacity>
-          <Text className="text-lg font-bold text-[#1F2366] font-inter ml-4">
-            Detalle del Ticket
-          </Text>
-        </View>
-      </View>
+      
+      <AppHeader
+        title="Detalle del Reporte"
+        subtitle="Aquí ves toda la información del incidente que reportaste"
+        onBack={goBack}
+      />
 
       <ScrollView
         className="flex-1"
