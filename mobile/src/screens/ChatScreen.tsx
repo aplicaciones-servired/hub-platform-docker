@@ -51,6 +51,23 @@ const INITIAL_MESSAGES: Message[] = [
   },
 ];
 
+// Convierte una fecha en el texto del separador: "Hoy", "Ayer" o "lunes, 27 de octubre de 2026"
+function getEtiquetaFecha(fecha: Date): string {
+  const hoy = new Date();
+  const ayer = new Date();
+  ayer.setDate(hoy.getDate() - 1);
+
+  if (fecha.toDateString() === hoy.toDateString()) return "Hoy";
+  if (fecha.toDateString() === ayer.toDateString()) return "Ayer";
+
+  return fecha.toLocaleDateString("es-CO", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 function getTimeString(): string {
   const now = new Date();
   const hours = now.getHours();
@@ -100,23 +117,51 @@ export default function ChatScreen() {
     api
       .get<{ items: { id: string; content: string; is_bot: boolean; created_at: string; metadata?: { ticketId?: string } | null }[] }>("/chat/history?limit=30")
       .then((history) => {
-        const historyMsgs: Message[] = (history.items ?? []).map((msg) => ({
-          id: msg.id,
-          type: msg.is_bot ? ("bot-card" as const) : ("user" as const),
-          text: msg.content,
-          timestamp: new Date(msg.created_at).toLocaleTimeString("es-CO", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          }),
-          ticketId: msg.metadata?.ticketId ?? undefined,
-        }));
+                const items = history.items ?? [];
 
-        if (historyMsgs.length === 0) {
+        if (items.length === 0) {
           setMessages([...INITIAL_MESSAGES, welcome]);
-        } else {
-          setMessages([...INITIAL_MESSAGES, ...historyMsgs]);
+          return;
         }
+
+        const historyMsgs: Message[] = [];
+        let ultimaEtiqueta = "";
+
+        for (const msg of items) {
+          const fecha = new Date(msg.created_at);
+          const etiqueta = getEtiquetaFecha(fecha);
+
+          // Si el día cambió respecto al mensaje anterior, agrega un separador
+          if (etiqueta !== ultimaEtiqueta) {
+            historyMsgs.push({
+              id: `date-${msg.id}`,
+              type: "date",
+              text: etiqueta,
+              timestamp: "",
+            });
+            ultimaEtiqueta = etiqueta;
+          }
+
+          historyMsgs.push({
+            id: msg.id,
+            type: msg.is_bot ? "bot-card" : "user",
+            text: msg.content,
+            timestamp: fecha.toLocaleTimeString("es-CO", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            }),
+            ticketId: msg.metadata?.ticketId ?? undefined,
+          });
+        }
+
+        // Si la última conversación no fue hoy, agrega "Hoy" al final
+        // para que los mensajes nuevos queden bajo el día correcto
+        if (ultimaEtiqueta !== "Hoy") {
+          historyMsgs.push(...INITIAL_MESSAGES);
+        }
+
+        setMessages(historyMsgs);
       })
       .catch((err) => {
         logger.error("Chat history error", { error: err instanceof Error ? err.message : err });
