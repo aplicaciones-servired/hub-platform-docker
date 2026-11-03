@@ -99,8 +99,8 @@ export default function LoginScreen() {
           ) : null}
 
           <Input
-            label="Documento"
-            placeholder="Ingrese la Sucursal del punto de venta"
+            label="Codigo de la sucursal"
+            placeholder="Ingrese el código de la sucursal"
             value={form.documento}
             onChangeText={(text) => {
               setForm((prev) => ({ ...prev, documento: text }));
