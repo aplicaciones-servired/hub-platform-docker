@@ -28,7 +28,6 @@ const PROBLEM_OPTIONS: SuggestedAction[] = [
   { label: "Problema de hardware", action: "problema_hardware" },
   { label: "Problema con punto de venta", action: "problema_pv" },
   { label: "Problema de acceso", action: "problema_acceso" },
-  { label: "Consultar estado de reporte", action: "consultar_estado" },
   { label: "Preguntas frecuentes", action: "faq" },
   { label: "Reportar otro incidente", action: "reportar" },
 ];
@@ -57,7 +56,7 @@ const PROBLEM_RESPONSES: Record<string, ChatResponse> = {
     autoAction: "reportar",
   },
   consultar_estado: {
-    text: "Te llevo a tu historial donde puedes ver el estado de todos tus reportes.",
+    text: "Te llevo a "Mis reportes" donde puedes ver el estado de todos tus reportes.",
     actions: [],
     autoAction: "ir_historial",
   },

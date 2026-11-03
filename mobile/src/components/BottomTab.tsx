@@ -75,7 +75,7 @@ export default function BottomTab({ activeTab, onTabChange, safeBottom = 20 }: B
         onPress={() => onTabChange("reportar")}
       />
       <TabItem
-        label="Historial"
+        label="Mis Reportes"
         icon={History}
         active={activeTab === "historial"}
         onPress={() => onTabChange("historial")}

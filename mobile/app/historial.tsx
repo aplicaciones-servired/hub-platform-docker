@@ -67,7 +67,7 @@ export default function HistorialScreen() {
         setPage(targetPage);
       })
       .catch((err) => {
-        setError(err instanceof Error ? err.message : "Error al cargar el historial");
+        setError(err instanceof Error ? err.message : "Error al cargar tus reportes");
       })
       .finally(() => {
         setLoading(false);

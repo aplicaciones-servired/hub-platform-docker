@@ -94,7 +94,6 @@ export default function ChatScreen() {
       timestamp: getTimeString(),
       suggestedActions: [
         { label: "Reportar un problema", action: "menu_principal" },
-        { label: "Ver mi historial", action: "ir_historial" },
       ],
     };
 
@@ -252,11 +251,7 @@ export default function ChatScreen() {
 
   const handleMenuPress = useCallback(
     (label: string) => {
-      if (label === "Estado de reporte") {
-        router.push("/historial");
-      } else {
         handleSend(label);
-      }
     },
     [router, handleSend]
   );
