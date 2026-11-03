@@ -116,6 +116,8 @@ export async function createIncident(
         descripcion: req.body.descripcion,
         urgencia: req.body.urgencia || "media",
         categoria: req.body.categoria ?? null,
+                reportante_nombre: req.body.reportante_nombre ?? null,
+        reportante_cedula: req.body.reportante_cedula ?? null,
         estado: "pendiente",
         visto_por_admin: false,
       })
@@ -396,7 +398,7 @@ export async function updateIncident(
     // Notificar solo en la TRANSICIÓN a resuelto (no al re-guardar la solución)
     if (estado === "resuelto" && previousEstado !== "resuelto") {
       const shortId = id.replace(/-/g, "").slice(-8).toUpperCase();
-      const botMessage = `Tu ticket #TK-${shortId} ha sido marcado como **Resuelto**.\n\n${solucion ? `**Solucion:** ${solucion}\n\n` : ""}Si necesita mas ayuda, contactenos.`;
+          const botMessage = `Tu reporte #TK-${shortId} fue resuelto.${solucion ? `\n\n**Solución:** ${solucion}` : ""}`;
 
       try {
         await db.insert(messages).values({
