@@ -199,6 +199,52 @@ describe("Users Controller", () => {
       expect(jsonMock).toHaveBeenCalledWith({ error: "El documento ya está registrado por otro usuario" });
     });
 
+    it("technician can update a non-admin user", async () => {
+      const selectChain = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ rol: "asesor" }]),
+          }),
+        }),
+      };
+      const updateChain = {
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([{ id: "user-id", rol: "tecnico" }]),
+          }),
+        }),
+      };
+      (db.select as ReturnType<typeof vi.fn>).mockReturnValue(selectChain);
+      (db.update as ReturnType<typeof vi.fn>).mockReturnValue(updateChain);
+      req.user = { userId: "tech-1", rol: "tecnico" } as any;
+      req.params = { id: "user-id" };
+      req.body = { rol: "tecnico" };
+
+      await updateUser(req as Request, res as Response);
+
+      expect(statusMock).not.toHaveBeenCalled();
+      expect(updateChain.set).toHaveBeenCalledWith(expect.objectContaining({ rol: "tecnico" }));
+    });
+
+    it("technician cannot grant the admin role", async () => {
+      const selectChain = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ rol: "asesor" }]),
+          }),
+        }),
+      };
+      (db.select as ReturnType<typeof vi.fn>).mockReturnValue(selectChain);
+      req.user = { userId: "tech-1", rol: "tecnico" } as any;
+      req.params = { id: "user-id" };
+      req.body = { rol: "admin" };
+
+      await updateUser(req as Request, res as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(403);
+      expect(db.update).not.toHaveBeenCalled();
+    });
+
     describe("deleteUser", () => {
       it("does not allow deleting the current account", async () => {
         req.params = { id: "admin-123" };

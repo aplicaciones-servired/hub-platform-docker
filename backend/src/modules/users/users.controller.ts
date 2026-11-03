@@ -262,8 +262,8 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    if (rol !== undefined && req.user!.rol !== "admin") {
-      res.status(403).json({ error: "Solo un administrador puede cambiar el rol de un usuario" });
+    if (rol === "admin" && req.user!.rol !== "admin") {
+      res.status(403).json({ error: "Solo un administrador puede otorgar el rol de administrador" });
       return;
     }
 

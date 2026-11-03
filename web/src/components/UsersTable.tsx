@@ -23,13 +23,14 @@ interface UsersTableProps {
   users: ApiUser[];
   currentUserId: string;
   canManageUsers: boolean;
+  canManageAdmins: boolean;
   onEdit: (user: ApiUser) => void;
   onToggleStatus: (user: ApiUser) => void;
   onResetPassword: (user: ApiUser) => void;
   onDelete: (user: ApiUser) => void;
 }
 
-function UserActionsMenu({ user, currentUserId, canManageUsers, onEdit, onToggleStatus, onResetPassword, onDelete }: { user: ApiUser; currentUserId: string; canManageUsers: boolean; onEdit: (u: ApiUser) => void; onToggleStatus: (u: ApiUser) => void; onResetPassword: (u: ApiUser) => void; onDelete: (u: ApiUser) => void }) {
+function UserActionsMenu({ user, currentUserId, canManageUsers, canManageAdmins, onEdit, onToggleStatus, onResetPassword, onDelete }: { user: ApiUser; currentUserId: string; canManageUsers: boolean; canManageAdmins: boolean; onEdit: (u: ApiUser) => void; onToggleStatus: (u: ApiUser) => void; onResetPassword: (u: ApiUser) => void; onDelete: (u: ApiUser) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -42,7 +43,7 @@ function UserActionsMenu({ user, currentUserId, canManageUsers, onEdit, onToggle
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
-  if (!canManageUsers || user.id === currentUserId) {
+  if (!canManageUsers || user.id === currentUserId || (user.rol === "admin" && !canManageAdmins)) {
     return (
       <div className="flex justify-end py-3 px-2">
         <span className="text-[11px] text-gray-400 dark:text-gray-500 font-inter italic">
@@ -98,7 +99,7 @@ function UserActionsMenu({ user, currentUserId, canManageUsers, onEdit, onToggle
   );
 }
 
-export default function UsersTable({ users, currentUserId, canManageUsers, onEdit, onToggleStatus, onResetPassword, onDelete }: UsersTableProps) {
+export default function UsersTable({ users, currentUserId, canManageUsers, canManageAdmins, onEdit, onToggleStatus, onResetPassword, onDelete }: UsersTableProps) {
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-visible">
       <div className="grid grid-cols-[1fr_100px_110px_120px_120px_60px] bg-[#EEF2FF] dark:bg-gray-800 px-5">
@@ -178,6 +179,7 @@ export default function UsersTable({ users, currentUserId, canManageUsers, onEdi
               user={user}
               currentUserId={currentUserId}
               canManageUsers={canManageUsers}
+              canManageAdmins={canManageAdmins}
               onEdit={onEdit}
               onToggleStatus={onToggleStatus}
               onResetPassword={onResetPassword}

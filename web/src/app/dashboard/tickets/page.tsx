@@ -16,7 +16,7 @@ import { useModal } from "@/hooks/useModal";
 import { useToast } from "@/contexts/ToastContext";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
-import { formatDateShort, formatDescription, getDateRange } from "@/lib/utils";
+import { formatDateShort, formatDescription, getDateRange, isAdminRole } from "@/lib/utils";
 import type { Incident } from "@hub/shared/types/incident";
 
 type IncidentItem = Incident;
@@ -25,7 +25,7 @@ export default function TicketsPage() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const isTechnicianQueue = searchParams.get("view") === "technicians";
-  const isAdmin = user?.rol === "admin";
+  const isAdmin = isAdminRole(user?.rol);
   const [incidents, setIncidents] = useState<IncidentItem[]>([]);
   const [technicians, setTechnicians] = useState<{ id: string; nombre: string; documento: string }[]>([]);
   const [techniciansLoading, setTechniciansLoading] = useState(false);
@@ -82,7 +82,6 @@ export default function TicketsPage() {
     const params = new URLSearchParams();
     params.set("page", String(page));
     params.set("limit", String(LIMIT));
-    if (isTechnicianQueue) params.set("assignedOnly", "true");
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (estadoFilter !== "Todos") params.set("estado", estadoFilter);
 
@@ -102,7 +101,7 @@ export default function TicketsPage() {
         logger.error("Error fetching tickets", { error: err instanceof Error ? err.message : err })
       )
       .finally(() => setLoading(false));
-  }, [page, debouncedSearch, estadoFilter, dateFilter, isTechnicianQueue]);
+  }, [page, debouncedSearch, estadoFilter, dateFilter]);
 
   const fetchStats = useCallback(() => {
     if (!isAdmin) {
@@ -229,7 +228,6 @@ export default function TicketsPage() {
     const params = new URLSearchParams();
     if (range.start) params.set("start", range.start);
     if (range.end) params.set("end", range.end);
-    if (isTechnicianQueue) params.set("assignedOnly", "true");
     const qs = params.toString() ? `?${params.toString()}` : "";
 
     let items: IncidentItem[] = [];
@@ -296,7 +294,7 @@ export default function TicketsPage() {
     a.click();
     URL.revokeObjectURL(url);
     showToast(`Exportación lista: ${items.length} tickets`);
-  }, [dateFilter, isTechnicianQueue, showToast]);
+  }, [dateFilter, showToast]);
 
   const mappedTickets = useMemo(
     () => {
@@ -334,9 +332,7 @@ export default function TicketsPage() {
           </h1>
           <p className="mt-1.5 text-sm text-[#6B7280] dark:text-gray-400 font-inter max-w-[650px]">
             {isTechnicianQueue
-              ? isAdmin
-                ? "Consulte todos los tickets y revise el técnico asignado a cada uno."
-                : "Consulta y gestiona los tickets que te han sido asignados."
+              ? "Consulte todos los tickets y revise el técnico asignado a cada uno."
               : "Administre las solicitudes de soporte, supervise el progreso del equipo y mantenga altos estándares de resolución para sus clientes externos e internos."}
           </p>
         </div>

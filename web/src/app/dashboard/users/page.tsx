@@ -15,6 +15,7 @@ import { logger } from "@/lib/logger";
 import { useToast } from "@/contexts/ToastContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModal } from "@/hooks/useModal";
+import { isAdminRole } from "@/lib/utils";
 import Pagination from "@/components/Pagination";
 import type { ApiUser } from "@hub/shared/types/user";
 
@@ -167,7 +168,8 @@ export default function UsersPage() {
       <UsersTable
         users={users}
         currentUserId={currentUser?.id ?? ""}
-        canManageUsers={currentUser?.rol === "admin"}
+        canManageUsers={isAdminRole(currentUser?.rol)}
+        canManageAdmins={currentUser?.rol === "admin"}
         onEdit={setEditingUser}
         onToggleStatus={handleToggleStatus}
         onResetPassword={setResetPasswordUser}
@@ -198,6 +200,7 @@ export default function UsersPage() {
       {editingUser && (
         <EditUserModal
           user={editingUser}
+          canAssignAdminRole={currentUser?.rol === "admin"}
           onClose={() => setEditingUser(null)}
           onSaved={(updated) => {
             setUsers((prev) => (Array.isArray(prev) ? prev : []).map((u) => (u.id === updated.id ? updated : u)));
