@@ -59,16 +59,31 @@ export default function CategoriaSelector({ value, onChange, error }: CategoriaS
               ) : null}
             </View>
 
-            <Text
-              style={{
-                flex: 1,
-                fontSize: 15,
-                color: elegido ? "#201A7A" : "#1F2937",
-                fontFamily: elegido ? "Inter_700Bold" : "Inter_400Regular",
-              }}
-            >
-              {categoria.label}
-            </Text>
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: 15,
+                  color: elegido ? "#201A7A" : "#1F2937",
+                  fontFamily: elegido ? "Inter_700Bold" : "Inter_400Regular",
+                }}
+              >
+                {categoria.label}
+              </Text>
+
+              {/* Segunda línea con el tiempo estimado (solo si el tipo tiene uno) */}
+              {categoria.tiempo ? (
+                <Text
+                  style={{
+                    fontSize: 13,
+                    color: elegido ? "#201A7A" : "#6B7280",
+                    fontFamily: "Inter_400Regular",
+                    marginTop: 2,
+                  }}
+                >
+                  Respuesta estimada: {categoria.tiempo}
+                </Text>
+              ) : null}
+            </View>
           </TouchableOpacity>
         );
       })}

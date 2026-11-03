@@ -10,7 +10,8 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Clock, User, Phone, MapPin, AlertCircle, Shield, MessageSquare, XCircle } from "lucide-react-native";
 import { api } from "../../src/services/api";
 import AppHeader from "../../src/components/AppHeader";
-import { URGENCIA_COLORS, ESTADO_LABELS, ESTADO_COLORS, COLORS } from "../../src/constants/colors";
+import { ESTADO_LABELS, ESTADO_COLORS, COLORS } from "../../src/constants/colors";
+import { getCategoriaLabel } from "../../src/constants/categorias";
 import { formatTicketId, formatDate } from "../../src/lib/format";
 
 interface IncidentDetail {
@@ -20,7 +21,7 @@ interface IncidentDetail {
   telefono: string;
   punto_venta: string;
   descripcion: string;
-  urgencia: "baja" | "media" | "alta";
+  categoria?: string | null;
   estado: "pendiente" | "en_proceso" | "resuelto";
   agente: string | null;
   created_at: string;
@@ -98,7 +99,6 @@ export default function IncidentDetailScreen() {
 
   const status = ESTADO_LABELS[incident.estado];
   const statusColor = ESTADO_COLORS[incident.estado];
-  const urgencyColor = URGENCIA_COLORS[incident.urgencia];
 
   return (
     <View className="flex-1 bg-[#F5F5F5]">
@@ -121,14 +121,6 @@ export default function IncidentDetailScreen() {
             </Text>
             <View
               className="px-2.5 py-1 rounded-full"
-              style={{ backgroundColor: urgencyColor }}
-            >
-              <Text className="text-[11px] font-bold text-white font-inter">
-                {incident.urgencia.toUpperCase()}
-              </Text>
-            </View>
-            <View
-              className="px-2.5 py-1 rounded-full"
               style={{ backgroundColor: statusColor }}
             >
               <Text className="text-[11px] font-bold text-white font-inter">
@@ -147,7 +139,7 @@ export default function IncidentDetailScreen() {
           <InfoRow icon={User} label="Documento" value={incident.documento} />
           <InfoRow icon={Phone} label="Teléfono" value={incident.telefono || "—"} />
           <InfoRow icon={MapPin} label="Punto de Venta" value={incident.punto_venta} />
-          <InfoRow icon={AlertCircle} label="Urgencia" value={incident.urgencia.charAt(0).toUpperCase() + incident.urgencia.slice(1)} />
+          <InfoRow icon={AlertCircle} label="Tipo de problema" value={getCategoriaLabel(incident.categoria ?? undefined)} />
           <InfoRow icon={Clock} label="Estado" value={status} />
           <InfoRow icon={Shield} label="Agente" value={incident.agente || "Sin asignar"} />
         </View>

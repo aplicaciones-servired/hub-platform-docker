@@ -13,7 +13,7 @@ import { History, AlertCircle } from "lucide-react-native";
 import { api } from "../src/services/api";
 import BottomTab from "../src/components/BottomTab";
 import AppHeader from "../src/components/AppHeader";
-import { URGENCIA_COLORS, ESTADO_LABELS, ESTADO_COLORS, COLORS } from "../src/constants/colors";
+import { ESTADO_LABELS, ESTADO_COLORS, COLORS } from "../src/constants/colors";
 
 interface Incident {
   id: string;
@@ -152,25 +152,6 @@ export default function HistorialScreen() {
                 >
                   {item.punto_venta}
                 </Text>
-                <View
-                  style={{
-                    paddingHorizontal: 10,
-                    paddingVertical: 3,
-                    borderRadius: 999,
-                    backgroundColor: URGENCIA_COLORS[item.urgencia] + "20",
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      fontWeight: "600",
-                      color: URGENCIA_COLORS[item.urgencia],
-                      fontFamily: "Inter_700Bold",
-                    }}
-                  >
-                    {item.urgencia.toUpperCase()}
-                  </Text>
-                </View>
               </View>
 
               <Text
@@ -296,7 +277,6 @@ export default function HistorialScreen() {
         onTabChange={(tab) => {
           if (tab === "chatbot") router.replace("/chat");
           if (tab === "reportar") router.replace("/reportar");
-          if (tab === "ajustes") router.replace("/ajustes");
         }}
       />
     </View>

@@ -7,7 +7,7 @@ import {
   Platform,
   UIManager,
 } from "react-native";
-import { ChevronDown } from "lucide-react-native";
+import { ChevronDown, ChevronRight } from "lucide-react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -16,6 +16,7 @@ import Animated, {
 } from "react-native-reanimated";
 import SubmenuItem from "./SubmenuItem";
 import { CATEGORIAS } from "../constants/categorias";
+
 
 if (
   Platform.OS === "android" &&
@@ -196,16 +197,24 @@ export default function ExpandableMenu({
               marginTop: index > 0 ? 8 : 0,
             }}
           >
-            <Text
+                        <Text
               style={{
                 color: "#FFFFFF",
                 fontSize: 15,
                 fontFamily: "Inter_400Regular",
                 fontWeight: "500",
+                marginRight: 8,
               }}
             >
               {option.label}
             </Text>
+
+            {/* Flecha abajo: despliega opciones. Flecha derecha: abre una ventana */}
+            {option.subItems ? (
+              <ChevronDown size={18} color="#FFFFFF" strokeWidth={2.5} />
+            ) : (
+              <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.5} />
+            )}
           </TouchableOpacity>
         )
       )}

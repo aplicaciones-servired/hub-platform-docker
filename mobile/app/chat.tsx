@@ -1,5 +1,5 @@
-import ChatScreen from "../src/screens/ChatScreen";
+import InicioScreen from "../src/screens/InicioScreen";
 
 export default function ChatRoute() {
-  return <ChatScreen />;
+  return <InicioScreen />;
 }
