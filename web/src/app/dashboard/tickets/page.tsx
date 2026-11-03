@@ -82,6 +82,7 @@ export default function TicketsPage() {
     const params = new URLSearchParams();
     params.set("page", String(page));
     params.set("limit", String(LIMIT));
+    if (isTechnicianQueue) params.set("assignedOnly", "true");
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (estadoFilter !== "Todos") params.set("estado", estadoFilter);
 
@@ -101,7 +102,7 @@ export default function TicketsPage() {
         logger.error("Error fetching tickets", { error: err instanceof Error ? err.message : err })
       )
       .finally(() => setLoading(false));
-  }, [page, debouncedSearch, estadoFilter, dateFilter]);
+  }, [page, debouncedSearch, estadoFilter, dateFilter, isTechnicianQueue]);
 
   const fetchStats = useCallback(() => {
     if (!isAdmin) {
@@ -228,6 +229,7 @@ export default function TicketsPage() {
     const params = new URLSearchParams();
     if (range.start) params.set("start", range.start);
     if (range.end) params.set("end", range.end);
+    if (isTechnicianQueue) params.set("assignedOnly", "true");
     const qs = params.toString() ? `?${params.toString()}` : "";
 
     let items: IncidentItem[] = [];
@@ -294,7 +296,7 @@ export default function TicketsPage() {
     a.click();
     URL.revokeObjectURL(url);
     showToast(`Exportación lista: ${items.length} tickets`);
-  }, [dateFilter, showToast]);
+  }, [dateFilter, isTechnicianQueue, showToast]);
 
   const mappedTickets = useMemo(
     () => {
@@ -332,7 +334,9 @@ export default function TicketsPage() {
           </h1>
           <p className="mt-1.5 text-sm text-[#6B7280] dark:text-gray-400 font-inter max-w-[650px]">
             {isTechnicianQueue
-              ? "Consulte todos los tickets y revise el técnico asignado a cada uno."
+              ? isAdmin
+                ? "Consulte todos los tickets y revise el técnico asignado a cada uno."
+                : "Consulta y gestiona los tickets que te han sido asignados."
               : "Administre las solicitudes de soporte, supervise el progreso del equipo y mantenga altos estándares de resolución para sus clientes externos e internos."}
           </p>
         </div>
