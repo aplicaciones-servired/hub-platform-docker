@@ -148,6 +148,13 @@
       "when": 1793217656820,
       "tag": "0020_heavy_magneto",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793718214328,
+      "tag": "0021_agregar_categoria_incidentes",
+      "breakpoints": true
     }
   ]
 }

@@ -20,6 +20,7 @@ import BottomTab from "../components/BottomTab";
 import { api } from "../services/api";
 import { logger } from "../services/logger";
 import { useAuth } from "../contexts/AuthContext";
+import { CATEGORIAS } from "../constants/categorias";
 
 interface SuggestedAction {
   label: string;
@@ -283,10 +284,11 @@ export default function ChatScreen() {
 
   const handleSubmenuPress = useCallback(
     (label: string) => {
-      if (label === "Reportar incidente") {
-        router.push("/reportar");
-      } else if (label === "Preguntas frecuentes") {
-        setShowFaq(true);
+      // Busca el tipo de incidente que corresponde al botón tocado
+      const categoria = CATEGORIAS.find((c) => c.label === label);
+      if (categoria) {
+        // Abre el formulario y le pasa el código del tipo elegido
+        router.push({ pathname: "/reportar", params: { categoria: categoria.codigo } });
       } else {
         handleSend(label);
       }
@@ -296,9 +298,13 @@ export default function ChatScreen() {
 
   const handleMenuPress = useCallback(
     (label: string) => {
+      if (label === "Preguntas frecuentes") {
+        setShowFaq(true);
+      } else {
         handleSend(label);
+      }
     },
-    [router, handleSend]
+    [handleSend]
   );
 
   const renderItem = useCallback(

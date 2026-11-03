@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   Send,
   MessageSquare,
@@ -22,6 +22,7 @@ import Animated, {
 import AppHeader from "../components/AppHeader";
 import TextField from "../components/TextField";
 import TextAreaField from "../components/TextAreaField";
+import CategoriaSelector from "../components/CategoriaSelector";
 import { api } from "../services/api";
 import { logger } from "../services/logger";
 import { useAuth } from "../contexts/AuthContext";
@@ -35,12 +36,15 @@ interface FormErrors {
   puntoVenta?: string;
   telefono?: string;
   descripcion?: string;
+  categoria?: string;
 }
 
 export default function ReportScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
+    // Si se llega desde el chat, trae el tipo elegido: /reportar?categoria=energia
+  const params = useLocalSearchParams<{ categoria?: string }>();
 
   // `router.back()` es un no-op silencioso si el historial está vacío, y
   // `/reportar` siempre se entra con `replace` (historial, ajustes, exito y la
@@ -64,6 +68,13 @@ export default function ReportScreen() {
   const [puntoVenta, setPuntoVenta] = useState("");
   const [telefono, setTelefono] = useState("");
   const [descripcion, setDescripcion] = useState("");
+
+    const [categoria, setCategoria] = useState("");
+
+  // Cuando llega un tipo desde el chat, lo deja seleccionado en el formulario
+  useEffect(() => {
+    if (params.categoria) setCategoria(params.categoria);
+  }, [params.categoria]);
 
   useEffect(() => {
     if (user) {
@@ -108,6 +119,9 @@ export default function ReportScreen() {
     if (!descripcion.trim())
       newErrors.descripcion = "La descripción es requerida";
 
+        if (!categoria)
+      newErrors.categoria = "Elige el tipo de problema que presentas";
+
     if (!hasHistory && !telefono.trim())
       newErrors.telefono = "El teléfono es requerido";
 
@@ -128,6 +142,7 @@ export default function ReportScreen() {
         punto_venta: puntoVenta,
         telefono,
         descripcion,
+        categoria,
       });
 
       router.replace({
@@ -244,6 +259,15 @@ export default function ReportScreen() {
               error={errors.telefono}
             />
 
+            <CategoriaSelector
+              value={categoria}
+              onChange={(codigo) => {
+                setCategoria(codigo);
+                if (errors.categoria)
+                  setErrors({ ...errors, categoria: undefined });
+              }}
+              error={errors.categoria}
+            />
             <TextAreaField
               label="Descripción"
               placeholder="Describe qué sucedió..."

@@ -1,5 +1,17 @@
 import { z } from "zod";
 
+// Tipos de incidente válidos. Deben coincidir con los códigos de
+// mobile/src/constants/categorias.ts
+export const CATEGORIAS_INCIDENTE = [
+  "aplicativos",
+  "bloqueo_usuario",
+  "internet_vpn",
+  "impresoras_pda",
+  "baterias",
+  "energia",
+  "otro",
+] as const;
+
 export const uuidParamsSchema = z.object({ id: z.string().uuid("ID inválido") });
 
 export const createIncidentSchema = z.object({
@@ -7,6 +19,7 @@ export const createIncidentSchema = z.object({
   telefono: z.string().regex(/^\d{6,20}$/, "El teléfono debe tener entre 6 y 20 dígitos").or(z.literal("")).optional().default(""),
   descripcion: z.string().min(1, "La descripción es requerida").max(2000),
   urgencia: z.enum(["baja", "media", "alta"]).default("media"),
+    categoria: z.enum(CATEGORIAS_INCIDENTE).optional(),
   // Solo admins: atribuir el ticket a otro usuario por documento
   documento: z.string().max(20).optional(),
 });
@@ -48,6 +61,7 @@ export const listIncidentsQuerySchema = {
     assignedOnly: z.enum(["true", "false"]).optional().transform((value) => value === "true"),
     estado: z.enum(["pendiente", "en_proceso", "resuelto"]).optional(),
     urgencia: z.enum(["baja", "media", "alta"]).optional(),
+     categoria: z.enum(CATEGORIAS_INCIDENTE).optional(),
     start: z
       .string()
       .optional()

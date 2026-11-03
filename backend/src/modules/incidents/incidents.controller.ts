@@ -115,6 +115,7 @@ export async function createIncident(
         telefono: req.body.telefono || "",
         descripcion: req.body.descripcion,
         urgencia: req.body.urgencia || "media",
+        categoria: req.body.categoria ?? null,
         estado: "pendiente",
         visto_por_admin: false,
       })
@@ -139,6 +140,7 @@ export async function listIncidents(
     const search = q.search as string | undefined;
     const estado = q.estado as string | undefined;
     const urgencia = q.urgencia as string | undefined;
+    const categoria = q.categoria as string | undefined;
 
     const conditions = [isNull(incidents.deleted_at)];
 
@@ -176,6 +178,11 @@ export async function listIncidents(
       conditions.push(
         eq(incidents.urgencia, urgencia as "baja" | "media" | "alta")
       );
+    }
+
+    
+    if (categoria) {
+      conditions.push(eq(incidents.categoria, categoria));
     }
 
     const whereClause =
