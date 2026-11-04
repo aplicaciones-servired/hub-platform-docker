@@ -62,7 +62,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
           <div className="flex items-center gap-2.5">
             <Image
               src={logoImg}
-              alt="Servired"
+              alt="HUB AI Assistant"
               width={82}
               height={24}
               className="w-auto h-[24px] shrink-0"

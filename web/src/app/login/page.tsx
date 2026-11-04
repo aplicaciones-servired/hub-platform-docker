@@ -56,7 +56,7 @@ export default function LoginPage() {
         <div className="flex justify-center mb-6">
           <Image
             src={logoImg}
-            alt="Servired"
+            alt="HUB AI Assistant"
             width={220}
             height={64}
             priority

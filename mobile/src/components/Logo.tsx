@@ -8,7 +8,7 @@ const LOGO_SOURCE = (() => {
   }
 })();
 
-const LOGO_ASPECT = 648 / 189;
+const LOGO_ASPECT = 918 / 266;
 
 interface LogoProps {
   size?: number;
