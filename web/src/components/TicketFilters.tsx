@@ -1,13 +1,16 @@
 "use client";
 
 import { Search, Download, ChevronDown } from "lucide-react";
+import { CATEGORIAS } from "@/lib/categorias";
 
 interface TicketFiltersProps {
   searchTerm: string;
   estadoFilter: string;
+  tipoFilter: string;
   dateFilter: string;
   onSearchChange: (v: string) => void;
   onEstadoChange: (v: string) => void;
+  onTipoChange: (v: string) => void;
   onDateChange: (v: string) => void;
   onExport?: () => void;
 }
@@ -18,14 +21,16 @@ const selectClass =
 export default function TicketFilters({
   searchTerm,
   estadoFilter,
+  tipoFilter,
   dateFilter,
   onSearchChange,
   onEstadoChange,
+  onTipoChange,
   onDateChange,
   onExport,
 }: TicketFiltersProps) {
   return (
-    <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-[10px] h-[60px] flex items-center px-4 gap-3 mb-5">
+    <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-[10px] min-h-[60px] py-3 flex-wrap  flex items-center px-4 gap-3 mb-5">
       <div className="relative flex-1 max-w-[340px]">
         <Search
           size={16}
@@ -42,6 +47,7 @@ export default function TicketFilters({
         />
       </div>
 
+            {/* Filtro 1: Estado */}
       <div className="relative">
         <select
           value={estadoFilter}
@@ -60,6 +66,28 @@ export default function TicketFilters({
         />
       </div>
 
+      {/* Filtro 2: Tipo de incidente */}
+      <div className="relative">
+        <select
+          value={tipoFilter}
+          onChange={(e) => onTipoChange(e.target.value)}
+          className={`${selectClass} max-w-[230px]`}
+        >
+          <option value="Todos">Tipo: Todos</option>
+          {CATEGORIAS.map((c) => (
+            <option key={c.codigo} value={c.codigo}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDown
+          size={14}
+          color="#9CA3AF"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+        />
+      </div>
+
+      {/* Filtro 3: Fecha */}
       <div className="relative">
         <select
           value={dateFilter}

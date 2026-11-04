@@ -56,7 +56,7 @@ const PROBLEM_RESPONSES: Record<string, ChatResponse> = {
     autoAction: "reportar",
   },
   consultar_estado: {
-    text: "Te llevo a Mis reportes donde puedes ver el estado de todos tus reportes.",
+        text: "Te llevo a 'Mis reportes', donde puedes ver el estado de todos tus reportes.",
     actions: [],
     autoAction: "ir_historial",
   },

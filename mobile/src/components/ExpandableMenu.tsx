@@ -7,7 +7,7 @@ import {
   Platform,
   UIManager,
 } from "react-native";
-import { ChevronDown } from "lucide-react-native";
+import { ChevronDown, ChevronRight } from "lucide-react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -15,6 +15,8 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import SubmenuItem from "./SubmenuItem";
+import { CATEGORIAS } from "../constants/categorias";
+
 
 if (
   Platform.OS === "android" &&
@@ -30,12 +32,10 @@ interface MenuOption {
 
 const MENU_OPTIONS: MenuOption[] = [
   {
-    label: "Soporte t\u00E9cnico",
-    subItems: [
-      { label: "Reportar incidente" },
-      { label: "Preguntas frecuentes" },
-    ],
+    label: "Reportar incidente",
+    subItems: CATEGORIAS.map((c) => ({ label: c.label })),
   },
+  { label: "Preguntas frecuentes" },
 ];
 
 interface ExpandableMenuProps {
@@ -62,9 +62,7 @@ export default function ExpandableMenu({
   }));
 
   const submenuAnimStyle = useAnimatedStyle(() => ({
-    height: submenuHeight.value,
     opacity: submenuOpacity.value,
-    overflow: "hidden" as const,
   }));
 
   const handleSelect = useCallback((label: string) => {
@@ -81,6 +79,13 @@ export default function ExpandableMenu({
 
     const option = MENU_OPTIONS.find((o) => o.label === label);
     if (!option) return;
+
+    
+    // Opción sin submenú (ej: Preguntas frecuentes): solo avisa y no cambia el menú
+    if (!option.subItems) {
+      onMenuPress?.(label);
+      return;
+    }
 
     LayoutAnimation.configureNext(
       LayoutAnimation.create(250, "easeInEaseOut", "opacity")
@@ -119,6 +124,7 @@ export default function ExpandableMenu({
       {selectedOption && (
         <View style={{ marginBottom: 4 }}>
           <TouchableOpacity
+          onPress={() => handleSelect(selectedOption.label)}
             activeOpacity={0.8}
             style={{
               backgroundColor: "#201A7A",
@@ -191,16 +197,24 @@ export default function ExpandableMenu({
               marginTop: index > 0 ? 8 : 0,
             }}
           >
-            <Text
+                        <Text
               style={{
                 color: "#FFFFFF",
                 fontSize: 15,
                 fontFamily: "Inter_400Regular",
                 fontWeight: "500",
+                marginRight: 8,
               }}
             >
               {option.label}
             </Text>
+
+            {/* Flecha abajo: despliega opciones. Flecha derecha: abre una ventana */}
+            {option.subItems ? (
+              <ChevronDown size={18} color="#FFFFFF" strokeWidth={2.5} />
+            ) : (
+              <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.5} />
+            )}
           </TouchableOpacity>
         )
       )}

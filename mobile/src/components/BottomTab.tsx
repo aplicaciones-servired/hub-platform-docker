@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity } from "react-native";
-import { MessageSquare, AlertTriangle, History, Settings, LucideIcon } from "lucide-react-native";
+import { Home, AlertTriangle, History, GraduationCap, LucideIcon } from "lucide-react-native";
 
 interface Tab {
   label: string;
@@ -45,8 +45,8 @@ function TabItem({ label, icon: Icon, active, onPress }: Tab) {
 }
 
 interface BottomTabProps {
-  activeTab: "chatbot" | "reportar" | "historial" | "ajustes";
-  onTabChange: (tab: "chatbot" | "reportar" | "historial" | "ajustes") => void;
+  activeTab: "chatbot" | "reportar" | "historial" | "capacitacion";
+  onTabChange: (tab: "chatbot" | "reportar" | "historial" | "capacitacion") => void;
   safeBottom?: number;
 }
 
@@ -63,8 +63,8 @@ export default function BottomTab({ activeTab, onTabChange, safeBottom = 20 }: B
       }}
     >
       <TabItem
-        label="Chatbot"
-        icon={MessageSquare}
+        label="Inicio"
+        icon={Home}
         active={activeTab === "chatbot"}
         onPress={() => onTabChange("chatbot")}
       />
@@ -80,11 +80,12 @@ export default function BottomTab({ activeTab, onTabChange, safeBottom = 20 }: B
         active={activeTab === "historial"}
         onPress={() => onTabChange("historial")}
       />
-      <TabItem
-        label="Ajustes"
-        icon={Settings}
-        active={activeTab === "ajustes"}
-        onPress={() => onTabChange("ajustes")}
+
+            <TabItem
+        label="Capacitación"
+        icon={GraduationCap}
+        active={activeTab === "capacitacion"}
+        onPress={() => onTabChange("capacitacion")}
       />
     </View>
   );

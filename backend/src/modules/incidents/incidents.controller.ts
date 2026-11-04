@@ -115,6 +115,10 @@ export async function createIncident(
         telefono: req.body.telefono || "",
         descripcion: req.body.descripcion,
         urgencia: req.body.urgencia || "media",
+        categoria: req.body.categoria ?? null,
+                reportante_nombre: req.body.reportante_nombre ?? null,
+        reportante_cedula: req.body.reportante_cedula ?? null,
+        imagenes: req.body.imagenes ?? null,
         estado: "pendiente",
         visto_por_admin: false,
       })
@@ -139,6 +143,7 @@ export async function listIncidents(
     const search = q.search as string | undefined;
     const estado = q.estado as string | undefined;
     const urgencia = q.urgencia as string | undefined;
+    const categoria = q.categoria as string | undefined;
 
     const conditions = [isNull(incidents.deleted_at)];
 
@@ -176,6 +181,11 @@ export async function listIncidents(
       conditions.push(
         eq(incidents.urgencia, urgencia as "baja" | "media" | "alta")
       );
+    }
+
+    
+    if (categoria) {
+      conditions.push(eq(incidents.categoria, categoria));
     }
 
     const whereClause =
@@ -389,7 +399,7 @@ export async function updateIncident(
     // Notificar solo en la TRANSICIÓN a resuelto (no al re-guardar la solución)
     if (estado === "resuelto" && previousEstado !== "resuelto") {
       const shortId = id.replace(/-/g, "").slice(-8).toUpperCase();
-      const botMessage = `Tu ticket #TK-${shortId} ha sido marcado como **Resuelto**.\n\n${solucion ? `**Solucion:** ${solucion}\n\n` : ""}Si necesita mas ayuda, contactenos.`;
+          const botMessage = `Tu reporte #TK-${shortId} fue resuelto.${solucion ? `\n\n**Solución:** ${solucion}` : ""}`;
 
       try {
         await db.insert(messages).values({
