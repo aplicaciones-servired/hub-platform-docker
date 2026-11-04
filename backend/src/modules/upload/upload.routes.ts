@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import { uploadFile } from "./upload.controller";
+import { uploadFile, subirImagenIncidente } from "./upload.controller";
 import { authMiddleware } from "../../middlewares/auth";
 import { adminOnly } from "../../middlewares/admin";
 
@@ -11,5 +11,8 @@ const upload = multer({
 });
 
 router.post("/", authMiddleware, adminOnly, upload.single("file"), uploadFile);
+
+// Fotos de incidentes: cualquier usuario con sesión iniciada puede subirlas (máx. 5 MB cada una)
+router.post("/incidente", authMiddleware, upload.single("file"), subirImagenIncidente);
 
 export default router;

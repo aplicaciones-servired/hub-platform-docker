@@ -1,32 +1,81 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { ChevronDown, X } from "lucide-react-native";
+import { CATEGORIAS } from "../constants/categorias";
 
 interface FaqItem {
   pregunta: string;
   respuesta: string;
 }
 
+// Tiempos de respuesta armados desde la lista de tipos,
+// así si cambia un tiempo en categorias.ts, también cambia aquí.
+const TIEMPOS = CATEGORIAS.filter((c) => c.tiempo)
+  .map((c) => `• ${c.label}: ${c.tiempo}`)
+  .join("\n");
+
 const FAQS: FaqItem[] = [
   {
-    pregunta: "¿Cómo cerrar sesión de forma segura?",
+    pregunta: "¿Cómo reporto un problema?",
     respuesta:
-      "Para cerrar sesión, dirígete al menú Perfil o Configuración y selecciona Cerrar sesión. Esto protegerá tu información, especialmente si utilizas un dispositivo compartido.",
+      "1. En Inicio, toca \"Reportar incidente\" y elige el tipo de problema.\n" +
+      "   También puedes tocar \"Reportar\" en la barra de abajo.\n" +
+      "2. Escribe tu nombre completo, tu cédula y revisa tu teléfono.\n" +
+      "3. Explica qué pasó, desde cuándo y qué equipo o programa falla.\n" +
+      "4. Toca \"Enviar Reporte\".",
   },
   {
-    pregunta: "¿Puedo continuar una conversación anterior?",
+    pregunta: "¿Cuánto tardan en responder?",
     respuesta:
-      "Sí. Si la conversación sigue disponible, podrás retomarla desde el historial del chat y continuar con el mismo caso sin necesidad de empezar de nuevo.",
+      "Depende del tipo de problema:\n\n" +
+      TIEMPOS +
+      "\n\nSon tiempos aproximados.",
   },
   {
-    pregunta: "¿Cómo saber si mi ticket fue recibido?",
+    pregunta: "¿Cómo sé si mi reporte fue recibido?",
     respuesta:
-      "Una vez enviado el reporte, la aplicación mostrará un mensaje de confirmación junto con el número de ticket. Además, podrás consultar su estado en la sección Mis Tickets o Estado de Tickets.",
+      "Al enviarlo, aparece la pantalla \"¡Reporte Enviado!\" con un número de reporte, por ejemplo #TK-1A2B3C4D.\n\n" +
+      "También lo verás en Inicio, en \"Tu último reporte\", y en \"Mis reportes\".",
   },
   {
-    pregunta: "La aplicación está lenta, ¿cómo solucionarlo?",
+    pregunta: "¿Cómo veo cómo va mi reporte?",
     respuesta:
-      "Si la aplicación presenta lentitud, prueba las siguientes acciones:\n\n• Verifica que tengas una conexión estable a Internet.\n• Cierra y vuelve a abrir la aplicación.\n• Actualiza la aplicación a la última versión disponible.\n• Reinicia tu dispositivo.\n• Si el problema continúa, crea un ticket de soporte indicando el inconveniente para que podamos revisarlo.",
+      "Toca \"Mis reportes\" en la barra de abajo. Cada reporte muestra su estado:\n\n" +
+      "• Pendiente: todavía no lo han revisado.\n" +
+      "• En proceso: un técnico ya está trabajando en él.\n" +
+      "• Resuelto: el problema fue solucionado.\n\n" +
+      "Toca un reporte para ver todos sus datos y la solución.",
+  },
+  {
+    pregunta: "¿Cómo me entero de que ya lo solucionaron?",
+    respuesta:
+      "Cuando tu reporte se resuelve, aparece un aviso en Inicio, en la sección \"Avisos\", con la solución que dio el técnico. " +
+      "También verás el estado \"Resuelto\" en \"Mis reportes\".",
+  },
+  {
+    pregunta: "¿Por qué me piden cédula y teléfono?",
+    respuesta:
+      "Para saber quién hizo el reporte y poder llamarte si el técnico necesita más información. " +
+      "Revisa que tu teléfono esté bien escrito. Si cambió, corrígelo antes de enviar.",
+  },
+  {
+    pregunta: "¿Cómo cierro sesión?",
+    respuesta:
+      "Toca el ícono rojo que está arriba a la derecha, junto al nombre del punto, y confirma.\n\n" +
+      "Hazlo siempre si el celular o el computador lo usan otras personas.",
+  },
+  {
+    pregunta: "¿Dónde aprendo a usar la app?",
+    respuesta:
+      "Toca \"Capacitación\" en la barra de abajo. Ahí encontrarás videos cortos que explican cada pantalla.",
+  },
+  {
+    pregunta: "La app está lenta o no carga, ¿qué hago?",
+    respuesta:
+      "1. Revisa que tengas internet.\n" +
+      "2. Cierra la app y vuelve a abrirla.\n" +
+      "3. Si sigue fallando, reinicia el celular.\n" +
+      "4. Si el problema continúa, envía un reporte eligiendo \"Otro problema\".",
   },
 ];
 
@@ -59,7 +108,7 @@ export default function FaqModal({ onClose }: FaqModalProps) {
             fontFamily: "Inter_700Bold",
           }}
         >
-          Preguntas Frecuentes
+          Preguntas frecuentes
         </Text>
         <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <X size={22} color="#6B7280" strokeWidth={2} />

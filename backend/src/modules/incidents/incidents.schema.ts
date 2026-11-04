@@ -23,6 +23,10 @@ export const createIncidentSchema = z.object({
   // Solo admins: atribuir el ticket a otro usuario por documento
     reportante_nombre: z.string().trim().min(3, "El nombre debe tener al menos 3 letras").max(100).optional(),
   reportante_cedula: z.string().trim().regex(/^\d{6,10}$/, "La cédula debe tener entre 6 y 10 números").optional(),
+    imagenes: z
+    .array(z.string().regex(/^incidentes\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.(jpg|png|webp)$/, "Foto inválida"))
+    .max(3, "Máximo 3 fotos por reporte")
+    .optional(),
   
   documento: z.string().max(20).optional(),
 });

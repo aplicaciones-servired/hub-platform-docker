@@ -118,6 +118,7 @@ export async function createIncident(
         categoria: req.body.categoria ?? null,
                 reportante_nombre: req.body.reportante_nombre ?? null,
         reportante_cedula: req.body.reportante_cedula ?? null,
+        imagenes: req.body.imagenes ?? null,
         estado: "pendiente",
         visto_por_admin: false,
       })

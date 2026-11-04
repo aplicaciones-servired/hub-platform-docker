@@ -54,6 +54,10 @@ export const env = {
   CORS_ORIGIN: process.env.CORS_ORIGIN,
   MAX_LOGIN_ATTEMPTS: parsePositiveInt(process.env.MAX_LOGIN_ATTEMPTS, 5, "MAX_LOGIN_ATTEMPTS"),
   EXPO_ACCESS_TOKEN: process.env.EXPO_ACCESS_TOKEN || "",
+  S3_ENDPOINT: process.env.S3_ENDPOINT || "",
+  S3_BUCKET: process.env.S3_BUCKET || "imagenes-soporte",
+  S3_ACCESS_KEY: process.env.S3_ACCESS_KEY || "",
+  S3_SECRET_KEY: process.env.S3_SECRET_KEY || "",
   EXTERNAL_SYSTEMS_URL: process.env.EXTERNAL_SYSTEMS_URL || "",
   ALLOWED_HOSTS: (process.env.ALLOWED_HOSTS || "")
     .split(",")

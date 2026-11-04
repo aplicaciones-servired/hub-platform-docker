@@ -9,6 +9,9 @@ export interface Incident {
   punto_venta: string;
   telefono: string;
   descripcion: string;
+  categoria?: string | null;
+  reportante_nombre?: string | null;
+  reportante_cedula?: string | null;
   urgencia: IncidentUrgency;
   estado: IncidentStatus;
   agente: string | null;

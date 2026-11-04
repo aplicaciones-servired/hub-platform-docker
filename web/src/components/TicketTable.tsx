@@ -15,6 +15,7 @@ interface TicketRow {
   id: string;
   asunto: string;
   categoria: string;
+  tipo?: string;
   solicitante: string;
   estado: string;
   createdAt: string;
@@ -221,7 +222,7 @@ export default function TicketTable({
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-visible">
       <div className="grid grid-cols-[90px_minmax(150px,1fr)_120px_110px_140px_100px_100px_90px] bg-[#EEF2FF] dark:bg-gray-800 px-5">
-        {["ID TICKET", "ASUNTO", "SOLICITANTE", "ESTADO", "ASIGNADO A", "CREADO", "CIERRE", "ACCIONES"].map(
+        {["ID TICKET", "ASUNTO", "TIPO", "SOLICITANTE", "ESTADO", "ASIGNADO A", "CREADO", "CIERRE", "ACCIONES"].map(
           (col) => (
             <div
               key={col}
@@ -257,6 +258,13 @@ export default function TicketTable({
               {ticket.categoria}
             </p>
           </div>
+
+          
+             <div className="py-3 px-2">
+               <span className="text-[12px] font-medium text-gray-700 dark:text-gray-200 font-inter">
+                 {ticket.tipo || "Sin tipo"}
+               </span>
+             </div>
 
           <div className="py-3 px-2">
             <span className="text-[13px] text-gray-800 dark:text-gray-100 font-inter font-medium">

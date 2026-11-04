@@ -162,6 +162,13 @@
       "when": 1793737117756,
       "tag": "0022_agregar_reportante_incidentes",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793810858182,
+      "tag": "0023_agregar_imagenes_incidentes",
+      "breakpoints": true
     }
   ]
 }

@@ -65,6 +65,7 @@ export const incidents = pgTable(
     categoria: varchar("categoria", { length: 50 }),
     reportante_nombre: varchar("reportante_nombre", { length: 100 }),
     reportante_cedula: varchar("reportante_cedula", { length: 20 }),
+    imagenes: text("imagenes").array(),
     urgencia: urgenciaEnum("urgencia").notNull().default("media"),
     estado: estadoEnum("estado").notNull().default("pendiente"),
     agente: varchar("agente", { length: 100 }),

@@ -22,6 +22,8 @@ interface IncidentDetail {
   punto_venta: string;
   descripcion: string;
   categoria?: string | null;
+    reportante_nombre?: string | null;
+  reportante_cedula?: string | null;
   estado: "pendiente" | "en_proceso" | "resuelto";
   agente: string | null;
   created_at: string;
@@ -135,8 +137,8 @@ export default function IncidentDetailScreen() {
 
         {/* Info Grid */}
         <View className="bg-white rounded-2xl border border-gray-200 p-5 gap-4">
-          <InfoRow icon={User} label="Solicitante" value={incident.nombre} />
-          <InfoRow icon={User} label="Documento" value={incident.documento} />
+          <InfoRow icon={User} label="Reportado por" value={incident.reportante_nombre || incident.nombre} />
+          <InfoRow icon={User} label="Cédula" value={incident.reportante_cedula || incident.documento} />
           <InfoRow icon={Phone} label="Teléfono" value={incident.telefono || "—"} />
           <InfoRow icon={MapPin} label="Punto de Venta" value={incident.punto_venta} />
           <InfoRow icon={AlertCircle} label="Tipo de problema" value={getCategoriaLabel(incident.categoria ?? undefined)} />

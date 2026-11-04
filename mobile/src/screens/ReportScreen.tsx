@@ -22,6 +22,7 @@ import AppHeader from "../components/AppHeader";
 import TextField from "../components/TextField";
 import TextAreaField from "../components/TextAreaField";
 import CategoriaSelector from "../components/CategoriaSelector";
+import FotosSelector from "../components/FotosSelector";
 import { api } from "../services/api";
 import { logger } from "../services/logger";
 import { useAuth } from "../contexts/AuthContext";
@@ -61,6 +62,7 @@ export default function ReportScreen() {
   const [categoria, setCategoria] = useState("");
   const [reportanteNombre, setReportanteNombre] = useState("");
   const [reportanteCedula, setReportanteCedula] = useState("");
+  const [fotos, setFotos] = useState<string[]>([]);
 
   // Cuando llega un tipo desde el chat, lo deja seleccionado en el formulario
   useEffect(() => {
@@ -307,6 +309,9 @@ export default function ReportScreen() {
               error={errors.descripcion}
             />
 
+            
+            <FotosSelector fotos={fotos} onChange={setFotos} />
+
             <AnimatedTouchable
               onPress={handleSubmit}
               onPressIn={handlePressIn}
@@ -353,6 +358,7 @@ export default function ReportScreen() {
         onTabChange={(tab) => {
           if (tab === "chatbot") router.replace("/chat");
           if (tab === "historial") router.replace("/historial");
+          if (tab === "capacitacion") router.replace("/capacitacion");
         }}
       />
 
