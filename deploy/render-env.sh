@@ -16,6 +16,7 @@
 #  Variables opcionales:
 #      POSTGRES_USER, POSTGRES_DB, JWT_EXPIRES_IN, MAX_LOGIN_ATTEMPTS,
 #      EXTERNAL_SYSTEMS_URL, EXPO_ACCESS_TOKEN, LOG_LEVEL,
+#      S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY, S3_SECRET_KEY,
 #      APP_DASHBOARD_DOMAIN, APP_MOBILE_DOMAIN,
 #      NEXT_PUBLIC_SUPPORT_WHATSAPP, NEXT_PUBLIC_SUPPORT_PHONE
 # ════════════════════════════════════════════════════════════════════════════
@@ -81,6 +82,8 @@ cat > "$TMP_FILE" <<'STATIC'
 # ── API ──────────────────────────────────────────────────────────────────
 # ── Seed del admin (documento 123456789); solo si la BD aun no tiene admin ─
 # ── Integraciones (vacias = modulo deshabilitado) ────────────────────────
+# Las credenciales S3/MinIO son opcionales; se conservan desde el .env previo
+# y las rutas de imágenes fallan explícitamente si el almacenamiento no está configurado.
 # ── Build args de los frontends (publicables: viajan en el bundle) ───────
 # EXPO_PUBLIC_API_URL llega como build arg a mobile/Dockerfile.web (tiene
 # fail-fast si llega vacio). El navegador usa la ruta relativa /api.
@@ -111,6 +114,10 @@ LOG_LEVEL=${LOG_LEVEL}
 SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD}
 EXTERNAL_SYSTEMS_URL=${EXTERNAL_SYSTEMS_URL:-}
 EXPO_ACCESS_TOKEN=${EXPO_ACCESS_TOKEN:-}
+S3_ENDPOINT=${S3_ENDPOINT:-}
+S3_BUCKET=${S3_BUCKET:-imagenes-soporte}
+S3_ACCESS_KEY=${S3_ACCESS_KEY:-}
+S3_SECRET_KEY=${S3_SECRET_KEY:-}
 EXPO_PUBLIC_API_URL=/api
 NEXT_PUBLIC_API_URL=http://api:3001/api
 NEXT_PUBLIC_SUPPORT_WHATSAPP=${NEXT_PUBLIC_SUPPORT_WHATSAPP:-https://wa.me/573000000000}

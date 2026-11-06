@@ -301,6 +301,10 @@ pipeline {
                         #    esto: el plugin falla igual si el ID no existe.
                         EXTERNAL_SYSTEMS_URL="$(read_env "$DEPLOY_DIR/.env" EXTERNAL_SYSTEMS_URL)"
                         EXPO_ACCESS_TOKEN="$(read_env "$DEPLOY_DIR/.env" EXPO_ACCESS_TOKEN)"
+                        S3_ENDPOINT="$(read_env "$DEPLOY_DIR/.env" S3_ENDPOINT)"
+                        S3_BUCKET="$(read_env "$DEPLOY_DIR/.env" S3_BUCKET)"
+                        S3_ACCESS_KEY="$(read_env "$DEPLOY_DIR/.env" S3_ACCESS_KEY)"
+                        S3_SECRET_KEY="$(read_env "$DEPLOY_DIR/.env" S3_SECRET_KEY)"
 
                         APP_VERSION="$IMAGE_TAG" \
                         POSTGRES_USER=hub_admin \
@@ -309,6 +313,10 @@ pipeline {
                         APP_MOBILE_DOMAIN="$APP_MOBILE_DOMAIN" \
                         EXTERNAL_SYSTEMS_URL="$EXTERNAL_SYSTEMS_URL" \
                         EXPO_ACCESS_TOKEN="$EXPO_ACCESS_TOKEN" \
+                        S3_ENDPOINT="$S3_ENDPOINT" \
+                        S3_BUCKET="$S3_BUCKET" \
+                        S3_ACCESS_KEY="$S3_ACCESS_KEY" \
+                        S3_SECRET_KEY="$S3_SECRET_KEY" \
                         NEXT_PUBLIC_SUPPORT_WHATSAPP="$SUPPORT_WHATSAPP" \
                         NEXT_PUBLIC_SUPPORT_PHONE="$SUPPORT_PHONE" \
                         DEPLOY_DIR="$DEPLOY_DIR" \
