@@ -94,6 +94,7 @@ services:
       args:
         NEXT_PUBLIC_SUPPORT_WHATSAPP: ${NEXT_PUBLIC_SUPPORT_WHATSAPP:-https://wa.me/573000000000}
         NEXT_PUBLIC_SUPPORT_PHONE: ${NEXT_PUBLIC_SUPPORT_PHONE:-+57 300 000 0000}
+        NEXT_PUBLIC_COMPANY: ${COMPANY:-SERVIRED}
     container_name: hub-web
     security_opt:
       - no-new-privileges:true
@@ -139,6 +140,7 @@ services:
       dockerfile: mobile/Dockerfile.web
       args:
         EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-/api}
+        EXPO_PUBLIC_COMPANY: ${COMPANY:-SERVIRED}
     container_name: hub-mobile
     security_opt:
       - no-new-privileges:true

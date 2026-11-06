@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import logoImg from "@/assets/logo.png";
+import { COMPANY_LOGO, COMPANY_NAME } from "@/lib/brand";
 import type { CompanySettings } from "@hub/shared/types/api";
 
 interface SettingsEmpresaTabProps {
@@ -70,8 +70,8 @@ export default function SettingsEmpresaTab({ settings, onSettingsChange }: Setti
           </h2>
           <div className="w-full max-w-[260px] h-[100px] bg-[#F8FAFC] dark:bg-gray-800 border-2 border-dashed border-[#CBD5E1] dark:border-gray-600 rounded-xl flex items-center justify-center p-3">
             <Image
-              src={logoImg}
-              alt="Logo de la empresa"
+              src={COMPANY_LOGO}
+              alt={`Logo de ${COMPANY_NAME}`}
               width={200}
               height={58}
               className="w-auto h-auto max-w-full object-contain"
