@@ -55,9 +55,9 @@ export default function RootLayout() {
                 <Stack.Screen name="chat" />
                 <Stack.Screen name="reportar" />
                 <Stack.Screen name="historial" />
+                <Stack.Screen name="capacitacion" />
                 <Stack.Screen name="exito" />
                 <Stack.Screen name="incidente/[id]" />
-                <Stack.Screen name="ajustes" />
               </Stack>
             </AuthProvider>
           </ConnectivityProvider>

@@ -8,10 +8,9 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   Send,
-  MessageSquare,
 } from "lucide-react-native";
 import BottomTab from "../components/BottomTab";
 import Animated, {
@@ -19,10 +18,11 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from "react-native-reanimated";
-import ReportHeader from "../components/ReportHeader";
+import AppHeader from "../components/AppHeader";
 import TextField from "../components/TextField";
 import TextAreaField from "../components/TextAreaField";
-import Logo from "../components/Logo";
+import CategoriaSelector from "../components/CategoriaSelector";
+import FotosSelector from "../components/FotosSelector";
 import { api } from "../services/api";
 import { logger } from "../services/logger";
 import { useAuth } from "../contexts/AuthContext";
@@ -36,29 +36,22 @@ interface FormErrors {
   puntoVenta?: string;
   telefono?: string;
   descripcion?: string;
+  categoria?: string;
+  reportanteNombre?: string;
+  reportanteCedula?: string;
 }
 
 export default function ReportScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
-
-  // `router.back()` es un no-op silencioso si el historial está vacío, y
-  // `/reportar` siempre se entra con `replace` (historial, ajustes, exito y la
-  // tab bar), así que nunca queda una entrada que popping. Con este fallback el
-  // botón siempre lleva a algún lado.
-  const goBack = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace("/chat");
-    }
-  };
+    // Si se llega desde el chat, trae el tipo elegido: /reportar?categoria=energia
+  const params = useLocalSearchParams<{ categoria?: string }>();
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState("");
-  const [hasHistory, setHasHistory] = useState(false);
+  const [] = useState(true);
 
   const [nombre, setNombre] = useState("");
   const [documento, setDocumento] = useState("");
@@ -66,17 +59,36 @@ export default function ReportScreen() {
   const [telefono, setTelefono] = useState("");
   const [descripcion, setDescripcion] = useState("");
 
+  const [categoria, setCategoria] = useState("");
+  const [reportanteNombre, setReportanteNombre] = useState("");
+  const [reportanteCedula, setReportanteCedula] = useState("");
+  const [fotos, setFotos] = useState<string[]>([]);
+
+  // Cuando llega un tipo desde el chat, lo deja seleccionado en el formulario
+  useEffect(() => {
+    if (params.categoria) setCategoria(params.categoria);
+  }, [params.categoria]);
+
   useEffect(() => {
     if (user) {
       setNombre(user.nombre);
       setDocumento(user.documento);
       setPuntoVenta(user.nombre);
     }
-    api.get<{ items: { telefono: string }[]; total: number }>("/incidents?limit=1").then((data) => {
+    api.get<{
+      items: { telefono: string; reportante_nombre?: string | null; reportante_cedula?: string | null }[];
+      total: number;
+    }>("/incidents?limit=1").then((data) => {
       if (data?.items?.length > 0) {
-        setHasHistory(true);
         if (data.items[0].telefono) {
           setTelefono(data.items[0].telefono);
+        }
+
+                if (data.items[0].reportante_nombre) {
+          setReportanteNombre(data.items[0].reportante_nombre);
+        }
+        if (data.items[0].reportante_cedula) {
+          setReportanteCedula(data.items[0].reportante_cedula);
         }
       }
     }).catch((err) => {
@@ -109,26 +121,80 @@ export default function ReportScreen() {
     if (!descripcion.trim())
       newErrors.descripcion = "La descripción es requerida";
 
-    if (!hasHistory && !telefono.trim())
-      newErrors.telefono = "El teléfono es requerido";
+        if (!categoria)
+      newErrors.categoria = "Elige el tipo de problema que presentas";
 
+    if (!telefono.trim())
+      newErrors.telefono = "Escribe un teléfono de contacto";
+    else if (!/^\d{10}$/.test(telefono.trim()))
+      newErrors.telefono = "El teléfono debe tener 10 números, sin espacios ni guiones";
+        if (reportanteNombre.trim().length < 3)
+      newErrors.reportanteNombre = "Escribe tu nombre completo";
+
+    if (!reportanteCedula.trim())
+      newErrors.reportanteCedula = "Escribe tu número de cédula";
+    else if (!/^\d{6,10}$/.test(reportanteCedula.trim()))
+      newErrors.reportanteCedula = "La cédula debe tener solo números (entre 6 y 10), sin puntos ni espacios";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
+    const handleSubmit = async () => {
     if (!validate()) return;
 
     setLoading(true);
     setSubmitError("");
 
     try {
+      const uploadedImageNames: string[] = [];
+
+      // 1. SUBIR LAS FOTOS A MINIO
+      if (fotos.length > 0) {
+        console.log("Iniciando subida de fotos...", fotos);
+        
+        for (const fotoUri of fotos) {
+          const formData = new FormData();
+          const filename = fotoUri.split('/').pop() || `foto-${Date.now()}.jpg`;
+
+          if (Platform.OS === 'web') {
+            // En la web, la foto es un blob:http://... (necesitamos descargarla)
+            const blob = await fetch(fotoUri).then(r => r.blob());
+            formData.append('file', blob, filename);
+          } else {
+            // En el celular, la foto es una URI file://...
+            formData.append('file', {
+              uri: fotoUri,
+              name: filename,
+              type: 'image/jpeg',
+            } as any);
+          }
+
+          // Enviamos al backend
+          const uploadRes = await api.upload<{ url?: string; filename?: string; name?: string }>(
+            "/upload/incidente", 
+            formData
+          );
+          
+          console.log("Respuesta del servidor al subir foto:", uploadRes);
+
+          const savedName = (uploadRes as any).key || uploadRes.filename || uploadRes.url || uploadRes.name;
+          if (savedName) {
+            uploadedImageNames.push(savedName);
+          }
+        }
+      }
+
+      // 2. CREAR EL REPORTE CON LOS NOMBRES DE LAS FOTOS
       const incident = await api.post<{ id: string }>("/incidents", {
         nombre,
         documento,
         punto_venta: puntoVenta,
         telefono,
         descripcion,
+        categoria,
+        reportante_nombre: reportanteNombre.trim(),
+        reportante_cedula: reportanteCedula.trim(),
+        imagenes: uploadedImageNames.length > 0 ? uploadedImageNames : undefined, // <--- Aquí se envían las fotos
       });
 
       router.replace({
@@ -136,6 +202,7 @@ export default function ReportScreen() {
         params: { ticketId: incident.id },
       });
     } catch (err) {
+      console.error("Error en handleSubmit:", err);
       setSubmitError(
         err instanceof Error ? err.message : "Error al enviar el reporte"
       );
@@ -143,12 +210,12 @@ export default function ReportScreen() {
       setLoading(false);
     }
   };
-
   return (
     <View className="flex-1 bg-[#F5F6FA]">
-      <View style={{ paddingTop: insets.top }}>
-        <ReportHeader />
-      </View>
+            <AppHeader 
+            title="Reporte de Incidente" 
+            subtitle="Cuentanos qué pasó"
+            />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -164,15 +231,12 @@ export default function ReportScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View className="items-center mb-4">
-            <Logo size={80} />
-          </View>
 
           <Text
-            className="text-[34px] text-[#1F2366] text-center mb-2"
+            className="text-[24px] text-[#1F2366] text-center mb-2"
             style={{ fontFamily: "Inter_700Bold", fontWeight: "700" }}
           >
-            Reportar un Incidente
+            Reportar incidente
           </Text>
 
           <Text className="text-[15px] font-inter text-[#6B7280] text-center mb-6 max-w-[300px]">
@@ -198,43 +262,49 @@ export default function ReportScreen() {
               elevation: 3,
             }}
           >
-            <TextField
-              label="Nombre Completo"
-              placeholder="Tu nombre completo"
-              value={nombre}
-              onChangeText={(t) => {
-                setNombre(t);
-                if (errors.nombre)
-                  setErrors({ ...errors, nombre: undefined });
+            <View
+              style={{
+                backgroundColor: "#EEEDF8",
+                borderRadius: 10,
+                padding: 12,
+                marginBottom: 10,
               }}
-              error={errors.nombre}
-              editable={false}
-            />
-
-            <TextField
-              label="CC / Documento"
-              placeholder="Número de documento"
-              value={documento}
-              onChangeText={(t) => {
-                setDocumento(t);
-                if (errors.documento)
-                  setErrors({ ...errors, documento: undefined });
-              }}
-              error={errors.documento}
-              keyboardType="numeric"
-              editable={false}
-            />
-
-            <TextField
-              label="Punto de Venta"
-              placeholder="Punto de venta del usuario"
+            >
+              <TextField
+              label="Nombre del punto"
+              placeholder="Nombre del punto de venta"
               value={puntoVenta}
               onChangeText={setPuntoVenta}
               editable={false}
             />
 
             <TextField
-              label="Número de Teléfono"
+              label="Tu nombre completo"
+              placeholder="Ej: María Pérez Gómez"
+              value={reportanteNombre}
+              onChangeText={(t) => {
+                setReportanteNombre(t);
+                if (errors.reportanteNombre)
+                  setErrors({ ...errors, reportanteNombre: undefined });
+              }}
+              error={errors.reportanteNombre}
+            />
+
+            <TextField
+              label="Tu cédula"
+              placeholder="Solo números, sin puntos"
+              value={reportanteCedula}
+              onChangeText={(t) => {
+                setReportanteCedula(t);
+                if (errors.reportanteCedula)
+                  setErrors({ ...errors, reportanteCedula: undefined });
+              }}
+              keyboardType="numeric"
+              error={errors.reportanteCedula}
+            />
+
+            <TextField
+              label="Telefono de contacto (confirmalo)"
               placeholder="Tu número de contacto"
               value={telefono}
               onChangeText={(t) => {
@@ -243,13 +313,33 @@ export default function ReportScreen() {
                   setErrors({ ...errors, telefono: undefined });
               }}
               keyboardType="phone-pad"
-              editable={!hasHistory}
               error={errors.telefono}
             />
 
+            <CategoriaSelector
+              value={categoria}
+              onChange={(codigo) => {
+                setCategoria(codigo);
+                if (errors.categoria)
+                  setErrors({ ...errors, categoria: undefined });
+              }}
+              error={errors.categoria}
+            />
+
+                        {/* Instrucciones para escribir una buena descripción */}
+            
+              <Text style={{ fontSize: 14, color: "#1F2366", fontFamily: "Inter_700Bold", marginBottom: 4 }}>
+                Para recibir una respuesta rápida:
+              </Text>
+              <Text style={{ fontSize: 14, color: "#1F2937", fontFamily: "Inter_400Regular", lineHeight: 20 }}>
+                • Llena todos los campos. Sin ellos no se puede enviar el reporte.{"\n"}
+                • Revisa que tu nombre, tu cédula y tu teléfono estén bien escritos.{"\n"}
+                • En la descripción, explica qué pasó, desde cuándo y qué equipo o programa falla.
+              </Text>
+            </View>
             <TextAreaField
               label="Descripción"
-              placeholder="Describe qué sucedió..."
+              placeholder="Ej: La impresora no imprime desde esta mañana"
               value={descripcion}
               onChangeText={(t) => {
                 setDescripcion(t);
@@ -258,6 +348,9 @@ export default function ReportScreen() {
               }}
               error={errors.descripcion}
             />
+
+            
+            <FotosSelector fotos={fotos} onChange={setFotos} />
 
             <AnimatedTouchable
               onPress={handleSubmit}
@@ -296,16 +389,6 @@ export default function ReportScreen() {
             </AnimatedTouchable>
           </View>
 
-          <TouchableOpacity
-            onPress={goBack}
-            className="flex-row items-center justify-center mt-5"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <MessageSquare size={18} color="#1F2366" strokeWidth={2} />
-            <Text className="text-[#1F2366] text-sm font-inter ml-2">
-              Volver al chat
-            </Text>
-          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -315,7 +398,7 @@ export default function ReportScreen() {
         onTabChange={(tab) => {
           if (tab === "chatbot") router.replace("/chat");
           if (tab === "historial") router.replace("/historial");
-          if (tab === "ajustes") router.replace("/ajustes");
+          if (tab === "capacitacion") router.replace("/capacitacion");
         }}
       />
 

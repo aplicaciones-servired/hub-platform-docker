@@ -57,27 +57,63 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
           </button>
         </div>
 
-        {/* Body */}
-        <div className="px-6 py-5 grid grid-cols-2 gap-4">
-          <InfoBlock icon={User} label="Solicitante" value={incident.nombre} />
-          <InfoBlock icon={User} label="Documento" value={incident.documento} />
-          <InfoBlock icon={Phone} label="Teléfono" value={incident.telefono || "—"} />
-          <InfoBlock icon={MapPin} label="Punto de Venta" value={incident.punto_venta} />
-          <InfoBlock icon={AlertCircle} label="Urgencia" value={incident.urgencia.charAt(0).toUpperCase() + incident.urgencia.slice(1)} />
-          <InfoBlock icon={Clock} label="Estado" value={status} />
-          <div className="col-span-2">
-            <InfoBlock icon={User} label="Agente Asignado" value={incident.agente || "Sin asignar"} />
+             {/* Body */}
+        <div className="px-6 py-5 flex flex-col gap-6">
+          {/* Información en cuadrícula */}
+          <div className="grid grid-cols-2 gap-4">
+            <InfoBlock icon={User} label="Solicitante" value={incident.nombre} />
+            <InfoBlock icon={User} label="Documento" value={incident.documento} />
+            <InfoBlock icon={Phone} label="Teléfono" value={incident.telefono || "—"} />
+            <InfoBlock icon={MapPin} label="Punto de Venta" value={incident.punto_venta} />
+            <InfoBlock icon={AlertCircle} label="Urgencia" value={incident.urgencia.charAt(0).toUpperCase() + incident.urgencia.slice(1)} />
+            <InfoBlock icon={Clock} label="Estado" value={status} />
+            <div className="col-span-2">
+              <InfoBlock icon={User} label="Agente Asignado" value={incident.agente || "Sin asignar"} />
+            </div>
+            {incident.estado === "resuelto" && (
+              <>
+                {incident.solucion && (
+                  <div className="col-span-2">
+                    <InfoBlock icon={CheckCircle2} label="Solución" value={incident.solucion} />
+                  </div>
+                )}
+                <InfoBlock icon={User} label="Cerrado por" value={incident.cerrado_por_nombre || "—"} />
+                <InfoBlock icon={Clock} label="Fecha de cierre" value={incident.fecha_cierre ? formatDate(incident.fecha_cierre) : "—"} />
+              </>
+            )}
           </div>
-          {incident.estado === "resuelto" && (
-            <>
-              {incident.solucion && (
-                <div className="col-span-2">
-                  <InfoBlock icon={CheckCircle2} label="Solución" value={incident.solucion} />
-                </div>
-              )}
-              <InfoBlock icon={User} label="Cerrado por" value={incident.cerrado_por_nombre || "—"} />
-              <InfoBlock icon={Clock} label="Fecha de cierre" value={incident.fecha_cierre ? formatDate(incident.fecha_cierre) : "—"} />
-            </>
+
+          {/* FOTOS ADJUNTAS */}
+          {(incident as any).imagenes && (incident as any).imagenes.length > 0 && (
+            <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
+              <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-400 font-inter uppercase tracking-[0.3px] mb-3">
+                Fotos adjuntas
+              </p>
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                {(incident as any).imagenes.map((imgKey: string, index: number) => {
+                  // Usamos la variable de entorno, o localhost por defecto
+                  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+                  const imageUrl = `${apiUrl}/upload/incidente/${imgKey}`;
+                  
+                  return (
+                    <a 
+                      key={index} 
+                      href={imageUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="shrink-0"
+                      title="Clic para abrir en tamaño completo"
+                    >
+                      <img
+                        src={imageUrl}
+                        alt={`Foto ${index + 1}`}
+                        className="w-32 h-32 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity cursor-pointer shadow-sm"
+                      />
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </div>
 

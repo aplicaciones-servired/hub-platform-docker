@@ -13,7 +13,8 @@ export default function SubmenuItem({ label, onPress }: SubmenuItemProps) {
       style={{
         backgroundColor: "#D9D8EC",
         borderRadius: 6,
-        height: 34,
+        minHeight: 44,
+        paddingVertical: 10,
         justifyContent: "center",
         paddingHorizontal: 14,
         marginBottom: 6,
@@ -23,7 +24,7 @@ export default function SubmenuItem({ label, onPress }: SubmenuItemProps) {
       <Text
         style={{
           color: "#4B4F7A",
-          fontSize: 13,
+          fontSize: 15,
           fontFamily: "Inter_400Regular",
           fontWeight: "500",
         }}

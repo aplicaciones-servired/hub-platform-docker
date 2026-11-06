@@ -118,8 +118,9 @@ async function request<T>(
 ): Promise<T> {
   const isGet = !options.method || options.method === "GET";
 
+  const isFormData = options.body instanceof FormData;
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     "X-Auth-Scope": "user",
     // Cookies propias (mobile_*): sin esto, la PWA y el web compartirían
     // user_token/user_refreshToken en localhost (las cookies no distinguen puertos)
@@ -129,7 +130,6 @@ async function request<T>(
     ...(csrfToken && !isGet ? { "X-CSRF-Token": csrfToken } : {}),
     ...((options.headers as Record<string, string>) || {}),
   };
-
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs ?? REQUEST_TIMEOUT);
 
@@ -258,4 +258,6 @@ export const api = {
   get: <T>(endpoint: string, timeoutMs?: number) => request<T>(endpoint, undefined, timeoutMs),
   post: <T>(endpoint: string, body?: unknown) =>
     request<T>(endpoint, { method: "POST", body: JSON.stringify(body) }),
+  upload: <T>(endpoint: string, formData: FormData) =>
+    request<T>(endpoint, { method: "POST", body: formData }),
 };

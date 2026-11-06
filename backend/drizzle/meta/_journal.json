@@ -148,6 +148,27 @@
       "when": 1793217656820,
       "tag": "0020_heavy_magneto",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793718214328,
+      "tag": "0021_agregar_categoria_incidentes",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793737117756,
+      "tag": "0022_agregar_reportante_incidentes",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793810858182,
+      "tag": "0023_agregar_imagenes_incidentes",
+      "breakpoints": true
     }
   ]
 }
