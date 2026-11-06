@@ -1,5 +1,7 @@
-import { View, Text, TouchableOpacity, Image, Alert, Platform } from "react-native";
+import { useState } from "react";
+import { View, Text, TouchableOpacity, Image, Alert, Modal, Platform } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import * as Clipboard from "expo-clipboard";
 import { Camera, X } from "lucide-react-native";
 
 const MAX_FOTOS = 3;
@@ -12,9 +14,12 @@ interface FotosSelectorProps {
 // Recuadro para adjuntar hasta 3 fotos del problema (opcional)
 export default function FotosSelector({ fotos, onChange }: FotosSelectorProps) {
   const quedan = MAX_FOTOS - fotos.length;
+  const [selectorVisible, setSelectorVisible] = useState(false);
+  const [pasteError, setPasteError] = useState("");
 
   // Abre la galería (o el selector de archivos en el computador)
   const elegirDeGaleria = async () => {
+    setSelectorVisible(false);
     const resultado = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsMultipleSelection: true,
@@ -28,6 +33,7 @@ export default function FotosSelector({ fotos, onChange }: FotosSelectorProps) {
 
   // Abre la cámara del celular
   const tomarFoto = async () => {
+    setSelectorVisible(false);
     const permiso = await ImagePicker.requestCameraPermissionsAsync();
     if (!permiso.granted) {
       Alert.alert(
@@ -44,18 +50,24 @@ export default function FotosSelector({ fotos, onChange }: FotosSelectorProps) {
     onChange([...fotos, resultado.assets[0].uri].slice(0, MAX_FOTOS));
   };
 
-  // Al tocar el recuadro: en el computador abre los archivos;
-  // en el celular pregunta si quiere usar la cámara o la galería
-  const handleAdjuntar = () => {
-    if (Platform.OS === "web") {
-      elegirDeGaleria();
-      return;
+  const pegarImagen = async () => {
+    setPasteError("");
+    try {
+      const imagen = await Clipboard.getImageAsync({ format: "png" });
+      if (!imagen) {
+        setPasteError("No se encontró una imagen en el portapapeles.");
+        return;
+      }
+      onChange([...fotos, imagen.data].slice(0, MAX_FOTOS));
+      setSelectorVisible(false);
+    } catch {
+      setPasteError("No se pudo pegar la imagen. Revisa los permisos del portapapeles.");
     }
-    Alert.alert("Adjuntar foto", "¿De dónde quieres tomar la foto?", [
-      { text: "Tomar foto", onPress: tomarFoto },
-      { text: "Elegir de la galería", onPress: elegirDeGaleria },
-      { text: "Cancelar", style: "cancel" },
-    ]);
+  };
+
+  const handleAdjuntar = () => {
+    setPasteError("");
+    setSelectorVisible(true);
   };
 
   const quitarFoto = (index: number) => {
@@ -144,6 +156,80 @@ export default function FotosSelector({ fotos, onChange }: FotosSelectorProps) {
           Ya agregaste el máximo de 3 fotos. Toca la X roja para quitar una.
         </Text>
       )}
+
+      <Modal
+        visible={selectorVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectorVisible(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            padding: 24,
+            backgroundColor: "rgba(0,0,0,0.45)",
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderRadius: 16,
+              padding: 20,
+              gap: 10,
+              width: "100%",
+              maxWidth: 380,
+              alignSelf: "center",
+            }}
+          >
+            <Text style={{ color: "#1F2366", fontSize: 17, fontFamily: "Inter_700Bold" }}>
+              Adjuntar foto
+            </Text>
+            <Text style={{ color: "#6B7280", fontSize: 14, fontFamily: "Inter_400Regular", marginBottom: 4 }}>
+              Elige una opción para agregar una imagen.
+            </Text>
+            {Platform.OS !== "web" && (
+              <TouchableOpacity onPress={tomarFoto} style={actionButtonStyle}>
+                <Text style={actionButtonTextStyle}>Tomar foto</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={elegirDeGaleria} style={actionButtonStyle}>
+              <Text style={actionButtonTextStyle}>Elegir de la galería</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={pegarImagen} style={actionButtonStyle}>
+              <Text style={actionButtonTextStyle}>Pegar imagen</Text>
+            </TouchableOpacity>
+            {pasteError ? (
+              <Text accessibilityRole="alert" style={{ color: "#B91C1C", fontSize: 13 }}>
+                {pasteError}
+              </Text>
+            ) : null}
+            <TouchableOpacity
+              onPress={() => setSelectorVisible(false)}
+              style={{ alignItems: "center", paddingVertical: 10 }}
+            >
+              <Text style={{ color: "#6B7280", fontSize: 14, fontFamily: "Inter_700Bold" }}>
+                Cancelar
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
+
+const actionButtonStyle = {
+  backgroundColor: "#F3F2FA",
+  borderRadius: 10,
+  paddingVertical: 13,
+  paddingHorizontal: 14,
+  alignItems: "center" as const,
+};
+
+const actionButtonTextStyle = {
+  color: "#201A7A",
+  fontSize: 14,
+  fontFamily: "Inter_700Bold",
+  fontWeight: "700" as const,
+};

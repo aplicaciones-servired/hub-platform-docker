@@ -153,10 +153,11 @@ export default function ReportScreen() {
         
         for (const fotoUri of fotos) {
           const formData = new FormData();
-          const filename = fotoUri.split('/').pop() || `foto-${Date.now()}.jpg`;
+          const filename = fotoUri.startsWith("data:image/png")
+            ? `foto-portapapeles-${Date.now()}.png`
+            : fotoUri.split("/").pop() || `foto-${Date.now()}.jpg`;
 
-          if (Platform.OS === 'web') {
-            // En la web, la foto es un blob:http://... (necesitamos descargarla)
+          if (Platform.OS === "web" || fotoUri.startsWith("data:")) {
             const blob = await fetch(fotoUri).then(r => r.blob());
             formData.append('file', blob, filename);
           } else {
