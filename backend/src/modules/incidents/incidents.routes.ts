@@ -45,7 +45,7 @@ router.get("/technicians", superAdminOnly, getTechnicians);
 router.get("/agentes", adminOnly, getAgentes);
 router.get("/stats", adminOnly, validate(statsQuerySchema), getStats);
 router.get("/export-data", adminOnly, validate(exportQuerySchema), exportIncidents);
-router.get("/unread-count", superAdminOnly, unreadCount);
+router.get("/unread-count", unreadCount);
 router.patch("/mark-seen", superAdminOnly, markSeen);
 router.get("/", validate(listIncidentsQuerySchema), listIncidents);
 router.get("/:id", validate({ params: uuidParamsSchema }), getIncident);

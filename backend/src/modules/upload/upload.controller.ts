@@ -3,7 +3,8 @@ import path from "node:path";
 import fs from "node:fs";
 import { randomUUID } from "node:crypto";
 import { logger } from "../../lib/logger";
-import { subirArchivo } from "../../lib/s3";
+import { subirArchivo, obtenerArchivo } from "../../lib/s3";
+import { Readable } from "node:stream"; 
 
 const UPLOAD_DIR = path.resolve(process.cwd(), "uploads");
 const MAX_STORAGE_BYTES = 500 * 1024 * 1024;
@@ -130,5 +131,37 @@ export async function subirImagenIncidente(req: Request, res: Response): Promise
   } catch (err) {
     logger.error("Error subiendo imagen a MinIO", { error: (err as Error).message });
     res.status(503).json({ error: "No se pudo guardar la foto. Intenta de nuevo." });
+  }
+}
+export async function obtenerImagenIncidente(req: Request, res: Response): Promise<void> {
+  const { key } = req.params as { key: string };
+  
+  if (!key) {
+    res.status(400).json({ error: "Falta el nombre de la imagen" });
+    return;
+  }
+
+  try {
+    const { contenido, contentType } = await obtenerArchivo(key);
+    
+    if (!contenido) {
+      res.status(404).json({ error: "Imagen no encontrada" });
+      return;
+    }
+
+    res.setHeader("Content-Type", contentType || "image/jpeg");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    // Si el contenido es un Stream (Node.js), lo enviamos directo
+    if (contenido instanceof Readable) {
+      contenido.pipe(res);
+    } else if (typeof contenido === "object" && "transformToWebStream" in contenido) {
+      // Para versiones más nuevas del SDK de AWS
+      Readable.fromWeb((contenido as any).transformToWebStream()).pipe(res);
+    } else {
+      res.send(contenido);
+    }
+  } catch (error) {
+    logger.error("Error obteniendo imagen de MinIO", { error: (error as Error).message });
+    res.status(404).json({ error: "Imagen no encontrada" });
   }
 }

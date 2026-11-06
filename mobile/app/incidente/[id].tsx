@@ -5,10 +5,11 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Image, 
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Clock, User, Phone, MapPin, AlertCircle, Shield, MessageSquare, XCircle } from "lucide-react-native";
-import { api } from "../../src/services/api";
+import { api, API_URL } from "../../src/services/api";
 import AppHeader from "../../src/components/AppHeader";
 import { ESTADO_LABELS, ESTADO_COLORS, COLORS } from "../../src/constants/colors";
 import { getCategoriaLabel } from "../../src/constants/categorias";
@@ -28,6 +29,7 @@ interface IncidentDetail {
   agente: string | null;
   created_at: string;
   updated_at: string;
+  imagenes?: string[] | null; 
   comments: { id: string; autor: string; texto: string; fecha: string }[];
 }
 
@@ -43,6 +45,7 @@ export default function IncidentDetailScreen() {
   // la entrada en vez de apilar, así que el botón Volver quedaba muerto en ese
   // camino. Desde historial se llega con `push` y ahí sí funciona; con este
   // fallback ambos caminos hacen algo.
+  
   const goBack = () => {
     if (router.canGoBack()) {
       router.back();
@@ -145,7 +148,29 @@ export default function IncidentDetailScreen() {
           <InfoRow icon={Clock} label="Estado" value={status} />
           <InfoRow icon={Shield} label="Agente" value={incident.agente || "Sin asignar"} />
         </View>
-
+            {/* FOTOS ADJUNTAS */}
+        {incident.imagenes && incident.imagenes.length > 0 && (
+          <View className="bg-white rounded-2xl border border-gray-200 p-5">
+            <Text className="text-base font-bold text-[#1F2937] font-inter mb-3">
+              Fotos adjuntas
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {incident.imagenes.map((imgKey: string, index: number) => {
+                // Construimos la URL usando la base de la API
+                const imageUrl = `${API_URL}/upload/incidente/${encodeURIComponent(imgKey)}`;
+                return (
+                  <Image
+                    key={index}
+                    source={{ uri: imageUrl }}
+                    style={{ width: 160, height: 160, borderRadius: 10, marginRight: 10, backgroundColor: "#F3F4F6" }}
+                    resizeMode="cover"
+                  />
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+        {/* FIN FOTOS ADJUNTAS */}
         {/* Comments */}
         {incident.comments.length > 0 && (
           <View className="bg-white rounded-2xl border border-gray-200 p-5">

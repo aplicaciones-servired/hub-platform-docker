@@ -139,13 +139,52 @@ export default function ReportScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
+    const handleSubmit = async () => {
     if (!validate()) return;
 
     setLoading(true);
     setSubmitError("");
 
     try {
+      const uploadedImageNames: string[] = [];
+
+      // 1. SUBIR LAS FOTOS A MINIO
+      if (fotos.length > 0) {
+        console.log("Iniciando subida de fotos...", fotos);
+        
+        for (const fotoUri of fotos) {
+          const formData = new FormData();
+          const filename = fotoUri.split('/').pop() || `foto-${Date.now()}.jpg`;
+
+          if (Platform.OS === 'web') {
+            // En la web, la foto es un blob:http://... (necesitamos descargarla)
+            const blob = await fetch(fotoUri).then(r => r.blob());
+            formData.append('file', blob, filename);
+          } else {
+            // En el celular, la foto es una URI file://...
+            formData.append('file', {
+              uri: fotoUri,
+              name: filename,
+              type: 'image/jpeg',
+            } as any);
+          }
+
+          // Enviamos al backend
+          const uploadRes = await api.upload<{ url?: string; filename?: string; name?: string }>(
+            "/upload/incidente", 
+            formData
+          );
+          
+          console.log("Respuesta del servidor al subir foto:", uploadRes);
+
+          const savedName = (uploadRes as any).key || uploadRes.filename || uploadRes.url || uploadRes.name;
+          if (savedName) {
+            uploadedImageNames.push(savedName);
+          }
+        }
+      }
+
+      // 2. CREAR EL REPORTE CON LOS NOMBRES DE LAS FOTOS
       const incident = await api.post<{ id: string }>("/incidents", {
         nombre,
         documento,
@@ -155,6 +194,7 @@ export default function ReportScreen() {
         categoria,
         reportante_nombre: reportanteNombre.trim(),
         reportante_cedula: reportanteCedula.trim(),
+        imagenes: uploadedImageNames.length > 0 ? uploadedImageNames : undefined, // <--- Aquí se envían las fotos
       });
 
       router.replace({
@@ -162,6 +202,7 @@ export default function ReportScreen() {
         params: { ticketId: incident.id },
       });
     } catch (err) {
+      console.error("Error en handleSubmit:", err);
       setSubmitError(
         err instanceof Error ? err.message : "Error al enviar el reporte"
       );
@@ -169,7 +210,6 @@ export default function ReportScreen() {
       setLoading(false);
     }
   };
-
   return (
     <View className="flex-1 bg-[#F5F6FA]">
             <AppHeader 

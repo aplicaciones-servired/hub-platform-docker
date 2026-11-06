@@ -363,9 +363,6 @@ export async function updateIncident(
       updateData.fecha_cierre = new Date();
     }
 
-    // Condicionar el UPDATE por el estado leído: cierra la carrera entre el
-    // SELECT de validación y el UPDATE (dos PATCH concurrentes a "resuelto"
-    // ya no pueden ganar ambos y duplicar mensaje bot + push)
     const updateConditions = [eq(incidents.id, id), isNull(incidents.deleted_at)];
     if (estado && previousEstado !== undefined) {
       updateConditions.push(eq(incidents.estado, previousEstado));
@@ -378,7 +375,6 @@ export async function updateIncident(
       .returning();
 
     if (!updated) {
-      // Distinguir: ¿no existe, o cambió el estado debajo nuestro?
       if (estado && previousEstado !== undefined) {
         const [still] = await db
           .select({ estado: incidents.estado })
@@ -396,10 +392,35 @@ export async function updateIncident(
       return;
     }
 
-    // Notificar solo en la TRANSICIÓN a resuelto (no al re-guardar la solución)
+    // --- NUEVO: Notificar al técnico cuando se le asigna ---
+    if (tecnico_id && technician) {
+      try {
+        const techTokens = await db
+          .select({ token: pushTokens.token })
+          .from(pushTokens)
+          .where(eq(pushTokens.user_id, technician.id));
+
+        if (techTokens.length > 0) {
+          const shortId = id.replace(/-/g, "").slice(-8).toUpperCase();
+          const pushMessages = techTokens.map((t) => ({
+            to: t.token,
+            sound: "default" as const,
+            title: "Nuevo caso asignado",
+            body: `Se te asignó el ticket #TK-${shortId} en ${updated.punto_venta}.`,
+            data: { incidentId: id },
+          }));
+          await sendExpoPush(pushMessages);
+        }
+      } catch (pushErr) {
+        logger.error("Assignment notification error", { error: (pushErr as Error).message });
+      }
+    }
+    // --------------------------------------------------------
+
+    // Notificar solo en la TRANSICIÓN a resuelto
     if (estado === "resuelto" && previousEstado !== "resuelto") {
       const shortId = id.replace(/-/g, "").slice(-8).toUpperCase();
-          const botMessage = `Tu reporte #TK-${shortId} fue resuelto.${solucion ? `\n\n**Solución:** ${solucion}` : ""}`;
+      const botMessage = `Tu reporte #TK-${shortId} fue resuelto.${solucion ? `\n\n**Solución:** ${solucion}` : ""}`;
 
       try {
         await db.insert(messages).values({
@@ -409,7 +430,6 @@ export async function updateIncident(
           metadata: { ticketId: updated.id },
         });
 
-        // Send push notification
         const userTokens = await db
           .select({ token: pushTokens.token })
           .from(pushTokens)
@@ -427,7 +447,6 @@ export async function updateIncident(
           await sendExpoPush(pushMessages);
         }
       } catch (notifyErr) {
-        // La actualización ya se aplicó; un fallo de notificación no debe dar 500
         logger.error("Resolved notification error", { error: (notifyErr as Error).message });
       }
     }
@@ -743,18 +762,32 @@ export async function getStats(
 }
 
 export async function unreadCount(
-  _req: Request,
+  req: Request,
   res: Response
 ): Promise<void> {
   try {
+    const conditions = [
+      isNull(incidents.deleted_at),
+      eq(incidents.estado, "pendiente") // Contamos los que están pendientes
+    ];
+
+    // Si es Admin, cuenta los no vistos por el admin
+    if (req.user!.rol === "admin") {
+      conditions.push(eq(incidents.visto_por_admin, false));
+    } 
+    // Si es Técnico, cuenta los que tiene asignados a él
+    else if (req.user!.rol === "tecnico") {
+      conditions.push(eq(incidents.tecnico_id, req.user!.userId));
+    } 
+    // Si es un usuario normal, cuenta los suyos propios
+    else {
+      conditions.push(eq(incidents.user_id, req.user!.userId));
+    }
+
     const [result] = await db
       .select({ count: sql<number>`count(*)`.mapWith(Number) })
       .from(incidents)
-      .where(and(
-        eq(incidents.visto_por_admin, false),
-        eq(incidents.estado, "pendiente"),
-        isNull(incidents.deleted_at)
-      ));
+      .where(and(...conditions));
 
     res.json({ count: result.count });
   } catch (error) {
