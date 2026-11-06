@@ -157,9 +157,17 @@ export default function ReportScreen() {
             ? `foto-portapapeles-${Date.now()}.png`
             : fotoUri.split("/").pop() || `foto-${Date.now()}.jpg`;
 
-          if (Platform.OS === "web" || fotoUri.startsWith("data:")) {
+          if (Platform.OS === "web") {
             const blob = await fetch(fotoUri).then(r => r.blob());
             formData.append('file', blob, filename);
+          } else if (fotoUri.startsWith("data:image/")) {
+            const [metadata, base64] = fotoUri.split(",", 2);
+            const mimeType = metadata.match(/^data:(.*?);base64$/)?.[1];
+            if (!base64 || !mimeType) {
+              throw new Error("No se pudo procesar la imagen pegada");
+            }
+            const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+            formData.append("file", new Blob([bytes], { type: mimeType }), filename);
           } else {
             // En el celular, la foto es una URI file://...
             formData.append('file', {
