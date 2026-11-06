@@ -150,7 +150,6 @@ export default function ReportScreen() {
 
       // 1. SUBIR LAS FOTOS A MINIO
       if (fotos.length > 0) {
-        console.log("Iniciando subida de fotos...", fotos);
         
         for (const fotoUri of fotos) {
           const formData = new FormData();
@@ -175,7 +174,6 @@ export default function ReportScreen() {
             formData
           );
           
-          console.log("Respuesta del servidor al subir foto:", uploadRes);
 
           const savedName = (uploadRes as any).key || uploadRes.filename || uploadRes.url || uploadRes.name;
           if (savedName) {

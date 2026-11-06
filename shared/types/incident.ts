@@ -9,6 +9,7 @@ export interface Incident {
   punto_venta: string;
   telefono: string;
   descripcion: string;
+  imagenes?: string[] | null;
   categoria?: string | null;
   reportante_nombre?: string | null;
   reportante_cedula?: string | null;

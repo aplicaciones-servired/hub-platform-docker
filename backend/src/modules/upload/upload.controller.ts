@@ -134,10 +134,13 @@ export async function subirImagenIncidente(req: Request, res: Response): Promise
   }
 }
 export async function obtenerImagenIncidente(req: Request, res: Response): Promise<void> {
-  const { key } = req.params as { key: string };
-  
-  if (!key) {
-    res.status(400).json({ error: "Falta el nombre de la imagen" });
+  const key =
+    typeof req.query.key === "string"
+      ? req.query.key
+      : (req.params as { key?: string }).key;
+
+  if (!key || !/^incidentes\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.(jpg|png|webp)$/i.test(key)) {
+    res.status(400).json({ error: "Nombre de imagen inválido" });
     return;
   }
 
@@ -150,6 +153,7 @@ export async function obtenerImagenIncidente(req: Request, res: Response): Promi
     }
 
     res.setHeader("Content-Type", contentType || "image/jpeg");
+    res.setHeader("Cache-Control", "private, no-store");
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
     // Si el contenido es un Stream (Node.js), lo enviamos directo
     if (contenido instanceof Readable) {
