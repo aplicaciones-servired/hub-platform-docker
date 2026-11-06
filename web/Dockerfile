@@ -8,12 +8,10 @@ FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb
 WORKDIR /app
 ARG NEXT_PUBLIC_SUPPORT_WHATSAPP
 ARG NEXT_PUBLIC_SUPPORT_PHONE
-ARG NEXT_PUBLIC_COMPANY=SERVIRED
-ENV NEXT_PUBLIC_COMPANY=${NEXT_PUBLIC_COMPANY}
 COPY --from=deps /app/node_modules ./node_modules
 COPY web/ ./
 COPY shared/ ../shared/
-RUN node scripts/generate-icons.mjs && npm run build
+RUN npm run build
 
 FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2 AS runner
 

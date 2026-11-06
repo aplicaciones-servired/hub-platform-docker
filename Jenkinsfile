@@ -27,11 +27,6 @@ pipeline {
     }
 
     parameters {
-        choice(
-            name: 'COMPANY',
-            choices: ['SERVIRED', 'MULTIRED'],
-            description: 'Marca que se usará en los logos e iconos de web y móvil.'
-        )
         string(
             name: 'APP_VERSION',
             defaultValue: '',
@@ -89,12 +84,10 @@ pipeline {
                     env.GIT_COMMIT = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
                     env.IMAGE_TAG = params.APP_VERSION?.trim() ?: env.GIT_COMMIT.take(12)
                     env.DRY_RUN = params.DRY_RUN.toString()
-                    env.COMPANY = params.COMPANY
                     currentBuild.displayName = "#${env.BUILD_NUMBER} ${env.IMAGE_TAG}"
 
                     echo "Commit    : ${env.GIT_COMMIT}"
                     echo "Tag       : ${env.IMAGE_TAG}"
-                    echo "Empresa   : ${env.COMPANY}"
                     echo "Destino   : ${env.DEPLOY_DIR} (proyecto compose '${env.COMPOSE_PROJECT}')"
 
                     sh '''#!/bin/bash
@@ -214,11 +207,9 @@ pipeline {
                     build_img api    backend  backend/Dockerfile
                     build_img web    .        web/Dockerfile \
                         "NEXT_PUBLIC_SUPPORT_WHATSAPP=$SUPPORT_WHATSAPP" \
-                        "NEXT_PUBLIC_SUPPORT_PHONE=$SUPPORT_PHONE" \
-                        "NEXT_PUBLIC_COMPANY=$COMPANY"
+                        "NEXT_PUBLIC_SUPPORT_PHONE=$SUPPORT_PHONE"
                     build_img mobile .        mobile/Dockerfile.web \
-                        "EXPO_PUBLIC_API_URL=/api" \
-                        "EXPO_PUBLIC_COMPANY=$COMPANY"
+                        "EXPO_PUBLIC_API_URL=/api"
 
                     # Comprobación de que la imagen existe y es usable: un build
                     # que "termina bien" pero no deja capa utilizable falla
@@ -320,7 +311,6 @@ pipeline {
                         EXPO_ACCESS_TOKEN="$EXPO_ACCESS_TOKEN" \
                         NEXT_PUBLIC_SUPPORT_WHATSAPP="$SUPPORT_WHATSAPP" \
                         NEXT_PUBLIC_SUPPORT_PHONE="$SUPPORT_PHONE" \
-                        COMPANY="$COMPANY" \
                         DEPLOY_DIR="$DEPLOY_DIR" \
                         "$DEPLOY_DIR/deploy/render-env.sh"
 

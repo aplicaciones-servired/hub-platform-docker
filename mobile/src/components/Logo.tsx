@@ -1,18 +1,14 @@
 import { View, Image, Text } from "react-native";
 
-const COMPANY = process.env.EXPO_PUBLIC_COMPANY === "MULTIRED" ? "MULTIRED" : "SERVIRED";
-
 const LOGO_SOURCE = (() => {
   try {
-    return COMPANY === "MULTIRED"
-      ? require("../../assets/multired-logo.png")
-      : require("../../assets/servired-logo.png");
+    return require("../../assets/logo.png");
   } catch {
     return null;
   }
 })();
 
-const LOGO_ASPECT = COMPANY === "MULTIRED" ? 918 / 266 : 834 / 277;
+const LOGO_ASPECT = 918 / 266;
 
 interface LogoProps {
   size?: number;
@@ -26,7 +22,6 @@ export default function Logo({ size = 72 }: LogoProps) {
     return (
       <Image
         source={LOGO_SOURCE}
-        accessibilityLabel={`Logo ${COMPANY}`}
         style={{
           width: imageWidth,
           height: imageHeight,

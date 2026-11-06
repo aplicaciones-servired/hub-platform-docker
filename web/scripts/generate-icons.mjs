@@ -2,16 +2,9 @@ import sharp from "sharp";
 import fs from "fs";
 import path from "path";
 
-const company = process.env.NEXT_PUBLIC_COMPANY || "SERVIRED";
-const logoFile = {
-  SERVIRED: "servired-logo.png",
-  MULTIRED: "multired-logo.png",
-}[company];
-if (!logoFile) {
-  throw new Error(`Empresa no soportada para los iconos: ${company}`);
-}
-
-const LOGO_SRC = path.join(process.cwd(), "src", "assets", logoFile);
+// Lockup horizontal de marca: se centra sobre un lienzo cuadrado blanco.
+// El PNG de origen es el logo horizontal; los iconos deben ser cuadrados.
+const LOGO_SRC = path.join(process.cwd(), "src", "assets", "servired.png");
 const LOGO_WIDTH_RATIO = 0.82;
 
 const SIZES = [
@@ -36,7 +29,7 @@ async function generateIcons() {
     const logoHeight = Math.round(logoWidth * aspect);
 
     const logo = await sharp(LOGO_SRC)
-      .resize({ width: logoWidth, height: logoHeight, fit: "fill" })
+      .resize({ width: logoWidth, height: logoHeight, fit: "contain" })
       .png()
       .toBuffer();
 
