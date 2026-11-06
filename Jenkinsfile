@@ -241,7 +241,11 @@ pipeline {
                     string(credentialsId: 'hub-postgres-password',    variable: 'POSTGRES_PASSWORD'),
                     string(credentialsId: 'hub-jwt-secret',           variable: 'JWT_SECRET'),
                     string(credentialsId: 'hub-jwt-refresh-secret',   variable: 'JWT_REFRESH_SECRET'),
-                    string(credentialsId: 'hub-seed-admin-password',  variable: 'SEED_ADMIN_PASSWORD')
+                    string(credentialsId: 'hub-seed-admin-password',  variable: 'SEED_ADMIN_PASSWORD'),
+                    string(credentialsId: 'hub-s3-endpoint',          variable: 'S3_ENDPOINT'),
+                    string(credentialsId: 'hub-s3-bucket',            variable: 'S3_BUCKET'),
+                    string(credentialsId: 'hub-s3-access-key',        variable: 'S3_ACCESS_KEY'),
+                    string(credentialsId: 'hub-s3-secret-key',        variable: 'S3_SECRET_KEY')
                 ]) {
                     sh '''#!/bin/bash
                         set -euo pipefail
@@ -310,10 +314,6 @@ pipeline {
                         #    esto: el plugin falla igual si el ID no existe.
                         EXTERNAL_SYSTEMS_URL="$(read_env "$DEPLOY_DIR/.env" EXTERNAL_SYSTEMS_URL)"
                         EXPO_ACCESS_TOKEN="$(read_env "$DEPLOY_DIR/.env" EXPO_ACCESS_TOKEN)"
-                        S3_ENDPOINT="$(read_env "$DEPLOY_DIR/.env" S3_ENDPOINT)"
-                        S3_BUCKET="$(read_env "$DEPLOY_DIR/.env" S3_BUCKET)"
-                        S3_ACCESS_KEY="$(read_env "$DEPLOY_DIR/.env" S3_ACCESS_KEY)"
-                        S3_SECRET_KEY="$(read_env "$DEPLOY_DIR/.env" S3_SECRET_KEY)"
 
                         APP_VERSION="$IMAGE_TAG" \
                         POSTGRES_USER=hub_admin \

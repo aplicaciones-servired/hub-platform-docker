@@ -13,10 +13,10 @@
 #
 #  Variables requeridas (secretos, desde credenciales de Jenkins):
 #      POSTGRES_PASSWORD, JWT_SECRET, JWT_REFRESH_SECRET, SEED_ADMIN_PASSWORD
-#  Variables opcionales:
+#      S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY, S3_SECRET_KEY
+# Variables opcionales:
 #      POSTGRES_USER, POSTGRES_DB, JWT_EXPIRES_IN, MAX_LOGIN_ATTEMPTS,
 #      EXTERNAL_SYSTEMS_URL, EXPO_ACCESS_TOKEN, LOG_LEVEL,
-#      S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY, S3_SECRET_KEY,
 #      APP_DASHBOARD_DOMAIN, APP_MOBILE_DOMAIN,
 #      NEXT_PUBLIC_SUPPORT_WHATSAPP, NEXT_PUBLIC_SUPPORT_PHONE, COMPANY
 # ════════════════════════════════════════════════════════════════════════════
@@ -45,7 +45,8 @@ MOBILE_DOMAIN="${APP_MOBILE_DOMAIN:-app.serviredgane.cloud}"
 fail() { echo "ERROR: $1" >&2; exit 1; }
 
 # ── Validación de secretos ────────────────────────────────────────────────
-for var in POSTGRES_PASSWORD JWT_SECRET JWT_REFRESH_SECRET SEED_ADMIN_PASSWORD; do
+for var in POSTGRES_PASSWORD JWT_SECRET JWT_REFRESH_SECRET SEED_ADMIN_PASSWORD \
+  S3_ENDPOINT S3_BUCKET S3_ACCESS_KEY S3_SECRET_KEY; do
   eval "value=\${$var:-}"
   [ -n "$value" ] || fail "$var no llego desde Jenkins (credencial vacia o ausente)"
 done
@@ -88,8 +89,7 @@ cat > "$TMP_FILE" <<'STATIC'
 # ── API ──────────────────────────────────────────────────────────────────
 # ── Seed del admin (documento 123456789); solo si la BD aun no tiene admin ─
 # ── Integraciones (vacias = modulo deshabilitado) ────────────────────────
-# Las credenciales S3/MinIO son opcionales; se conservan desde el .env previo
-# y las rutas de imágenes fallan explícitamente si el almacenamiento no está configurado.
+# Las variables S3/MinIO se inyectan desde credenciales de Jenkins.
 # ── Build args de los frontends (publicables: viajan en el bundle) ───────
 # EXPO_PUBLIC_API_URL llega como build arg a mobile/Dockerfile.web (tiene
 # fail-fast si llega vacio). El navegador usa la ruta relativa /api.
