@@ -138,16 +138,24 @@ export default function IncidentDetailScreen() {
           </Text>
         </View>
 
-        {/* Info Grid */}
+  
+           {/* Info Grid */}
         <View className="bg-white rounded-2xl border border-gray-200 p-5 gap-4">
-          <InfoRow icon={User} label="Reportado por" value={incident.reportante_nombre || incident.nombre} />
-          <InfoRow icon={User} label="Cédula" value={incident.reportante_cedula || incident.documento} />
+          {/* Nuevos campos del Solicitante */}
+          <InfoRow icon={User} label="Nombre del Solicitante" value={(incident as any).reportante_nombre || "No registrado"} />
+          <InfoRow icon={User} label="Cédula del Solicitante" value={(incident as any).reportante_cedula || "No registrado"} />
+
+          {/* Campos del Punto de Venta y del Ticket */}
+          <InfoRow icon={User} label="Usuario del Punto" value={incident.nombre} />
+          <InfoRow icon={User} label="Documento del Punto" value={incident.documento} />
           <InfoRow icon={Phone} label="Teléfono" value={incident.telefono || "—"} />
           <InfoRow icon={MapPin} label="Punto de Venta" value={incident.punto_venta} />
           <InfoRow icon={AlertCircle} label="Tipo de problema" value={getCategoriaLabel(incident.categoria ?? undefined)} />
+          <InfoRow icon={AlertCircle} label="Urgencia" value={incident.urgencia.charAt(0).toUpperCase() + incident.urgencia.slice(1)} />
           <InfoRow icon={Clock} label="Estado" value={status} />
-          <InfoRow icon={Shield} label="Agente" value={incident.agente || "Sin asignar"} />
+          <InfoRow icon={Shield} label="Agente Asignado" value={incident.agente || "Sin asignar"} />
         </View>
+
             {/* FOTOS ADJUNTAS */}
         {incident.imagenes && incident.imagenes.length > 0 && (
           <View className="bg-white rounded-2xl border border-gray-200 p-5">

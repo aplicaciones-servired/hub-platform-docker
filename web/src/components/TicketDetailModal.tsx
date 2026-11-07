@@ -57,16 +57,22 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
           </button>
         </div>
 
-             {/* Body */}
+        {/* Body */}
         <div className="px-6 py-5 flex flex-col gap-6">
           {/* Información en cuadrícula */}
           <div className="grid grid-cols-2 gap-4">
-            <InfoBlock icon={User} label="Solicitante" value={incident.nombre} />
-            <InfoBlock icon={User} label="Documento" value={incident.documento} />
+            {/* Datos del Solicitante */}
+            <InfoBlock icon={User} label="Nombre del Solicitante" value={(incident as any).reportante_nombre || "No registrado"} />
+            <InfoBlock icon={User} label="Cédula del Solicitante" value={(incident as any).reportante_cedula || "No registrado"} />
+            
+            {/* Datos del Punto de Venta */}
+            <InfoBlock icon={User} label="Usuario del Punto" value={incident.nombre} />
+            <InfoBlock icon={User} label="Documento del Punto" value={incident.documento} />
             <InfoBlock icon={Phone} label="Teléfono" value={incident.telefono || "—"} />
             <InfoBlock icon={MapPin} label="Punto de Venta" value={incident.punto_venta} />
             <InfoBlock icon={AlertCircle} label="Urgencia" value={incident.urgencia.charAt(0).toUpperCase() + incident.urgencia.slice(1)} />
             <InfoBlock icon={Clock} label="Estado" value={status} />
+            
             <div className="col-span-2">
               <InfoBlock icon={User} label="Agente Asignado" value={incident.agente || "Sin asignar"} />
             </div>
@@ -91,24 +97,11 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
               </p>
               <div className="flex gap-3 overflow-x-auto pb-2">
                 {(incident as any).imagenes.map((imgKey: string, index: number) => {
-                  // Usamos la variable de entorno, o localhost por defecto
                   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
                   const imageUrl = `${apiUrl}/upload/incidente/${imgKey}`;
-                  
                   return (
-                    <a 
-                      key={index} 
-                      href={imageUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="shrink-0"
-                      title="Clic para abrir en tamaño completo"
-                    >
-                      <img
-                        src={imageUrl}
-                        alt={`Foto ${index + 1}`}
-                        className="w-32 h-32 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity cursor-pointer shadow-sm"
-                      />
+                    <a key={index} href={imageUrl} target="_blank" rel="noopener noreferrer" className="shrink-0" title="Clic para abrir en tamaño completo">
+                      <img src={imageUrl} alt={`Foto ${index + 1}`} className="w-32 h-32 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity cursor-pointer shadow-sm" />
                     </a>
                   );
                 })}
@@ -116,6 +109,8 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
             </div>
           )}
         </div>
+
+          
 
         {/* Footer */}
         <div className="bg-[#F8F8FC] dark:bg-gray-950 px-6 py-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
