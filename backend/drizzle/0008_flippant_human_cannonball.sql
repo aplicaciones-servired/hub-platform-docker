@@ -1,4 +1,4 @@
-ALTER TYPE "public"."rol" ADD VALUE 'tecnico';--> statement-breakpoint
+ALTER TYPE "public"."rol" ADD VALUE IF NOT EXISTS 'tecnico';--> statement-breakpoint
 CREATE TABLE "puntos_venta" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"nombre" varchar(150) NOT NULL,

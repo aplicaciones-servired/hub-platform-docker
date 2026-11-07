@@ -6,6 +6,7 @@ import { logger } from "../../lib/logger";
 import { env } from "../../config/env";
 import { escapeLike } from "../../lib/like";
 import { colombiaDayStart, colombiaDayEnd } from "../../lib/dates";
+import { isAdminRole } from "../../middlewares/admin";
 
 type ExpoPushMessage = { to: string } & Record<string, unknown>;
 
@@ -281,12 +282,8 @@ export async function updateIncident(
     const { id } = req.params as { id: string };
     const { estado, agente, tecnico_id, solucion, imagen_url } = req.body;
 
-    if (tecnico_id !== undefined && req.user!.rol !== "admin") {
-      res.status(403).json({ error: "Solo un administrador puede asignar técnicos" });
-      return;
-    }
-    if (agente !== undefined && req.user!.rol !== "admin") {
-      res.status(403).json({ error: "Solo un administrador puede asignar técnicos" });
+    if ((tecnico_id !== undefined || agente !== undefined) && !isAdminRole(req.user!.rol)) {
+      res.status(403).json({ error: "Solo un administrador o técnico puede asignar técnicos" });
       return;
     }
 
@@ -310,19 +307,6 @@ export async function updateIncident(
         return;
       }
       technician = activeTechnician;
-    }
-
-    if (req.user!.rol === "tecnico") {
-      const [assignedIncident] = await db
-        .select({ tecnico_id: incidents.tecnico_id })
-        .from(incidents)
-        .where(and(eq(incidents.id, id), isNull(incidents.deleted_at)))
-        .limit(1);
-
-      if (!assignedIncident || assignedIncident.tecnico_id !== req.user!.userId) {
-        res.status(403).json({ error: "Solo puedes modificar tickets asignados a ti" });
-        return;
-      }
     }
 
     let previousEstado: "pendiente" | "en_proceso" | "resuelto" | undefined;
@@ -478,10 +462,7 @@ export async function addComment(
     }
 
     const canComment =
-      req.user!.rol === "admin" ||
-      (req.user!.rol === "tecnico"
-        ? incident.tecnico_id === req.user!.userId
-        : incident.user_id === req.user!.userId);
+      isAdminRole(req.user!.rol) || incident.user_id === req.user!.userId;
     if (!canComment) {
       res.status(403).json({ error: "No puedes comentar incidentes de otros usuarios" });
       return;

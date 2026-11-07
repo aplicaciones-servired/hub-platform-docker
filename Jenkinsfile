@@ -27,6 +27,11 @@ pipeline {
     }
 
     parameters {
+        choice(
+            name: 'COMPANY',
+            choices: ['SERVIRED', 'MULTIRED'],
+            description: 'Marca que se usará en los logos e iconos de web y móvil.'
+        )
         string(
             name: 'APP_VERSION',
             defaultValue: '',
@@ -84,10 +89,12 @@ pipeline {
                     env.GIT_COMMIT = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
                     env.IMAGE_TAG = params.APP_VERSION?.trim() ?: env.GIT_COMMIT.take(12)
                     env.DRY_RUN = params.DRY_RUN.toString()
+                    env.COMPANY = params.COMPANY
                     currentBuild.displayName = "#${env.BUILD_NUMBER} ${env.IMAGE_TAG}"
 
                     echo "Commit    : ${env.GIT_COMMIT}"
                     echo "Tag       : ${env.IMAGE_TAG}"
+                    echo "Empresa   : ${env.COMPANY}"
                     echo "Destino   : ${env.DEPLOY_DIR} (proyecto compose '${env.COMPOSE_PROJECT}')"
 
                     sh '''#!/bin/bash
@@ -207,9 +214,11 @@ pipeline {
                     build_img api    backend  backend/Dockerfile
                     build_img web    .        web/Dockerfile \
                         "NEXT_PUBLIC_SUPPORT_WHATSAPP=$SUPPORT_WHATSAPP" \
-                        "NEXT_PUBLIC_SUPPORT_PHONE=$SUPPORT_PHONE"
+                        "NEXT_PUBLIC_SUPPORT_PHONE=$SUPPORT_PHONE" \
+                        "NEXT_PUBLIC_COMPANY=$COMPANY"
                     build_img mobile .        mobile/Dockerfile.web \
-                        "EXPO_PUBLIC_API_URL=/api"
+                        "EXPO_PUBLIC_API_URL=/api" \
+                        "EXPO_PUBLIC_COMPANY=$COMPANY"
 
                     # Comprobación de que la imagen existe y es usable: un build
                     # que "termina bien" pero no deja capa utilizable falla
@@ -232,7 +241,11 @@ pipeline {
                     string(credentialsId: 'hub-postgres-password',    variable: 'POSTGRES_PASSWORD'),
                     string(credentialsId: 'hub-jwt-secret',           variable: 'JWT_SECRET'),
                     string(credentialsId: 'hub-jwt-refresh-secret',   variable: 'JWT_REFRESH_SECRET'),
-                    string(credentialsId: 'hub-seed-admin-password',  variable: 'SEED_ADMIN_PASSWORD')
+                    string(credentialsId: 'hub-seed-admin-password',  variable: 'SEED_ADMIN_PASSWORD'),
+                    string(credentialsId: 'hub-s3-endpoint',          variable: 'S3_ENDPOINT'),
+                    string(credentialsId: 'hub-s3-bucket',            variable: 'S3_BUCKET'),
+                    string(credentialsId: 'hub-s3-access-key',        variable: 'S3_ACCESS_KEY'),
+                    string(credentialsId: 'hub-s3-secret-key',        variable: 'S3_SECRET_KEY')
                 ]) {
                     sh '''#!/bin/bash
                         set -euo pipefail
@@ -309,8 +322,13 @@ pipeline {
                         APP_MOBILE_DOMAIN="$APP_MOBILE_DOMAIN" \
                         EXTERNAL_SYSTEMS_URL="$EXTERNAL_SYSTEMS_URL" \
                         EXPO_ACCESS_TOKEN="$EXPO_ACCESS_TOKEN" \
+                        S3_ENDPOINT="$S3_ENDPOINT" \
+                        S3_BUCKET="$S3_BUCKET" \
+                        S3_ACCESS_KEY="$S3_ACCESS_KEY" \
+                        S3_SECRET_KEY="$S3_SECRET_KEY" \
                         NEXT_PUBLIC_SUPPORT_WHATSAPP="$SUPPORT_WHATSAPP" \
                         NEXT_PUBLIC_SUPPORT_PHONE="$SUPPORT_PHONE" \
+                        COMPANY="$COMPANY" \
                         DEPLOY_DIR="$DEPLOY_DIR" \
                         "$DEPLOY_DIR/deploy/render-env.sh"
 

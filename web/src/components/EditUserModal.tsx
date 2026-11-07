@@ -7,11 +7,12 @@ import { logger } from "@/lib/logger";
 
 interface EditUserModalProps {
   user: ApiUser;
+  canAssignAdminRole: boolean;
   onClose: () => void;
   onSaved: (updated: ApiUser) => void;
 }
 
-export default function EditUserModal({ user, onClose, onSaved }: EditUserModalProps) {
+export default function EditUserModal({ user, canAssignAdminRole, onClose, onSaved }: EditUserModalProps) {
   const [editNombre, setEditNombre] = useState(user.nombre);
   const [editDocumento, setEditDocumento] = useState(user.documento);
   const [editRole, setEditRole] = useState<string>(user.rol);
@@ -75,7 +76,7 @@ export default function EditUserModal({ user, onClose, onSaved }: EditUserModalP
           >
             <option value="tecnico">Técnico</option>
             <option value="asesor">Asesor</option>
-            <option value="admin">Administrador</option>
+            {canAssignAdminRole && <option value="admin">Administrador</option>}
             <option value="user">Usuario</option>
           </select>
         </div>

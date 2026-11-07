@@ -1,5 +1,9 @@
 import type { ApiUser } from "@hub/shared/types/user";
 
+export function isAdminRole(rol: string | null | undefined): boolean {
+  return rol === "admin" || rol === "tecnico";
+}
+
 function toDateKey(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");

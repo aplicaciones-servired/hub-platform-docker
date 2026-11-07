@@ -12,7 +12,7 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
-import logoImg from "@/assets/logo.png";
+import { COMPANY_LOGO, COMPANY_NAME } from "@/lib/brand";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSearchParams } from "next/navigation";
 
@@ -61,8 +61,8 @@ export default function Sidebar({ onLogout }: SidebarProps) {
         <div className="flex items-center justify-between px-5 py-5 pb-6 gap-2.5">
           <div className="flex items-center gap-2.5">
             <Image
-              src={logoImg}
-              alt="Servired"
+              src={COMPANY_LOGO}
+              alt={`Logo ${COMPANY_NAME}`}
               width={82}
               height={24}
               className="w-auto h-[24px] shrink-0"

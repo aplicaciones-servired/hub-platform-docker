@@ -4,12 +4,12 @@ CREATE INDEX "incidents_tecnico_id_idx" ON "incidents" USING btree ("tecnico_id"
 WITH "unique_technicians" AS (
   SELECT u."id", u."nombre"
   FROM "users" AS u
-  WHERE u."rol" = 'tecnico'
+  WHERE u."rol"::text = 'tecnico'
     AND u."deleted_at" IS NULL
     AND NOT EXISTS (
       SELECT 1
       FROM "users" AS other
-      WHERE other."rol" = 'tecnico'
+      WHERE other."rol"::text = 'tecnico'
         AND other."deleted_at" IS NULL
         AND other."nombre" = u."nombre"
         AND other."id" <> u."id"

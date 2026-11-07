@@ -1,17 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 
-export function adminOnly(req: Request, res: Response, next: NextFunction): void {
-  if (!req.user || (req.user.rol !== "admin" && req.user.rol !== "tecnico")) {
-    res.status(403).json({ error: "Acceso denegado. Se requiere rol admin o técnico." });
-    return;
-  }
-
-  next();
+export function isAdminRole(rol: string | undefined): boolean {
+  return rol === "admin" || rol === "tecnico";
 }
 
-export function superAdminOnly(req: Request, res: Response, next: NextFunction): void {
-  if (!req.user || req.user.rol !== "admin") {
-    res.status(403).json({ error: "Acceso denegado. Se requiere rol admin." });
+export function adminOnly(req: Request, res: Response, next: NextFunction): void {
+  if (!req.user || !isAdminRole(req.user.rol)) {
+    res.status(403).json({ error: "Acceso denegado. Se requiere rol admin o técnico." });
     return;
   }
 

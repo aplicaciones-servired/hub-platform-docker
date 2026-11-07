@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Save, X, RefreshCw, ShieldBan, Cloud, Server, Database } from "lucide-react";
+import { Save, X, RefreshCw, Cloud, Server, Database } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import { useToast } from "@/contexts/ToastContext";
@@ -85,8 +84,6 @@ function loadSettings(): CompanySettings {
 }
 
 export default function SettingsPage() {
-  const { user } = useAuth();
-  const isTecnico = user?.rol === "tecnico";
   const [activeTab, setActiveTab] = useState("empresa");
   const { theme, setTheme } = useTheme();
   const cacheStats = getCacheStats();
@@ -160,19 +157,9 @@ export default function SettingsPage() {
       <SettingsTabBar active={activeTab} onChange={setActiveTab} />
 
       {/* Tab Content - Empresa */}
-      {isTecnico && (
-        <div className="mt-7 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6 flex items-center gap-4">
-          <ShieldBan size={24} color="#D97706" strokeWidth={2} />
-          <p className="text-[14px] text-amber-700 dark:text-amber-400 font-inter">
-            No tienes permisos para modificar la configuración. Contacta a un administrador.
-          </p>
-        </div>
-      )}
-
       {activeTab === "empresa" && (
         <SettingsEmpresaTab
           settings={settings}
-          isTecnico={isTecnico}
           onSettingsChange={handleSettingsChange}
         />
       )}
@@ -208,7 +195,7 @@ export default function SettingsPage() {
       )}
 
       {/* Action Buttons */}
-      {activeTab === "empresa" && !isTecnico && (
+      {activeTab === "empresa" && (
         <div className="flex justify-end gap-3 mt-2">
           <button
             onClick={handleDiscard}

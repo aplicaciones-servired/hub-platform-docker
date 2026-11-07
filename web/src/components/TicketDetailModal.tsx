@@ -4,6 +4,7 @@ import { X, Clock, User, Phone, MapPin, AlertCircle, CheckCircle2 } from "lucide
 import type { Incident } from "@hub/shared/types/incident";
 import { PRIORITY_BADGES, STATUS_BADGES } from "@/lib/styles";
 import { formatDate, ESTADO_LABELS, formatTicketId } from "@/lib/utils";
+import IncidentPhoto from "@/components/IncidentPhoto";
 
 interface TicketDetailModalProps {
   incident: Incident | null;
@@ -90,21 +91,19 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
           </div>
 
           {/* FOTOS ADJUNTAS */}
-          {(incident as any).imagenes && (incident as any).imagenes.length > 0 && (
+          {incident.imagenes && incident.imagenes.length > 0 && (
             <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
               <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-400 font-inter uppercase tracking-[0.3px] mb-3">
                 Fotos adjuntas
               </p>
               <div className="flex gap-3 overflow-x-auto pb-2">
-                {(incident as any).imagenes.map((imgKey: string, index: number) => {
-                  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-                  const imageUrl = `${apiUrl}/upload/incidente/${imgKey}`;
-                  return (
-                    <a key={index} href={imageUrl} target="_blank" rel="noopener noreferrer" className="shrink-0" title="Clic para abrir en tamaño completo">
-                      <img src={imageUrl} alt={`Foto ${index + 1}`} className="w-32 h-32 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity cursor-pointer shadow-sm" />
-                    </a>
-                  );
-                })}
+                {incident.imagenes.map((imgKey, index) => (
+                  <IncidentPhoto
+                    key={imgKey}
+                    imageKey={imgKey}
+                    alt={`Foto ${index + 1}`}
+                  />
+                ))}
               </div>
             </div>
           )}

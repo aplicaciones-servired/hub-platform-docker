@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import Image from "next/image";
 import { Lock, Eye, EyeOff, LogIn, IdCard } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import logoImg from "@/assets/logo.png";
+import { COMPANY_LOGO, COMPANY_NAME } from "@/lib/brand";
 
 export default function LoginPage() {
   const { login, loading } = useAuth();
@@ -55,8 +55,8 @@ export default function LoginPage() {
       <div className="bg-white dark:bg-gray-900 w-[420px] rounded-xl border border-gray-200 dark:border-gray-700 shadow-[0_8px_24px_rgba(0,0,0,0.08)] p-9">
         <div className="flex justify-center mb-6">
           <Image
-            src={logoImg}
-            alt="Servired"
+            src={COMPANY_LOGO}
+            alt={`Logo ${COMPANY_NAME}`}
             width={220}
             height={64}
             priority

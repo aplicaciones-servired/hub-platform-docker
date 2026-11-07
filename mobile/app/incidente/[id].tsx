@@ -5,12 +5,12 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Image, 
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Clock, User, Phone, MapPin, AlertCircle, Shield, MessageSquare, XCircle } from "lucide-react-native";
-import { api, API_URL } from "../../src/services/api";
+import { api } from "../../src/services/api";
 import AppHeader from "../../src/components/AppHeader";
+import IncidentPhoto from "../../src/components/IncidentPhoto";
 import { ESTADO_LABELS, ESTADO_COLORS, COLORS } from "../../src/constants/colors";
 import { getCategoriaLabel } from "../../src/constants/categorias";
 import { formatTicketId, formatDate } from "../../src/lib/format";
@@ -164,14 +164,11 @@ export default function IncidentDetailScreen() {
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {incident.imagenes.map((imgKey: string, index: number) => {
-                // Construimos la URL usando la base de la API
-                const imageUrl = `${API_URL}/upload/incidente/${encodeURIComponent(imgKey)}`;
                 return (
-                  <Image
+                  <IncidentPhoto
                     key={index}
-                    source={{ uri: imageUrl }}
+                    imageKey={imgKey}
                     style={{ width: 160, height: 160, borderRadius: 10, marginRight: 10, backgroundColor: "#F3F4F6" }}
-                    resizeMode="cover"
                   />
                 );
               })}

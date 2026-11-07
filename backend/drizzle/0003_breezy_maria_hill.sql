@@ -1,1 +1,1 @@
-ALTER TYPE "public"."rol" ADD VALUE 'asesor' BEFORE 'admin';
+ALTER TYPE "public"."rol" ADD VALUE IF NOT EXISTS 'asesor' BEFORE 'admin';

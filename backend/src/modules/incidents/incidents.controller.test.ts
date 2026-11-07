@@ -354,15 +354,35 @@ describe("Incidents Controller", () => {
       });
     });
 
-    it("technician cannot change assignments", async () => {
+    it("technician can change assignments", async () => {
+      const technicianSelect = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ id: "tech-2", nombre: "Técnico Dos" }]),
+          }),
+        }),
+      };
+      const updateChain = {
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([{ id: "incident-1", tecnico_id: "tech-2", agente: "Técnico Dos" }]),
+          }),
+        }),
+      };
+      (db.select as ReturnType<typeof vi.fn>).mockReturnValue(technicianSelect);
+      (db.update as ReturnType<typeof vi.fn>).mockReturnValue(updateChain);
+
       req.user = { userId: "tech-1", rol: "tecnico" } as any;
       req.params = { id: "incident-1" };
       req.body = { tecnico_id: "tech-2" };
 
       await updateIncident(req as Request, res as Response);
 
-      expect(statusMock).toHaveBeenCalledWith(403);
-      expect(db.update).not.toHaveBeenCalled();
+      expect(statusMock).not.toHaveBeenCalled();
+      expect(updateChain.set).toHaveBeenCalledWith(expect.objectContaining({
+        tecnico_id: "tech-2",
+        agente: "Técnico Dos",
+      }));
     });
   });
 

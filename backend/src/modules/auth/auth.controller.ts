@@ -32,7 +32,7 @@ function getClientFromRequest(req: Request): AuthClient {
 const DUMMY_HASH = "$2a$12$xo2yWONym/BmrASiewX2luAQaaXLPGWevMtgLgJm3gbTrRajG5GNy";
 
 // Minutos de bloqueo automático tras agotar intentos (bloqueo manual de admin = permanente)
-const LOCKOUT_MINUTES = 0;
+const LOCKOUT_MINUTES = 15;
 
 /**
  * Persiste la sesión de refresh token (hash sha256, nunca el token en claro).

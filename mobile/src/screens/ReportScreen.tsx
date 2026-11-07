@@ -150,16 +150,24 @@ export default function ReportScreen() {
 
       // 1. SUBIR LAS FOTOS A MINIO
       if (fotos.length > 0) {
-        console.log("Iniciando subida de fotos...", fotos);
         
         for (const fotoUri of fotos) {
           const formData = new FormData();
-          const filename = fotoUri.split('/').pop() || `foto-${Date.now()}.jpg`;
+          const filename = fotoUri.startsWith("data:image/png")
+            ? `foto-portapapeles-${Date.now()}.png`
+            : fotoUri.split("/").pop() || `foto-${Date.now()}.jpg`;
 
-          if (Platform.OS === 'web') {
-            // En la web, la foto es un blob:http://... (necesitamos descargarla)
+          if (Platform.OS === "web") {
             const blob = await fetch(fotoUri).then(r => r.blob());
             formData.append('file', blob, filename);
+          } else if (fotoUri.startsWith("data:image/")) {
+            const [metadata, base64] = fotoUri.split(",", 2);
+            const mimeType = metadata.match(/^data:(.*?);base64$/)?.[1];
+            if (!base64 || !mimeType) {
+              throw new Error("No se pudo procesar la imagen pegada");
+            }
+            const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+            formData.append("file", new Blob([bytes], { type: mimeType }), filename);
           } else {
             // En el celular, la foto es una URI file://...
             formData.append('file', {
@@ -175,7 +183,6 @@ export default function ReportScreen() {
             formData
           );
           
-          console.log("Respuesta del servidor al subir foto:", uploadRes);
 
           const savedName = (uploadRes as any).key || uploadRes.filename || uploadRes.url || uploadRes.name;
           if (savedName) {

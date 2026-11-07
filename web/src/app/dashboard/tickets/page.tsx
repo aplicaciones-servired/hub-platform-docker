@@ -16,7 +16,7 @@ import { useModal } from "@/hooks/useModal";
 import { useToast } from "@/contexts/ToastContext";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
-import { formatDateShort, formatDescription, getDateRange } from "@/lib/utils";
+import { formatDateShort, formatDescription, getDateRange, isAdminRole } from "@/lib/utils";
 import { getCategoriaLabel } from "@/lib/categorias";
 import type { Incident } from "@hub/shared/types/incident";
 
@@ -26,7 +26,7 @@ export default function TicketsPage() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const isTechnicianQueue = searchParams.get("view") === "technicians";
-  const isAdmin = user?.rol === "admin";
+  const isAdmin = isAdminRole(user?.rol);
   const [incidents, setIncidents] = useState<IncidentItem[]>([]);
   const [technicians, setTechnicians] = useState<{ id: string; nombre: string; documento: string }[]>([]);
   const [techniciansLoading, setTechniciansLoading] = useState(false);
@@ -36,7 +36,7 @@ export default function TicketsPage() {
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [estadoFilter, setEstadoFilter] = useState("Todos");
-       const [tipoFilter, setTipoFilter] = useState("Todos");
+  const [tipoFilter, setTipoFilter] = useState("Todos");
   const [dateFilter, setDateFilter] = useState("30d");
   const [selectedIncident, setSelectedIncident] = useState<IncidentItem | null>(null);
   const [resolvingTicket, setResolvingTicket] = useState<string | null>(null);
@@ -87,7 +87,7 @@ export default function TicketsPage() {
     if (isTechnicianQueue) params.set("assignedOnly", "true");
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (estadoFilter !== "Todos") params.set("estado", estadoFilter);
-           if (tipoFilter !== "Todos") params.set("categoria", tipoFilter);
+    if (tipoFilter !== "Todos") params.set("categoria", tipoFilter);
 
     const range = getDateRange(dateFilter);
     if (range.start) params.set("start", range.start);
@@ -105,7 +105,7 @@ export default function TicketsPage() {
         logger.error("Error fetching tickets", { error: err instanceof Error ? err.message : err })
       )
       .finally(() => setLoading(false));
-       }, [page, debouncedSearch, estadoFilter, tipoFilter, dateFilter, isTechnicianQueue]);
+  }, [page, debouncedSearch, estadoFilter, tipoFilter, dateFilter, isTechnicianQueue]);
 
   const fetchStats = useCallback(() => {
     if (!isAdmin) {
@@ -307,7 +307,7 @@ export default function TicketsPage() {
       return safe.map((inc) => ({
         id: inc.id,
         asunto: formatDescription(inc.descripcion),
-                categoria: inc.punto_venta,
+        categoria: inc.punto_venta,
         tipo: getCategoriaLabel(inc.categoria),
         solicitante: inc.reportante_nombre || inc.nombre,
         estado:
@@ -380,10 +380,10 @@ export default function TicketsPage() {
           setPage(1);
         }}
 
-             onTipoChange={(v) => {
-             setTipoFilter(v);
-             setPage(1);
-           }}
+        onTipoChange={(v) => {
+          setTipoFilter(v);
+          setPage(1);
+        }}
 
         onDateChange={setDateFilter}
         onExport={handleExport}
