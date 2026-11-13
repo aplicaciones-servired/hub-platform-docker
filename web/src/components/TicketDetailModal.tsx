@@ -100,14 +100,14 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
               <InfoBlock icon={User} label="Cédula del Solicitante" value={(incident as any).reportante_cedula || "No registrado"} />
               
               <InfoBlock icon={User} label="Usuario del Punto" value={incident.nombre} />
-              <InfoBlock icon={User} label="Documento del Punto" value={incident.documento} />
+              <InfoBlock icon={User} label="Código del punto" value={incident.documento} />
               <InfoBlock icon={Phone} label="Teléfono" value={incident.telefono || "—"} />
               <InfoBlock icon={MapPin} label="Punto de Venta" value={incident.punto_venta} />
               <InfoBlock icon={AlertCircle} label="Urgencia" value={incident.urgencia.charAt(0).toUpperCase() + incident.urgencia.slice(1)} />
               <InfoBlock icon={Clock} label="Estado" value={status} />
               
               <div className="col-span-2">
-                <InfoBlock icon={User} label="Agente Asignado" value={incident.agente || "Sin asignar"} />
+                <InfoBlock icon={User} label="Técnico asignado" value={incident.agente || "Sin asignar"} />
               </div>
               {incident.estado === "resuelto" && (
                 <>

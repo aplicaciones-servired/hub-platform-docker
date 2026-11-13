@@ -218,7 +218,7 @@ export default function TicketsPage() {
         logger.error("Assign agent error", { error: msg });
         fetchTickets();
         showAlert(
-          "No se pudo asignar el agente",
+          "No se pudo asignar el técnico",
           msg || "El ticket puede haber cambiado. Se recargó la tabla.",
           "error"
         );
@@ -259,7 +259,7 @@ export default function TicketsPage() {
     const ws = wb.addWorksheet("Tickets");
 
     ws.columns = [
-      { header: "Documento", key: "doc", width: 16 },
+      { header: "Código del punto", key: "doc", width: 16 },
       { header: "Nombre", key: "nombre", width: 22 },
       { header: "Teléfono", key: "tel", width: 14 },
       { header: "Punto de Venta", key: "pv", width: 22 },

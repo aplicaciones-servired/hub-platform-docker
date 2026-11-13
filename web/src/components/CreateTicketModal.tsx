@@ -87,7 +87,7 @@ export default function CreateTicketModal({ onClose, onCreated, showAlert }: Cre
   const handleSubmit = async () => {
     const errs: Record<string, string> = {};
     if (!newTicket.sucursalCodigo.trim()) errs.sucursalCodigo = "Requerido";
-    if (!newTicket.punto_venta.trim()) errs.sucursalCodigo = "Sucursal no válida";
+    if (!newTicket.punto_venta.trim()) errs.sucursalCodigo = "Punto de venta no válido";
     if (!newTicket.reportante_nombre.trim()) errs.reportante_nombre = "Requerido";
     if (!newTicket.reportante_cedula.trim()) errs.reportante_cedula = "Requerido";
     if (!newTicket.descripcion.trim()) errs.descripcion = "Requerido";
@@ -135,7 +135,7 @@ export default function CreateTicketModal({ onClose, onCreated, showAlert }: Cre
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
       if (msg.includes("No existe un usuario con ese documento")) {
-        setTicketErrors((p) => ({ ...p, sucursalCodigo: "No existe un usuario con ese documento" }));
+        setTicketErrors((p) => ({ ...p, sucursalCodigo: "No existe un punto de venta con ese código" }));
       } else {
         logger.error("Create ticket error", { error: msg });
         showAlert("Error", msg || "Error al crear ticket", "error");
@@ -170,7 +170,7 @@ export default function CreateTicketModal({ onClose, onCreated, showAlert }: Cre
         {/* Sucursal y Nombre del Punto */}
         <div className="flex gap-3 mb-3">
           <div className="flex-1">
-            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 font-inter mb-1.5">Código de Sucursal</label>
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 font-inter mb-1.5">Código del punto</label>
             <input
               type="text"
               value={newTicket.sucursalCodigo}
@@ -179,7 +179,7 @@ export default function CreateTicketModal({ onClose, onCreated, showAlert }: Cre
               placeholder="Ej: 315"
             />
             {ticketErrors.sucursalCodigo && <p className="text-xs text-red-500 mt-1 font-inter">{ticketErrors.sucursalCodigo}</p>}
-            {buscandoSucursal && <p className="text-xs text-blue-500 mt-1 font-inter">Buscando sucursal...</p>}
+            {buscandoSucursal && <p className="text-xs text-blue-500 mt-1 font-inter">Buscando punto de venta...</p>}
           </div>
           <div className="flex-1">
             <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 font-inter mb-1.5">Nombre del Punto</label>

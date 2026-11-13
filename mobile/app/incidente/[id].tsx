@@ -155,13 +155,13 @@ export default function IncidentDetailScreen() {
 
           {/* Campos del Punto de Venta y del Ticket */}
           <InfoRow icon={User} label="Usuario del Punto" value={incident.nombre} />
-          <InfoRow icon={User} label="Documento del Punto" value={incident.documento} />
+          <InfoRow icon={User} label="Código del punto" value={incident.documento} />
           <InfoRow icon={Phone} label="Teléfono" value={incident.telefono || "—"} />
           <InfoRow icon={MapPin} label="Punto de Venta" value={incident.punto_venta} />
           <InfoRow icon={AlertCircle} label="Tipo de problema" value={getCategoriaLabel(incident.categoria ?? undefined)} />
           <InfoRow icon={AlertCircle} label="Urgencia" value={incident.urgencia.charAt(0).toUpperCase() + incident.urgencia.slice(1)} />
           <InfoRow icon={Clock} label="Estado" value={status} />
-          <InfoRow icon={Shield} label="Agente Asignado" value={incident.agente || "Sin asignar"} />
+          <InfoRow icon={Shield} label="Técnico asignado" value={incident.agente || "Sin asignar"} />
         </View>
 
             {/* FOTOS ADJUNTAS */}

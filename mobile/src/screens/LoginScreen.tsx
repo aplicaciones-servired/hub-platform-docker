@@ -59,7 +59,7 @@ export default function LoginScreen() {
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
-    if (!form.documento.trim()) newErrors.documento = "La sucursal es requerida";
+    if (!form.documento.trim()) newErrors.documento = "Escribe el código de tu punto de venta";
     if (!form.contrasena.trim()) newErrors.contrasena = "La contraseña es requerida";
     else if (form.contrasena.length < 6) newErrors.contrasena = "Mínimo 6 caracteres";
     setErrors(newErrors);
@@ -127,7 +127,7 @@ export default function LoginScreen() {
           {/* --- INPUT DE SUCURSAL CON AUTOCOMPLETADO --- */}
           <View style={{ position: "relative", zIndex: 10 }}>
             <Input
-              label="Sucursal (Código o Nombre)"
+              label="Punto de venta (código o nombre)"
               placeholder="Ej: 315 o La Virgen"
               value={form.documento}
                 onChangeText={(text) => {

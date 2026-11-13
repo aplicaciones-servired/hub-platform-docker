@@ -107,7 +107,7 @@ export default function IncidenteDetailPage() {
           <InfoRow icon={MapPin} label="Punto de Venta" value={incident.punto_venta} />
           <InfoRow icon={AlertCircle} label="Urgencia" value={incident.urgencia.charAt(0).toUpperCase() + incident.urgencia.slice(1)} />
           <InfoRow icon={Clock} label="Estado" value={status} />
-          <InfoRow icon={Shield} label="Agente" value={incident.agente || "Sin asignar"} />
+          <InfoRow icon={Shield} label="Técnico" value={incident.agente || "Sin asignar"} />
         </div>
 
         {incident.comments.length > 0 && (
