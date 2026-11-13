@@ -223,6 +223,7 @@ export default function AnalyticsPage() {
               onEndChange={setEndDate}
               onApplyRange={handleApplyRange}
               onCancelRange={handleCancelRange}
+              selectedAgente={selectedAgente}
             />
           </div>
         </div>

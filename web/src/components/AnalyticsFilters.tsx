@@ -27,8 +27,8 @@ interface AnalyticsFiltersProps {
   onEndChange: (date: string) => void;
   onApplyRange: () => void;
   onCancelRange: () => void;
+  selectedAgente?: string;
 }
-
 // ─────────────────────────────────────────────────────────────
 // Helpers de formato
 // ─────────────────────────────────────────────────────────────
@@ -68,12 +68,12 @@ function colorTiempo(minutos: number | null): string {
 // Estilos reutilizables
 // ─────────────────────────────────────────────────────────────
 
-const PURPLE = "FF8745EC";
+const PURPLE = "FF25207E";
 const BLUE = "FF03A9F3";
 const GREEN = "FF16A34A";
 const DARK = "FF262626";
 const GRAY = "FF7F7F7F";
-const LIGHT_PURPLE = "FFF8F3FF";
+const LIGHT_PURPLE = "FFEEEDF8";
 const LIGHT_BLUE = "FFEAF8FF";
 const ZEBRA = "FFF9FAFB";
 const BORDER = "FFD9D9D9";
@@ -116,7 +116,8 @@ async function handleExport(
   areaData: AreaDataPoint[],
   donutData: DonutDataPoint[],
   appliedRange: { start: string; end: string } | null,
-  filter: FilterPreset
+  filter: FilterPreset,
+  selectedAgente?: string
 ) {
   const ExcelJS = (await import("exceljs")).default;
   const wb = new ExcelJS.Workbook();
@@ -133,7 +134,8 @@ async function handleExport(
   });
 
   const effectiveRange = appliedRange || getDateRange(filter);
-  const rangeLabel = `Rango: ${formatDateRange(effectiveRange.start, effectiveRange.end)}  ·  Generado: ${generatedAt}`;
+  const filtroLabel = selectedAgente ? `  ·  FILTRO APLICADO: Técnico — ${selectedAgente} (solo sus tickets)` : "";
+  const rangeLabel = `Rango: ${formatDateRange(effectiveRange.start, effectiveRange.end)}  ·  Generado: ${generatedAt}${filtroLabel}`;
   const rangeSuffix = `_${effectiveRange.start}_${effectiveRange.end}`;
 
   // ── Fetch datos ──
@@ -142,6 +144,7 @@ async function handleExport(
     const qs = `?start=${effectiveRange.start}&end=${effectiveRange.end}`;
     const incData = await api.get<{ items: IncidentExport[] }>(`/incidents/export-data${qs}`);
     incidents = incData.items || [];
+        if (selectedAgente) incidents = incidents.filter((inc) => inc.agente === selectedAgente);
   } catch (err) {
     logger.warn("Export incidents fetch failed", { error: (err as Error).message });
   }
@@ -240,6 +243,7 @@ async function handleExport(
   const rangeCell = wsDash.getCell("B4");
   rangeCell.value = rangeLabel;
   rangeCell.font = { size: 10, color: { argb: GRAY }, name: "Calibri" };
+    if (selectedAgente) rangeCell.font = { bold: true, size: 11, color: { argb: AZUL }, name: "Calibri" };
   rangeCell.alignment = { horizontal: "left", vertical: "middle", indent: 1 };
 
   const kpis = [
@@ -305,7 +309,7 @@ async function handleExport(
   // ═══════════════════════════════════════════════════════════
   const wsRes = wb.addWorksheet("Resumen", {
     views: [{ showGridLines: false, zoomScale: 90 }],
-    properties: { tabColor: { argb: "FFA673F1" } },
+    properties: { tabColor: { argb: "FF3B348B" } },
   });
 
   wsRes.getColumn(1).width = 2;
@@ -333,6 +337,7 @@ async function handleExport(
   wsRes.mergeCells("B4:N4");
   wsRes.getCell("B4").value = `${rangeLabel}   (todas las cifras se calculan con fórmulas sobre la hoja Detalle)`;
   wsRes.getCell("B4").font = { size: 10, color: { argb: GRAY }, name: "Calibri" };
+    if (selectedAgente) wsRes.getCell("B4").font = { bold: true, size: 11, color: { argb: AZUL }, name: "Calibri" };
 
   // INDICADORES
   wsRes.mergeCells("B6:F6");
@@ -354,7 +359,7 @@ async function handleExport(
     { metrica: "Pendientes", formula: `=COUNTIF(Detalle!D6:D1000,"pendiente")`, desc: "A la espera de asignación" },
     { metrica: "En Proceso", formula: `=COUNTIF(Detalle!D6:D1000,"en_proceso")`, desc: "Siendo atendidos actualmente" },
     { metrica: "Resueltos", formula: `=COUNTIF(Detalle!D6:D1000,"resuelto")`, desc: "Cerrados exitosamente" },
-    { metrica: "Agentes que atendieron", formula: `=COUNTIFS(H24:H27,"<>Sin asignar",L24:L27,">0")`, desc: "Técnicos con incidentes asignados" },
+    { metrica: "Tecnicos que atendieron", formula: `=COUNTIFS(H24:H27,"<>Sin asignar",L24:L27,">0")`, desc: "Técnicos con incidentes asignados" },
     { metrica: "Resueltos con solución", formula: `=COUNTIFS(Detalle!D6:D1000,"resuelto",Detalle!G6:G1000,"<>")`, desc: "Tickets cerrados con descripción de solución" },
     { metrica: "Tiempo promedio global", formula: `=IFERROR(INT(ROUND(AVERAGE(Detalle!J6:J1000)*60,0)/60)&" h "&MOD(ROUND(AVERAGE(Detalle!J6:J1000)*60,0),60)&" min","—")`, desc: "Promedio de todos los tickets resueltos" },
     { metrica: "Ticket más rápido", formula: `=IFERROR(INT(ROUND(MIN(Detalle!J6:J1000)*60,0)/60)&" h "&MOD(ROUND(MIN(Detalle!J6:J1000)*60,0),60)&" min","—")`, desc: "Menor tiempo de resolución" },
@@ -487,15 +492,15 @@ async function handleExport(
   wsRes.getCell(20, 10).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF2F2F2" } };
   Object.assign(wsRes.getCell(20, 10), cellBorder);
 
-  // RESUMEN POR AGENTE
+  // RESUMEN POR Tecnico
   wsRes.mergeCells("H22:N22");
   const agH = wsRes.getCell("H22");
-  agH.value = "RESUMEN POR AGENTE";
+  agH.value = "RESUMEN POR Tecnico";
   agH.font = { bold: true, size: 11, color: { argb: "FFFFFFFF" }, name: "Calibri" };
   agH.fill = { type: "pattern", pattern: "solid", fgColor: { argb: PURPLE } };
   agH.alignment = { horizontal: "center" };
 
-  ["Agente", "Pend.", "Proceso", "Res.", "Total", "T. Prom.", "T. Prom. (h)"].forEach((l, i) => {
+  ["Técnico", "Pend.", "Proceso", "Res.", "Total", "T. Prom.", "T. Prom. (h)"].forEach((l, i) => {
     const c = wsRes.getCell(23, 8 + i);
     c.value = l;
     Object.assign(c, headerStyle(LIGHT_PURPLE));
@@ -843,7 +848,7 @@ async function handleExport(
   wsDet.getCell("A4").font = { size: 9, color: { argb: GRAY }, name: "Calibri" };
 
   const detHeaders = [
-    "Documento", "Nombre", "Punto de Venta", "Estado", "Agente",
+    "Código del punto", "Nombre", "Punto de Venta", "Estado", "Técnico",
     "Descripción", "Solución", "Creado", "Cierre",
     "Tiempo (h)", "Tiempo de Resolución", "Fecha creación", "Día (1=Lun)", "Hora",
   ];
@@ -943,7 +948,8 @@ async function handleExport(
 async function handleExportPDF(
   appliedRange: { start: string; end: string } | null,
   filter: FilterPreset,
-  areaData: AreaDataPoint[]
+  areaData: AreaDataPoint[],
+  selectedAgente?: string
 ) {
   const { default: jsPDF } = await import("jspdf");
 
@@ -954,6 +960,7 @@ async function handleExportPDF(
     const qs = `?start=${effectiveRange.start}&end=${effectiveRange.end}`;
     const incData = await api.get<{ items: IncidentExport[] }>(`/incidents/export-data${qs}`);
     incidents = incData.items || [];
+    if (selectedAgente) incidents = incidents.filter((inc) => inc.agente === selectedAgente);
   } catch (err) {
     logger.warn("PDF export fetch failed", { error: (err as Error).message });
   }
@@ -1062,7 +1069,7 @@ async function handleExportPDF(
   };
 
   // ── Portada / Encabezado ──
-  doc.setFillColor(135, 69, 236);
+  doc.setFillColor(37, 32, 126);
   doc.rect(0, 0, pageW, 28, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
@@ -1089,10 +1096,27 @@ async function handleExportPDF(
 
   y = 38;
 
+    // Aviso cuando el informe está filtrado por un técnico
+  if (selectedAgente) {
+    doc.setFillColor(238, 237, 248);
+    doc.setDrawColor(37, 32, 126);
+    doc.setLineWidth(0.5);
+    doc.rect(margin, y, contentW, 13, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(37, 32, 126);
+    doc.text(`FILTRO APLICADO: Técnico — ${selectedAgente}`, margin + 3, y + 5.5);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(60, 60, 60);
+    doc.text("Este informe solo incluye los tickets atendidos por este técnico.", margin + 3, y + 10.5);
+    y += 19;
+  }
+
   // ── 1. Resumen Ejecutivo ──
   title("1. Resumen Ejecutivo");
   body(
-    `Durante el período analizado se registraron ${total} incidentes en la plataforma HUB, de los cuales ${estadoMap.resuelto} fueron resueltos (${pct(estadoMap.resuelto)}%), ${estadoMap.pendiente} permanecen pendientes (${pct(estadoMap.pendiente)}%) y ${estadoMap.en_proceso} se encuentran en proceso (${pct(estadoMap.en_proceso)}%). Se contó con la participación de ${agentesReales} agentes que atendieron incidentes asignados.`
+    `Durante el período analizado se registraron ${total} incidentes en la plataforma HUB, de los cuales ${estadoMap.resuelto} fueron resueltos (${pct(estadoMap.resuelto)}%), ${estadoMap.pendiente} permanecen pendientes (${pct(estadoMap.pendiente)}%) y ${estadoMap.en_proceso} se encuentran en proceso (${pct(estadoMap.en_proceso)}%). Se contó con la participación de ${agentesReales} técnicos que atendieron incidentes asignados.`
   );
   body(
     `El tiempo promedio global de resolución fue de ${fmtDuracion(Math.round(tiempoProm))}, con un ticket más rápido resuelto en ${fmtDuracion(Math.round(tiempoMin))} y uno más lento que tomó ${fmtDuracion(Math.round(tiempoMax))}. La actividad se concentró en ${daysWithData} días, con un promedio de ${avgPerDay} incidentes diarios${busiestDay ? `, siendo el ${busiestDay.name} el día más activo con ${busiestDay.trafico} incidentes reportados` : ""}.`
@@ -1118,7 +1142,7 @@ async function handleExportPDF(
   // Tabla simple
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.setFillColor(135, 69, 236);
+  doc.setFillColor(37, 32, 126);
   doc.setTextColor(255, 255, 255);
   doc.rect(margin, y, contentW * 0.55, 7, "F");
   doc.rect(margin + contentW * 0.55, y, contentW * 0.45, 7, "F");
@@ -1129,7 +1153,7 @@ async function handleExportPDF(
   metricsRows.forEach((row, i) => {
     checkPage(7);
     if (i % 2 === 0) {
-      doc.setFillColor(248, 243, 255);
+      doc.setFillColor(238, 237, 248);
       doc.rect(margin, y, contentW, 6.5, "F");
     }
     doc.setFont("helvetica", "normal");
@@ -1146,7 +1170,7 @@ async function handleExportPDF(
   title("3. Distribución por Punto de Venta");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.setFillColor(135, 69, 236);
+  doc.setFillColor(37, 32, 126);
   doc.setTextColor(255, 255, 255);
   doc.rect(margin, y, contentW * 0.5, 7, "F");
   doc.rect(margin + contentW * 0.5, y, contentW * 0.25, 7, "F");
@@ -1159,7 +1183,7 @@ async function handleExportPDF(
   pvSorted.forEach(([name, count], i) => {
     checkPage(7);
     if (i % 2 === 0) {
-      doc.setFillColor(248, 243, 255);
+      doc.setFillColor(238, 237, 248);
       doc.rect(margin, y, contentW, 6.5, "F");
     }
     doc.setFont("helvetica", "normal");
@@ -1194,7 +1218,7 @@ async function handleExportPDF(
   ];
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.setFillColor(135, 69, 236);
+  doc.setFillColor(37, 32, 126);
   doc.setTextColor(255, 255, 255);
   doc.rect(margin, y, contentW * 0.5, 7, "F");
   doc.rect(margin + contentW * 0.5, y, contentW * 0.25, 7, "F");
@@ -1207,7 +1231,7 @@ async function handleExportPDF(
   estados.forEach(([name, count], i) => {
     checkPage(7);
     if (i % 2 === 0) {
-      doc.setFillColor(248, 243, 255);
+      doc.setFillColor(238, 237, 248);
       doc.rect(margin, y, contentW, 6.5, "F");
     }
     doc.setFont("helvetica", "normal");
@@ -1221,14 +1245,14 @@ async function handleExportPDF(
   y += 6;
 
   // ── 5. Por Agente ──
-  title("5. Resumen por Agente");
+  title("5. Resumen por Técnico");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
-  doc.setFillColor(135, 69, 236);
+  doc.setFillColor(37, 32, 126);
   doc.setTextColor(255, 255, 255);
   const cols = [0.28, 0.12, 0.14, 0.14, 0.12, 0.2];
   let x = margin;
-  ["Agente", "Pend.", "Proceso", "Res.", "Total", "T. Promedio"].forEach((h, i) => {
+  ["Técnico", "Pend.", "Proceso", "Res.", "Total", "T. Promedio"].forEach((h, i) => {
     doc.rect(x, y, contentW * cols[i], 7, "F");
     doc.text(h, x + 1.5, y + 5);
     x += contentW * cols[i];
@@ -1238,7 +1262,7 @@ async function handleExportPDF(
   agRows.forEach((row, i) => {
     checkPage(7);
     if (i % 2 === 0) {
-      doc.setFillColor(248, 243, 255);
+      doc.setFillColor(238, 237, 248);
       doc.rect(margin, y, contentW, 6.5, "F");
     }
     doc.setFont("helvetica", "normal");
@@ -1283,7 +1307,7 @@ async function handleExportPDF(
   if (areaData.length > 0) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
-    doc.setFillColor(135, 69, 236);
+    doc.setFillColor(37, 32, 126);
     doc.setTextColor(255, 255, 255);
     const evoCols = [0.25, 0.18, 0.18, 0.18, 0.21];
     x = margin;
@@ -1300,7 +1324,7 @@ async function handleExportPDF(
       const netos = d.trafico - d.conversiones;
       running += netos;
       if (i % 2 === 0) {
-        doc.setFillColor(248, 243, 255);
+        doc.setFillColor(238, 237, 248);
         doc.rect(margin, y, contentW, 6.5, "F");
       }
       doc.setFont("helvetica", "normal");
@@ -1326,7 +1350,7 @@ async function handleExportPDF(
     `Ticket más rápido: ${fmtDuracion(Math.round(tiempoMin))}. Ticket más lento: ${fmtDuracion(Math.round(tiempoMax))}. Tiempo promedio global: ${fmtDuracion(Math.round(tiempoProm))}.`
   );
   body(
-    `Se observa dispersión en los tiempos de resolución. Los tickets sin agente asignado y los asociados a puntos de prueba tienden a presentar tiempos significativamente mayores, mientras que los atendidos por agentes activos se resuelven más rápido.`
+    `Se observa dispersión en los tiempos de resolución. Los tickets sin técnico asignado y los asociados a puntos de prueba tienden a presentar tiempos significativamente mayores, mientras que los atendidos por técnicos activos se resuelven más rápido.`
   );
 
   // ── 8. Alertas y Recomendaciones ──
@@ -1342,7 +1366,7 @@ async function handleExportPDF(
   );
   if (sinAsignar && sinAsignar.total > total * 0.3) {
     body(
-      `• Incidentes sin asignar (${sinAsignar.total} de ${total}): El ${pct(sinAsignar.total)}% de los incidentes no tienen agente asignado, lo que impacta directamente en los tiempos de resolución. Se recomienda implementar un flujo de asignación automática o manual oportuna.`
+      `• Incidentes sin asignar (${sinAsignar.total} de ${total}): El ${pct(sinAsignar.total)}% de los incidentes no tienen técnico asignado, lo que impacta directamente en los tiempos de resolución. Se recomienda implementar un flujo de asignación automática o manual oportuna.`
     );
   }
   body(
@@ -1387,6 +1411,7 @@ export default memo(function AnalyticsFilters(props: AnalyticsFiltersProps) {
     onEndChange,
     onApplyRange,
     onCancelRange,
+    selectedAgente,
   } = props;
 
   const [exportingPdf, setExportingPdf] = useState(false);
@@ -1402,7 +1427,7 @@ export default memo(function AnalyticsFilters(props: AnalyticsFiltersProps) {
   const onExportPdf = async () => {
     setExportingPdf(true);
     try {
-      await handleExportPDF(appliedRange, filter, areaData);
+      await handleExportPDF(appliedRange, filter, areaData, selectedAgente);
     } catch (err) {
       console.error("Error generando PDF", err);
       alert("No se pudo generar el PDF. Revisa la consola.");
@@ -1431,7 +1456,7 @@ export default memo(function AnalyticsFilters(props: AnalyticsFiltersProps) {
         </div>
 
         <button
-          onClick={() => handleExport(metrics, areaData, donutData, appliedRange, filter)}
+          onClick={() => handleExport(metrics, areaData, donutData, appliedRange, filter, selectedAgente)}
           className="flex items-center gap-2 h-11 px-[18px] bg-[#25207E] border-none rounded-[10px] cursor-pointer font-inter text-[13px] font-semibold text-white shadow-[0_4px_12px_rgba(37,32,126,0.2)]"
         >
           <Download size={16} strokeWidth={2.5} />
