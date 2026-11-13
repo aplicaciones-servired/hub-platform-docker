@@ -169,6 +169,13 @@
       "when": 1793810858182,
       "tag": "0023_agregar_imagenes_incidentes",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1794601412944,
+      "tag": "0024_agregar_edited_at_comentarios",
+      "breakpoints": true
     }
   ]
 }
