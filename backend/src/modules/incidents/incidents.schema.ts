@@ -44,6 +44,7 @@ export const updateIncidentSchema = z.object({
       "imagen_url debe ser una URL http(s) o una ruta /uploads/"
     )
     .optional(),
+    comentario: z.string().optional(),
 });
 
 export const commentSchema = z.object({

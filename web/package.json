@@ -13,7 +13,9 @@
   "dependencies": {
     "@hub/shared": "file:../shared",
     "exceljs": "^4.4.0",
+    "html2canvas": "^1.4.1",
     "jose": "^6.2.9",
+    "jspdf": "^4.2.1",
     "lucide-react": "^0.460.0",
     "next": "^15.5.19",
     "react": "^19.0.0",

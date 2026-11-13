@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Eye, CheckCircle, Clock, Loader, UserPlus } from "lucide-react";
+import { X, Eye, CheckCircle, Clock, Loader, UserPlus, MessageSquare } from "lucide-react";
 import { STATUS_ACTION_COLORS } from "@/lib/styles";
 import { formatTicketId } from "@/lib/utils";
 
@@ -27,13 +27,14 @@ interface TicketRow {
 
 const STATUS_BADGES: Record<string, string> = {
   Abierto: "bg-blue-100 text-blue-600",
+  Pendiente: "bg-orange-100 text-orange-600", // <-- NUEVO
   "En Proceso": "bg-purple-100 text-purple-600",
   Resuelto: "bg-slate-100 text-slate-600",
 };
 
 interface TicketTableProps {
   tickets: TicketRow[];
-  onStatusChange: (ticketId: string, newStatus: string) => void;
+  onStatusChange: (ticketId: string, newStatus: string, comentario?: string) => void;
   onViewDetail: (ticketId: string) => void;
   onAssignAgent: (ticketId: string, technicianId: string | null) => void;
   onResolve?: (ticketId: string) => void;
@@ -68,11 +69,14 @@ function ActionMenu({
   canChangeStatus: boolean;
   techniciansLoading: boolean;
   techniciansError: boolean;
-  onStatusChange: (id: string, status: string) => void;
+  onStatusChange: (id: string, status: string, comentario?: string) => void;
   onViewDetail: (id: string) => void;
   onAssignAgent: (id: string, technicianId: string | null) => void;
   onResolve?: (id: string) => void;
 }) {
+  const [showCommentInput, setShowCommentInput] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [comentario, setComentario] = useState("");
   const [open, setOpen] = useState(false);
 
   const statusOptions = [
@@ -81,7 +85,10 @@ function ActionMenu({
     { label: "Resuelto", value: "resuelto", icon: CheckCircle, color: STATUS_ACTION_COLORS.resuelto },
   ];
 
-  const safeStatus = currentStatus === "Abierto" ? "pendiente" : currentStatus === "En Proceso" ? "en_proceso" : "resuelto";
+    const safeStatus = 
+    (currentStatus === "Abierto" || currentStatus === "Pendiente") ? "pendiente"
+    : currentStatus === "En Proceso" ? "en_proceso"
+    : "resuelto";
 
   return (
     <>
@@ -109,7 +116,11 @@ function ActionMenu({
                 <h2 className="text-base font-bold text-gray-900 dark:text-gray-100">Acciones del ticket</h2>
                 {currentAgente && <p className="text-xs text-gray-500 mt-1">Técnico: {currentAgente}</p>}
               </div>
-              <button onClick={() => setOpen(false)} aria-label="Cerrar" className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+              <button
+                onClick={() => setOpen(false)}
+                aria-label="Cerrar"
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
                 <X size={18} />
               </button>
             </div>
@@ -156,10 +167,14 @@ function ActionMenu({
                           className="flex w-full items-center justify-between px-3 py-2.5 text-left hover:bg-[#F3F0FF] dark:hover:bg-gray-800"
                         >
                           <span>
-                            <span className="block text-sm font-medium text-gray-800 dark:text-gray-100">{technician.nombre}</span>
+                            <span className="block text-sm font-medium text-gray-800 dark:text-gray-100">
+                              {technician.nombre}
+                            </span>
                             <span className="block text-xs text-gray-500">{technician.documento}</span>
                           </span>
-                          {currentTecnicoId === technician.id && <span className="text-xs font-semibold text-[#25207E]">Asignado</span>}
+                          {currentTecnicoId === technician.id && (
+                            <span className="text-xs font-semibold text-[#25207E]">Asignado</span>
+                          )}
                         </button>
                       ))}
                     </div>
@@ -178,25 +193,99 @@ function ActionMenu({
                 </section>
               )}
 
-              {canChangeStatus && safeStatus !== "resuelto" && (
+             {canChangeStatus && (
                 <section>
                   <h3 className="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-100">Cambiar estado</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {statusOptions.filter((option) => option.value !== safeStatus).map((option) => (
+
+                  {!showCommentInput ? (
+                    <div className="flex flex-wrap gap-2">
+                    {statusOptions
+  .filter((option) => {
+    if ((safeStatus === "en_proceso" || safeStatus === "resuelto") && option.value === "pendiente") {
+      return false;
+    }
+    return option.value !== safeStatus;
+  })
+  .map((option) => {
+    const Icon = option.icon;
+    const isReabrir = safeStatus === "resuelto" && option.value === "en_proceso";
+    const buttonLabel = isReabrir ? "Reabrir Ticket" : option.label;
+    // Si es "Reabrir Ticket", envía "pendiente" en lugar de "en_proceso"
+    const targetStatus = isReabrir ? "pendiente" : option.value;
+
+    return (
+      <button
+        key={option.value}
+        onClick={() => {
+          if (option.value === "resuelto" && onResolve) {
+            onResolve(ticketId);
+          } else {
+            onStatusChange(ticketId, targetStatus);
+          }
+          setOpen(false);
+        }}
+        className={`flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm ${option.color}`}
+      >
+        <Icon size={14} />
+        {buttonLabel}
+      </button>
+    );
+  })}
+                      {/* BOTÓN DE SEGUIMIENTO */}
                       <button
-                        key={option.value}
                         onClick={() => {
-                          if (option.value === "resuelto" && onResolve) onResolve(ticketId);
-                          else onStatusChange(ticketId, option.value);
-                          setOpen(false);
+                          setPendingStatus(safeStatus);
+                          setShowCommentInput(true);
                         }}
-                        className={`flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm ${option.color}`}
+                        className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300"
                       >
-                        <option.icon size={14} />
-                        {option.label}
+                        <MessageSquare size={14} />
+                        Agregar Seguimiento
                       </button>
-                    ))}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="mt-2 p-3 border rounded-lg bg-gray-50 dark:bg-gray-800">
+                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Escribe el comentario de seguimiento (Obligatorio):
+                      </p>
+                      <textarea
+                        value={comentario}
+                        onChange={(e) => setComentario(e.target.value)}
+                        className="w-full h-20 p-2 rounded border text-sm outline-none resize-none dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                        placeholder="Ej: Se realiza traslado de batería..."
+                      />
+                      <div className="flex justify-end gap-2 mt-2">
+                        <button
+                          onClick={() => {
+                            setShowCommentInput(false);
+                            setComentario("");
+                            setPendingStatus(null);
+                          }}
+                          className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-200 rounded"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (!comentario.trim()) {
+                              alert("El comentario es obligatorio");
+                              return;
+                            }
+                            if (pendingStatus) {
+                              onStatusChange(ticketId, pendingStatus, comentario);
+                            }
+                            setOpen(false);
+                            setShowCommentInput(false);
+                            setComentario("");
+                            setPendingStatus(null);
+                          }}
+                          className="px-3 py-1.5 text-xs font-medium text-white bg-[#25207E] rounded"
+                        >
+                          Guardar
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </section>
               )}
             </div>
@@ -259,12 +348,11 @@ export default function TicketTable({
             </p>
           </div>
 
-          
-             <div className="py-3 px-2">
-               <span className="text-[12px] font-medium text-gray-700 dark:text-gray-200 font-inter">
-                 {ticket.tipo || "Sin tipo"}
-               </span>
-             </div>
+          <div className="py-3 px-2">
+            <span className="text-[12px] font-medium text-gray-700 dark:text-gray-200 font-inter">
+              {ticket.tipo || "Sin tipo"}
+            </span>
+          </div>
 
           <div className="py-3 px-2">
             <span className="text-[13px] text-gray-800 dark:text-gray-100 font-inter font-medium">
@@ -281,7 +369,10 @@ export default function TicketTable({
           </div>
 
           <div className="py-3 px-2">
-            <span className="block truncate text-[12px] text-gray-700 dark:text-gray-300 font-inter" title={ticket.agente || "Sin asignar"}>
+            <span
+              className="block truncate text-[12px] text-gray-700 dark:text-gray-300 font-inter"
+              title={ticket.agente || "Sin asignar"}
+            >
               {ticket.agente || "Sin asignar"}
             </span>
           </div>
@@ -317,6 +408,6 @@ export default function TicketTable({
           </div>
         </div>
       ))}
-      </div>
+    </div>
   );
 }

@@ -7,6 +7,8 @@ import {
   TrafficChart,
   DonutChart,
   StatusBarChart,
+  HorasPicoChart, // <-- NUEVO
+  TecnicoPieChart, // <-- NUEVO
   type AreaDataPoint,
   type DonutDataPoint,
   type StatusBarDataPoint,
@@ -24,22 +26,25 @@ function ChartSkeleton() {
   );
 }
 
-
-
 export default function AnalyticsPage() {
   const [filter, setFilter] = useState<FilterPreset>("30d");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const fetchIdRef = useRef(0);
-  const [appliedRange, setAppliedRange] = useState<{
-    start: string;
-    end: string;
-  } | null>(null);
+  const [appliedRange, setAppliedRange] = useState<{ start: string; end: string } | null>(null);
+  
   const [metrics, setMetrics] = useState<{ icon: LucideIcon; title: string; value: string; desc: string }[]>([]);
   const [areaData, setAreaData] = useState<AreaDataPoint[]>([]);
   const [donutData, setDonutData] = useState<DonutDataPoint[]>([]);
   const [statusData, setStatusData] = useState<StatusBarDataPoint[]>([]);
+  
+  // --- NUEVOS ESTADOS ---
+  const [horasPicoData, setHorasPicoData] = useState<any[]>([]);
+  const [momentosPicoData, setMomentosPicoData] = useState<any[]>([]);
+  const [tecnicoData, setTecnicoData] = useState<any[]>([]);
+  const [tiempoTecnicoData, setTiempoTecnicoData] = useState<any[]>([]);
+  
   const [agentes, setAgentes] = useState<string[]>([]);
   const [selectedAgente, setSelectedAgente] = useState("");
   const [allPvNames, setAllPvNames] = useState<string[]>([]);
@@ -63,9 +68,10 @@ export default function AnalyticsPage() {
 
     Promise.allSettled([
       api.get<KpiResponse>(`/dashboard/kpis${qs}`),
-      api.get<{ timeline: { fecha: string; incidentes: number; resueltos: number }[]; distribution: DonutDataPoint[]; statusCounts: { pendientes: number; enProceso: number; resueltos: number } }>(`/incidents/stats${qs}`)
+      api.get<any>(`/incidents/stats${qs}`)
     ]).then(([kpiResult, statsResult]) => {
       if (id !== fetchIdRef.current) return;
+      
       if (kpiResult.status === 'fulfilled') {
         const kpis = kpiResult.value;
         setMetrics([
@@ -77,16 +83,19 @@ export default function AnalyticsPage() {
       } else {
         logger.error("Analytics KPIs error", { error: kpiResult.reason instanceof Error ? kpiResult.reason.message : kpiResult.reason });
       }
+
       if (statsResult.status === 'fulfilled') {
         const stats = statsResult.value;
+        
         setAreaData(
-          (Array.isArray(stats.timeline) ? stats.timeline : []).map((d) => ({
+          (Array.isArray(stats.timeline) ? stats.timeline : []).map((d: any) => ({
             name: d.fecha,
             trafico: d.incidentes,
             conversiones: d.resueltos,
           }))
         );
-        setDonutData(stats.distribution);
+        setDonutData(stats.distribution || []);
+        
         if (stats.statusCounts) {
           setStatusData([{
             name: agente || "General",
@@ -95,6 +104,13 @@ export default function AnalyticsPage() {
             resueltos: stats.statusCounts.resueltos,
           }]);
         }
+
+        // --- NUEVOS DATOS ---
+        setHorasPicoData(stats.horasPico || []);
+        setTecnicoData(stats.ticketsPorTecnico || []);
+        setTiempoTecnicoData(stats.tiempoPorTecnico || []);
+        setMomentosPicoData(stats.momentosPico || []);
+
       } else {
         logger.error("Analytics stats error", { error: statsResult.reason instanceof Error ? statsResult.reason.message : statsResult.reason });
       }
@@ -164,7 +180,7 @@ export default function AnalyticsPage() {
     : `Resumen de soporte corporativo — ${filterLabels[filter]}.`;
 
   return (
-    <div className="bg-[#F8F8FC] dark:bg-gray-950 min-h-[calc(100vh-72px)] p-8">
+    <div id="analytics-report" className="bg-[#F8F8FC] dark:bg-gray-950 min-h-[calc(100vh-72px)] p-8">
       <div className="flex items-start justify-between mb-7 flex-wrap gap-4">
         <div>
           <h1 className="text-[42px] font-bold text-gray-800 dark:text-gray-100 font-inter leading-tight">
@@ -214,8 +230,8 @@ export default function AnalyticsPage() {
 
       <AnalyticsMetrics metrics={metrics} />
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-2 gap-6">
+      {/* Charts Row 1 */}
+      <div className="grid grid-cols-2 gap-6 mb-6">
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6">
           <div className="flex items-start justify-between mb-5">
             <div>
@@ -253,33 +269,125 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Status Bar Chart */}
-      <div className="mt-6">
+      {/* Charts Row 2 (NUEVOS) */}
+      <div className="grid grid-cols-2 gap-6 mb-6">
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6">
           <div className="mb-5">
             <h3 className="text-base font-bold text-gray-800 dark:text-gray-100 font-inter">
-              Incidentes por Estado
+              🕐 Horas Pico
             </h3>
             <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400 font-inter">
-              {selectedAgente ? `Técnico: ${selectedAgente}` : "Todos los técnicos"} — Pendientes, en proceso y resueltos
+              Franjas horarias con mayor cantidad de reportes
             </p>
           </div>
-          <div className="flex items-center gap-6 mb-4">
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-[#3B82F6]" />
-              <span className="text-xs text-gray-500 dark:text-gray-400 font-inter">Pendientes</span>
+          {chartsLoading ? <ChartSkeleton /> : <HorasPicoChart data={horasPicoData} />}
+                    {momentosPicoData.length > 0 && (
+            <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800">
+              <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 font-inter uppercase tracking-[0.3px] mb-3">
+                🔥 Los momentos más concurridos
+              </p>
+              <div className="space-y-2">
+                {momentosPicoData.map((m: any, i: number) => {
+                  const fecha = new Date(m.fecha + "T12:00:00");
+                  const fechaFormato = fecha.toLocaleDateString("es-CO", { 
+                    weekday: "long", 
+                    day: "2-digit", 
+                    month: "short" 
+                  });
+                  return (
+                    <div key={i} className="flex justify-between items-center text-sm">
+                      <span className="text-gray-600 dark:text-gray-400 font-inter capitalize">
+                        {fechaFormato} a las {m.horaFormato}
+                      </span>
+                      <span className="font-bold text-[#EF4444] font-inter">
+                        {m.total} {m.total === 1 ? "ticket" : "tickets"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-[#7C3AED]" />
-              <span className="text-xs text-gray-500 dark:text-gray-400 font-inter">En Proceso</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-[#22C55E]" />
-              <span className="text-xs text-gray-500 dark:text-gray-400 font-inter">Resueltos</span>
-            </div>
-          </div>
-          {chartsLoading ? <ChartSkeleton /> : <StatusBarChart data={statusData} />}
+          )}
         </div>
+
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6">
+          <div className="mb-5">
+            <h3 className="text-base font-bold text-gray-800 dark:text-gray-100 font-inter">
+              👨‍🔧 Tickets por Técnico
+            </h3>
+            <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400 font-inter">
+              Carga de trabajo por agente
+            </p>
+          </div>
+          {chartsLoading ? <ChartSkeleton /> : <TecnicoPieChart data={tecnicoData} />}
+        </div>
+      </div>
+
+      {/* Tiempo de Resolución (NUEVO) */}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 mb-6">
+        <div className="mb-5">
+          <h3 className="text-base font-bold text-gray-800 dark:text-gray-100 font-inter">
+            ⏱️ Tiempo Promedio de Resolución por Técnico
+          </h3>
+          <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400 font-inter">
+            Cuánto se demora cada técnico en cerrar un caso
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-[#F8F8FC] dark:bg-gray-800">
+                <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Técnico</th>
+                <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Tickets Resueltos</th>
+                <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Tiempo Promedio</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tiempoTecnicoData.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="text-center py-4 text-gray-500">No hay datos en este período.</td>
+                </tr>
+              ) : (
+                tiempoTecnicoData.map((t: any) => (
+                  <tr key={t.agente} className="border-t border-gray-100 dark:border-gray-700">
+                    <td className="px-3 py-2 text-sm font-medium text-gray-800 dark:text-gray-100">{t.agente}</td>
+                    <td className="px-3 py-2 text-sm text-gray-600">{t.totalResueltos}</td>
+                    <td className="px-3 py-2 text-sm text-[#25207E] font-semibold">
+                      {t.promedioHoras >= 1 ? `${t.promedioHoras} h` : `${Math.round(t.promedioHoras * 60)} min`}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Status Bar Chart */}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6">
+        <div className="mb-5">
+          <h3 className="text-base font-bold text-gray-800 dark:text-gray-100 font-inter">
+            Incidentes por Estado
+          </h3>
+          <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400 font-inter">
+            {selectedAgente ? `Técnico: ${selectedAgente}` : "Todos los técnicos"} — Pendientes, en proceso y resueltos
+          </p>
+        </div>
+        <div className="flex items-center gap-6 mb-4">
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm bg-[#3B82F6]" />
+            <span className="text-xs text-gray-500 dark:text-gray-400 font-inter">Pendientes</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm bg-[#7C3AED]" />
+            <span className="text-xs text-gray-500 dark:text-gray-400 font-inter">En Proceso</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm bg-[#22C55E]" />
+            <span className="text-xs text-gray-500 dark:text-gray-400 font-inter">Resueltos</span>
+          </div>
+        </div>
+        {chartsLoading ? <ChartSkeleton /> : <StatusBarChart data={statusData} />}
       </div>
     </div>
   );

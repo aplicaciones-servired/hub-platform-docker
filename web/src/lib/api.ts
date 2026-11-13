@@ -31,8 +31,12 @@ function getCurrentScope(): "admin" | "user" | null {
 }
 
 function requestHeaders(options: RequestInit): Record<string, string> {
+  // Detectamos si es un archivo (FormData)
+  const isFormData = options.body instanceof FormData;
+  
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    // Si NO es un archivo, ponemos JSON. Si es archivo, dejamos que el navegador ponga el Content-Type.
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...((options.headers as Record<string, string>) || {}),
   };
 
@@ -42,6 +46,7 @@ function requestHeaders(options: RequestInit): Record<string, string> {
   }
 
   const csrf = getCsrfToken();
+  // Ponemos el token en el header (en minúsculas para que coincida con el backend)
   if (csrf && options.method && options.method !== "GET") {
     headers["x-csrf-token"] = csrf;
   }
@@ -260,4 +265,7 @@ export const api = {
     request<T>(endpoint, { method: "PATCH", body: JSON.stringify(body) }, schema),
   delete: <T>(endpoint: string, schema?: z.ZodType<T>) =>
     request<T>(endpoint, { method: "DELETE" }, schema),
+
+  upload: <T>(endpoint: string, formData: FormData) => 
+    request<T>(endpoint, { method: "POST", body: formData }),
 };

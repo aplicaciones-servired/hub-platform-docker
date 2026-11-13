@@ -142,11 +142,14 @@ export default function TicketsPage() {
   }, [fetchStats]);
 
   const handleStatusChange = useCallback(
-    async (ticketId: string, newStatus: string) => {
+    async (ticketId: string, newStatus: string, comentario?: string) => {
       try {
         const updated = await api.patch<IncidentItem>(
           `/incidents/${ticketId}`,
-          { estado: newStatus }
+          { 
+            estado: newStatus,
+            comentario: comentario // <-- Enviamos el comentario
+          }
         );
         setIncidents((prev) =>
           (Array.isArray(prev) ? prev : []).map((inc) => (inc.id === ticketId ? updated : inc))
@@ -155,7 +158,6 @@ export default function TicketsPage() {
       } catch (err) {
         const msg = err instanceof Error ? err.message : "";
         logger.error("Status change error", { error: msg });
-        // El estado puede haber cambiado en el servidor (409): recargar la tabla
         fetchTickets();
         showAlert(
           "No se pudo cambiar el estado",
@@ -164,7 +166,6 @@ export default function TicketsPage() {
         );
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [showAlert, fetchTickets, showToast, technicians]
   );
 
@@ -267,6 +268,7 @@ export default function TicketsPage() {
       { header: "Técnico", key: "tecnico", width: 20 },
       { header: "Descripción de la falla", key: "desc", width: 50 },
       { header: "Solución del problema", key: "sol", width: 50 },
+      { header: "Seguimiento", key: "seg", width: 50 },
       { header: "Creado", key: "creado", width: 20 },
       { header: "Actualizado", key: "act", width: 20 },
     ];
@@ -288,6 +290,11 @@ export default function TicketsPage() {
       row.getCell(9).value = inc.solucion || "";
       row.getCell(10).value = fmtDate(inc.created_at);
       row.getCell(11).value = fmtDate(inc.updated_at);
+      // NUEVO: Extraer los textos de los comentarios
+      row.getCell(10).value = (inc as any).comments ? (inc as any).comments.map((c: any) => c.texto).join(" | ") : "";
+      
+      row.getCell(11).value = fmtDate(inc.created_at);
+      row.getCell(12).value = fmtDate(inc.updated_at);
     });
 
     const buffer = await wb.xlsx.writeBuffer();
@@ -310,9 +317,12 @@ export default function TicketsPage() {
         categoria: inc.punto_venta,
         tipo: getCategoriaLabel(inc.categoria),
         solicitante: inc.reportante_nombre || inc.nombre,
-        estado:
+       estado:
           inc.estado === "pendiente"
-            ? "Abierto"
+            ? ((inc as any).comments_count > 0 ||
+               new Date(inc.updated_at).getTime() !== new Date(inc.created_at).getTime()
+                ? "Pendiente"
+                : "Abierto")
             : inc.estado === "en_proceso"
               ? "En Proceso"
               : "Resuelto",

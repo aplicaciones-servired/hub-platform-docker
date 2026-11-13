@@ -199,3 +199,124 @@ export const StatusBarChart = memo(function StatusBarChart({ data }: StatusBarCh
     </ResponsiveContainer>
   );
 });
+// ────────────────────────────────────────
+// GRÁFICA: Horas Pico
+// ────────────────────────────────────────
+export interface HoraDataPoint {
+  name: string;
+  total: number;
+}
+
+interface HorasPicoChartProps {
+  data: HoraDataPoint[];
+}
+
+export const HorasPicoChart = memo(function HorasPicoChart({ data }: HorasPicoChartProps) {
+  const { theme } = useTheme();
+  const safeData = Array.isArray(data) ? data : [];
+  const tickFill = theme === "dark" ? "#f3f4f6" : "#9CA3AF";
+  const gridStroke = theme === "dark" ? "#374151" : "#F3F4F6";
+  const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
+  const tooltipColor = theme === "dark" ? "#e2e8f0" : undefined;
+
+  const filtered = safeData.filter((d) => d.total > 0);
+  const maxTotal = Math.max(...filtered.map((d) => d.total), 1);
+
+  return (
+    <ResponsiveContainer width="100%" height={280}>
+      <BarChart data={filtered} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+        <XAxis dataKey="name" tick={{ fontSize: 11, fill: tickFill }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 12, fill: tickFill }} axisLine={false} tickLine={false} width={40} allowDecimals={false} />
+        <Tooltip
+          contentStyle={{
+            borderRadius: "8px",
+            border: "1px solid #E5E7EB",
+            backgroundColor: tooltipBg,
+            color: tooltipColor,
+          }}
+        />
+        <Bar dataKey="total" name="Tickets" radius={[6, 6, 0, 0]} maxBarSize={40}>
+          {filtered.map((entry, index) => (
+            <Cell
+              key={index}
+              fill={entry.total >= maxTotal * 0.7 ? "#EF4444" : entry.total >= maxTotal * 0.4 ? "#F59E0B" : "#7C3AED"}
+            />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+});
+
+// ────────────────────────────────────────
+// GRÁFICA: Tickets por Técnico (Pie Chart)
+// ────────────────────────────────────────
+export interface TecnicoDataPoint {
+  name: string;
+  value: number;
+}
+
+interface TecnicoPieChartProps {
+  data: TecnicoDataPoint[];
+}
+
+export const TecnicoPieChart = memo(function TecnicoPieChart({ data }: TecnicoPieChartProps) {
+  const { theme } = useTheme();
+  const safeData = Array.isArray(data) ? data : [];
+  const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
+  const tooltipColor = theme === "dark" ? "#e2e8f0" : undefined;
+
+  const colors = ["#25207E", "#7C3AED", "#3B82F6", "#F59E0B", "#EF4444", "#22C55E", "#EC4899", "#14B8A6"];
+  const total = safeData.reduce((s, d) => s + d.value, 0);
+
+  return (
+    <div className="flex flex-col items-center gap-5">
+      <ResponsiveContainer width="100%" height={240}>
+        <PieChart>
+          <Pie
+            data={safeData}
+            cx="50%"
+            cy="50%"
+            innerRadius={60}
+            outerRadius={100}
+            paddingAngle={3}
+            dataKey="value"
+            strokeWidth={0}
+            label={({ name, value }) => `${name}: ${value}`}
+          >
+            {safeData.map((entry, index) => (
+              <Cell key={index} fill={colors[index % colors.length]} />
+            ))}
+          </Pie>
+          <Tooltip
+            contentStyle={{
+              borderRadius: "8px",
+              border: "1px solid #E5E7EB",
+              backgroundColor: tooltipBg,
+              color: tooltipColor,
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="w-full max-h-40 overflow-y-auto">
+        <div className="flex flex-col gap-0.5">
+          {safeData.map((entry, i) => {
+            const pct = total > 0 ? Math.round((entry.value / total) * 100) : 0;
+            return (
+              <div key={entry.name} className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: colors[i % colors.length] }} />
+                <span className="text-[11px] truncate font-inter text-gray-500 dark:text-gray-400 flex-1">
+                  {entry.name}
+                </span>
+                <span className="text-[11px] shrink-0 font-inter text-gray-300">
+                  {entry.value} ({pct}%)
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+});
