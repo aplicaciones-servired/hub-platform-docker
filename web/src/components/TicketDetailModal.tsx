@@ -1,8 +1,8 @@
 "use client";
 
-import { X, Clock, User, Phone, MapPin, AlertCircle, CheckCircle2, Pencil, Check, X as XIcon } from "lucide-react";
+import { X, Clock, User, Phone, MapPin, CheckCircle2, Pencil, Check, X as XIcon } from "lucide-react";
 import type { Incident } from "@hub/shared/types/incident";
-import { PRIORITY_BADGES, STATUS_BADGES } from "@/lib/styles";
+import { STATUS_BADGES } from "@/lib/styles";
 import { formatDate, ESTADO_LABELS, formatTicketId } from "@/lib/utils";
 import IncidentPhoto from "@/components/IncidentPhoto";
 import { useState } from "react";
@@ -49,7 +49,6 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
 
   // 4. Variables derivadas
   const status = ESTADO_LABELS[incident.estado] || incident.estado;
-  const priorityBadge = PRIORITY_BADGES[incident.urgencia] || "bg-gray-500 text-white";
   const statusBadge = STATUS_BADGES[incident.estado] || "bg-gray-500 text-white";
 
   return (
@@ -68,11 +67,6 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-base font-bold text-gray-900 dark:text-white font-inter">
                   {formatTicketId(incident.id)}
-                </span>
-                <span
-                  className={`inline-block px-2.5 py-[3px] rounded-full text-[11px] font-semibold font-inter ${priorityBadge}`}
-                >
-                  {incident.urgencia.toUpperCase()}
                 </span>
                 <span
                   className={`inline-block px-2.5 py-[3px] rounded-full text-[11px] font-semibold font-inter ${statusBadge}`}
@@ -103,7 +97,6 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
               <InfoBlock icon={User} label="Código del punto" value={incident.documento} />
               <InfoBlock icon={Phone} label="Teléfono" value={incident.telefono || "—"} />
               <InfoBlock icon={MapPin} label="Punto de Venta" value={incident.punto_venta} />
-              <InfoBlock icon={AlertCircle} label="Urgencia" value={incident.urgencia.charAt(0).toUpperCase() + incident.urgencia.slice(1)} />
               <InfoBlock icon={Clock} label="Estado" value={status} />
               
               <div className="col-span-2">

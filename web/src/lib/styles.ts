@@ -1,9 +1,3 @@
-export const PRIORITY_BADGES: Record<string, string> = {
-  alta: "bg-red-500 text-white",
-  media: "bg-amber-400 text-white",
-  baja: "bg-green-500 text-white",
-};
-
 export const STATUS_BADGES: Record<string, string> = {
   pendiente: "bg-blue-500 text-white",
   en_proceso: "bg-purple-600 text-white",

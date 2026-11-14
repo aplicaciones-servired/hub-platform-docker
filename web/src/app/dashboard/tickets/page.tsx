@@ -282,17 +282,13 @@ export default function TicketsPage() {
       row.getCell(2).value = inc.nombre;
       row.getCell(3).value = inc.telefono;
       row.getCell(4).value = inc.punto_venta;
-      row.getCell(6).value = inc.estado;
-      row.getCell(7).value = inc.agente || "";
-      row.getCell(8).value = inc.descripcion;
-      row.getCell(9).value = inc.solucion || "";
+      row.getCell(5).value = inc.estado;
+      row.getCell(6).value = inc.agente || "";
+      row.getCell(7).value = inc.descripcion;
+      row.getCell(8).value = inc.solucion || "";
+      row.getCell(9).value = (inc as any).comments ? (inc as any).comments.map((c: any) => c.texto).join(" | ") : "";
       row.getCell(10).value = fmtDate(inc.created_at);
       row.getCell(11).value = fmtDate(inc.updated_at);
-      // NUEVO: Extraer los textos de los comentarios
-      row.getCell(10).value = (inc as any).comments ? (inc as any).comments.map((c: any) => c.texto).join(" | ") : "";
-      
-      row.getCell(11).value = fmtDate(inc.created_at);
-      row.getCell(12).value = fmtDate(inc.updated_at);
     });
 
     const buffer = await wb.xlsx.writeBuffer();
