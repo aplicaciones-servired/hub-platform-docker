@@ -16,7 +16,7 @@ import { useModal } from "@/hooks/useModal";
 import { useToast } from "@/contexts/ToastContext";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
-import { formatDateShort, formatDescription, getDateRange, isAdminRole } from "@/lib/utils";
+import { formatDateShort, formatDescription, getDateRange, isAdminRole, ESTADO_LABELS } from "@/lib/utils";
 import { getCategoriaLabel } from "@/lib/categorias";
 import type { Incident } from "@hub/shared/types/incident";
 
@@ -282,7 +282,7 @@ export default function TicketsPage() {
       row.getCell(2).value = inc.nombre;
       row.getCell(3).value = inc.telefono;
       row.getCell(4).value = inc.punto_venta;
-      row.getCell(5).value = inc.estado;
+      row.getCell(5).value = ESTADO_LABELS[inc.estado] || inc.estado;
       row.getCell(6).value = inc.agente || "";
       row.getCell(7).value = inc.descripcion;
       row.getCell(8).value = inc.solucion || "";
