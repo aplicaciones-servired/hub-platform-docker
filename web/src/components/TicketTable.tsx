@@ -27,7 +27,7 @@ interface TicketRow {
 
 const STATUS_BADGES: Record<string, string> = {
   Abierto: "bg-blue-100 text-blue-600",
-  Pendiente: "bg-orange-100 text-orange-600", // <-- NUEVO
+  Pendiente: "bg-orange-100 text-orange-600", 
   "En Proceso": "bg-purple-100 text-purple-600",
   Resuelto: "bg-slate-100 text-slate-600",
 };

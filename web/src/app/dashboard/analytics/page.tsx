@@ -7,8 +7,8 @@ import {
   TrafficChart,
   DonutChart,
   StatusBarChart,
-  HorasPicoChart, // <-- NUEVO
-  TecnicoPieChart, // <-- NUEVO
+  HorasPicoChart,
+  TecnicoPieChart,
   type AreaDataPoint,
   type DonutDataPoint,
   type StatusBarDataPoint,

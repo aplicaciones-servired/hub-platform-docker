@@ -148,7 +148,7 @@ export default function TicketsPage() {
           `/incidents/${ticketId}`,
           { 
             estado: newStatus,
-            comentario: comentario // <-- Enviamos el comentario
+            comentario: comentario
           }
         );
         setIncidents((prev) =>
@@ -263,7 +263,6 @@ export default function TicketsPage() {
       { header: "Nombre", key: "nombre", width: 22 },
       { header: "Teléfono", key: "tel", width: 14 },
       { header: "Punto de Venta", key: "pv", width: 22 },
-      { header: "Urgencia", key: "urg", width: 12 },
       { header: "Estado", key: "est", width: 14 },
       { header: "Técnico", key: "tecnico", width: 20 },
       { header: "Descripción de la falla", key: "desc", width: 50 },
@@ -283,7 +282,6 @@ export default function TicketsPage() {
       row.getCell(2).value = inc.nombre;
       row.getCell(3).value = inc.telefono;
       row.getCell(4).value = inc.punto_venta;
-      row.getCell(5).value = inc.urgencia;
       row.getCell(6).value = inc.estado;
       row.getCell(7).value = inc.agente || "";
       row.getCell(8).value = inc.descripcion;

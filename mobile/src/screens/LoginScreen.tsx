@@ -5,8 +5,8 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  TouchableOpacity,// <-- Importamos TouchableOpacity para la lista
-   FlatList, 
+  TouchableOpacity,
+  FlatList, 
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -15,7 +15,7 @@ import Input from "../components/Input";
 import PrimaryButton from "../components/PrimaryButton";
 import { useAuth } from "../contexts/AuthContext";
 import type { LoginFormData, FormErrors } from "../types";
-import { API_URL } from "../services/api"; // <-- Importamos la URL de la API
+import { API_URL } from "../services/api";
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -48,8 +48,7 @@ export default function LoginScreen() {
     }
     try {
       const res = await fetch(`${API_URL}/auth/sucursales?q=${encodeURIComponent(texto)}`);
-      const data = await res.json();
-      console.log("Sucursales encontradas:", data); 
+      const data = await res.json(); 
       setSugerencias(data);
       setMostrarSugerencias(true);
     } catch (error) {
@@ -134,7 +133,7 @@ export default function LoginScreen() {
                 setForm((prev) => ({ ...prev, documento: text }));
                 setErrors((prev) => prev.documento ? { ...prev, documento: undefined } : prev);
                 if (loginError) setLoginError("");
-                buscarSucursales(text); // <-- Deja solo esta línea
+                buscarSucursales(text);
               }}
               onBlur={() => {
                 // Retrasamos 200ms para que el clic en la sugerencia alcance a registrarse

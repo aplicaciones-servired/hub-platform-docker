@@ -1,6 +1,6 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
-import { register, login, me, refresh, logout, buscarSucursales } from "./auth.controller"; // <-- Aquí
+import { register, login, me, refresh, logout, buscarSucursales } from "./auth.controller";
 import { validate } from "../../middlewares/validate";
 import { loginSchema, registerSchema } from "./auth.schema";
 import { authMiddleware } from "../../middlewares/auth";
