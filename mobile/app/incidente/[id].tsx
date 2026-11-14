@@ -154,7 +154,9 @@ export default function IncidentDetailScreen() {
           <InfoRow icon={User} label="Cédula del Solicitante" value={(incident as any).reportante_cedula || "No registrado"} />
 
           {/* Campos del Punto de Venta y del Ticket */}
-          <InfoRow icon={User} label="Usuario del Punto" value={incident.nombre} />
+          {incident.nombre !== incident.punto_venta && (
+            <InfoRow icon={User} label="Usuario del Punto" value={incident.nombre} />
+          )}
           <InfoRow icon={User} label="Código del punto" value={incident.documento} />
           <InfoRow icon={Phone} label="Teléfono" value={incident.telefono || "—"} />
           <InfoRow icon={MapPin} label="Punto de Venta" value={incident.punto_venta} />
