@@ -69,12 +69,13 @@ function colorTiempo(minutos: number | null): string {
 // ─────────────────────────────────────────────────────────────
 
 const AZUL = "FF25207E";
-const BLUE = "FF03A9F3";
+const BLUE = "FF3B82F6";
 const GREEN = "FF16A34A";
+const AMBER = "FFF59E0B";
 const DARK = "FF262626";
 const GRAY = "FF7F7F7F";
 const LIGHT_AZUL = "FFEEEDF8";
-const LIGHT_BLUE = "FFEAF8FF";
+const LIGHT_BLUE = "FFEFF6FF";
 const ZEBRA = "FFF9FAFB";
 const BORDER = "FFD9D9D9";
 
@@ -249,7 +250,7 @@ async function handleExport(
   const kpis = [
     { label: "INCIDENTES REPORTADOS", value: totalIncidents, desc: "Total registrados", color: AZUL },
     { label: "PENDIENTES", value: estadoMap.pendiente, desc: "Esperando asignación", color: BLUE },
-    { label: "EN PROCESO", value: estadoMap.en_proceso, desc: "Siendo atendidos", color: AZUL },
+    { label: "EN PROCESO", value: estadoMap.en_proceso, desc: "Siendo atendidos", color: AMBER },
     { label: "RESUELTOS", value: estadoMap.resuelto, desc: "Cerrados con éxito", color: GREEN },
     { label: "TASA DE RESOLUCIÓN", value: resolutionRate, desc: "Resueltos ÷ creados", color: BLUE, isPct: true },
     { label: "TIEMPO PROMEDIO", value: fmtDuracion(Math.round(tiempoPromGlobal)), desc: "Tickets resueltos", color: BLUE },
@@ -457,7 +458,7 @@ async function handleExport(
 
   const estados = [
     { name: "Pendiente", key: "pendiente", color: BLUE },
-    { name: "En Proceso", key: "en_proceso", color: AZUL },
+    { name: "En Proceso", key: "en_proceso", color: AMBER },
     { name: "Resuelto", key: "resuelto", color: GREEN },
   ];
   estados.forEach((e, i) => {

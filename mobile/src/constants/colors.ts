@@ -18,8 +18,8 @@ export const ESTADO_COLORS: Record<string, string> = {
 
 export const COLORS = {
   primary: "#201A7A",
-  primaryLight: "#F3F0FF",
-  primaryBorder: "#DCD4FF",
+  primaryLight: "#EEEDF8",
+  primaryBorder: "#D9D7EE",
   textDark: "#1F2937",
   textMedium: "#6B7280",
   textLight: "#9CA3AF",

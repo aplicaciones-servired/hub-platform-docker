@@ -13,7 +13,7 @@ export default function UserSummaryCards({ totalUsers, adminCount, userCount, lo
       icon: Users,
       title: "Total Usuarios",
       value: loading ? "..." : totalUsers.toLocaleString(),
-      iconBg: "bg-[#F3F0FF]",
+      iconBg: "bg-[#EEEDF8]",
       iconColor: "#25207E",
     },
     {
@@ -27,7 +27,7 @@ export default function UserSummaryCards({ totalUsers, adminCount, userCount, lo
       icon: Mail,
       title: "Usuarios",
       value: loading ? "..." : userCount.toLocaleString(),
-      iconBg: "bg-[#F3F0FF]",
+      iconBg: "bg-[#EEEDF8]",
       iconColor: "#25207E",
     },
   ];

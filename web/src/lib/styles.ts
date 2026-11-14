@@ -1,6 +1,6 @@
 export const STATUS_BADGES: Record<string, string> = {
   pendiente: "bg-blue-500 text-white",
-  en_proceso: "bg-purple-600 text-white",
+  en_proceso: "bg-amber-500 text-white",
   resuelto: "bg-green-500 text-white",
 };
 
@@ -13,7 +13,7 @@ export const STATUS_DOTS: Record<string, string> = {
 
 export const STATUS_ACTION_COLORS: Record<string, string> = {
   pendiente: "text-blue-500",
-  en_proceso: "text-purple-600",
+  en_proceso: "text-amber-600",
   resuelto: "text-green-500",
 };
 
@@ -21,7 +21,7 @@ export const ROLE_BADGES: Record<string, string> = {
   admin: "bg-[#25207E] text-white",
   tecnico: "bg-blue-700 text-white",
   asesor: "bg-amber-100 text-amber-600",
-  user: "bg-[#DCCFFF] text-[#6D4AFF]",
+  user: "bg-[#EEEDF8] text-[#25207E]",
 };
 
 export const URGENCIA_COLORS: Record<string, string> = {

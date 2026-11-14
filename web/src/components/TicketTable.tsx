@@ -26,10 +26,10 @@ interface TicketRow {
 }
 
 const STATUS_BADGES: Record<string, string> = {
-  Abierto: "bg-blue-100 text-blue-600",
-  Pendiente: "bg-orange-100 text-orange-600", 
-  "En Proceso": "bg-purple-100 text-purple-600",
-  Resuelto: "bg-slate-100 text-slate-600",
+  Abierto: "bg-blue-100 text-blue-700",
+  Pendiente: "bg-blue-100 text-blue-700",
+  "En Proceso": "bg-amber-100 text-amber-700",
+  Resuelto: "bg-green-100 text-green-700",
 };
 
 interface TicketTableProps {
@@ -164,7 +164,7 @@ function ActionMenu({
                             onAssignAgent(ticketId, technician.id);
                             setOpen(false);
                           }}
-                          className="flex w-full items-center justify-between px-3 py-2.5 text-left hover:bg-[#F3F0FF] dark:hover:bg-gray-800"
+                          className="flex w-full items-center justify-between px-3 py-2.5 text-left hover:bg-[#EEEDF8] dark:hover:bg-gray-800"
                         >
                           <span>
                             <span className="block text-sm font-medium text-gray-800 dark:text-gray-100">

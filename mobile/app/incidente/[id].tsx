@@ -195,7 +195,7 @@ export default function IncidentDetailScreen() {
               <View key={comment.id} className="flex-row">
                 {/* Línea de tiempo (ícono y línea vertical) */}
                 <View className="items-center mr-3">
-                  <View className="w-8 h-8 rounded-full bg-[#F3F0FF] items-center justify-center">
+                  <View className="w-8 h-8 rounded-full bg-[#EEEDF8] items-center justify-center">
                     <User size={14} color="#25207E" strokeWidth={2} />
                   </View>
                   {index !== incident.comments.length - 1 && (
@@ -246,7 +246,7 @@ export default function IncidentDetailScreen() {
 function InfoRow({ icon: Icon, label, value }: { icon: typeof User; label: string; value: string }) {
   return (
     <View className="flex-row items-center gap-3">
-      <View className="w-8 h-8 rounded-lg bg-[#F3F0FF] items-center justify-center">
+      <View className="w-8 h-8 rounded-lg bg-[#EEEDF8] items-center justify-center">
         <Icon size={14} color="#25207E" strokeWidth={2} />
       </View>
       <View className="flex-1">

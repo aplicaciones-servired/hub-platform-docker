@@ -22,7 +22,7 @@ export default function AnalyticsMetrics({ metrics }: AnalyticsMetricsProps) {
           className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-[18px] min-h-[120px] flex flex-col justify-center gap-2"
         >
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#F3F0FF] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[#EEEDF8] flex items-center justify-center">
               <metric.icon size={16} color="#25207E" strokeWidth={2} />
             </div>
             <span className="text-[13px] font-medium text-gray-500 dark:text-gray-400 font-inter">

@@ -124,7 +124,7 @@ export default function UsersTable({ users, currentUserId, canManageUsers, canMa
           className="grid grid-cols-[1fr_100px_110px_120px_120px_60px] px-5 border-t border-gray-100 dark:border-gray-700 items-center"
         >
           <div className="flex items-center gap-3 py-3 px-2">
-            <div className="w-9 h-9 rounded-full bg-[#F3F0FF] dark:bg-[rgba(129,140,248,0.15)] flex items-center justify-center text-[var(--brand)] text-[13px] font-semibold font-inter shrink-0">
+            <div className="w-9 h-9 rounded-full bg-[#EEEDF8] dark:bg-[rgba(129,140,248,0.15)] flex items-center justify-center text-[var(--brand)] text-[13px] font-semibold font-inter shrink-0">
               {getInitials(user)}
             </div>
             <div>

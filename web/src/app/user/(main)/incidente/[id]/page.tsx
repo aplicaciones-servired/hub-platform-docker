@@ -20,7 +20,7 @@ interface IncidentDetail {
 function InfoRow({ icon: Icon, label, value }: { icon: typeof User; label: string; value: string }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="w-8 h-8 rounded-lg bg-[#F3F0FF] flex items-center justify-center">
+      <div className="w-8 h-8 rounded-lg bg-[#EEEDF8] flex items-center justify-center">
         <Icon size={14} color="#25207E" strokeWidth={2} />
       </div>
       <div className="flex-1">

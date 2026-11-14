@@ -100,7 +100,7 @@ export const DonutChart = memo(function DonutChart({ data, allPvNames }: DonutCh
   const pvColorMap = new Map(safeData.map((d) => [d.name, d.color]));
   const pvValueMap = new Map(safeData.map((d) => [d.name, d.value]));
   const allPvs = allPvNames || [];
-  const colors = ["#25207E", "#7C3AED", "#3B82F6", "#F59E0B", "#EF4444", "#22C55E", "#EC4899", "#14B8A6"];
+    const colors = ["#25207E", "#3B348B", "#1E40AF", "#2563EB", "#3B82F6", "#0EA5E9", "#60A5FA", "#93C5FD"];
 
   return (
     <div className="flex flex-col items-center gap-5">
@@ -193,7 +193,7 @@ export const StatusBarChart = memo(function StatusBarChart({ data }: StatusBarCh
           }}
         />
         <Bar dataKey="pendientes" name="Pendientes" fill="#3B82F6" radius={[4, 4, 0, 0]} maxBarSize={60} />
-        <Bar dataKey="enProceso" name="En Proceso" fill="#7C3AED" radius={[4, 4, 0, 0]} maxBarSize={60} />
+        <Bar dataKey="enProceso" name="En Proceso" fill="#F59E0B" radius={[4, 4, 0, 0]} maxBarSize={60} />
         <Bar dataKey="resueltos" name="Resueltos" fill="#22C55E" radius={[4, 4, 0, 0]} maxBarSize={60} />
       </BarChart>
     </ResponsiveContainer>
@@ -240,7 +240,7 @@ export const HorasPicoChart = memo(function HorasPicoChart({ data }: HorasPicoCh
           {filtered.map((entry, index) => (
             <Cell
               key={index}
-              fill={entry.total >= maxTotal * 0.7 ? "#EF4444" : entry.total >= maxTotal * 0.4 ? "#F59E0B" : "#7C3AED"}
+              fill={entry.total >= maxTotal * 0.7 ? "#25207E" : entry.total >= maxTotal * 0.4 ? "#3B82F6" : "#93C5FD"}
             />
           ))}
         </Bar>
@@ -267,7 +267,7 @@ export const TecnicoPieChart = memo(function TecnicoPieChart({ data }: TecnicoPi
   const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
   const tooltipColor = theme === "dark" ? "#e2e8f0" : undefined;
 
-  const colors = ["#25207E", "#7C3AED", "#3B82F6", "#F59E0B", "#EF4444", "#22C55E", "#EC4899", "#14B8A6"];
+  const colors = ["#25207E", "#3B348B", "#1E40AF", "#2563EB", "#3B82F6", "#0EA5E9", "#60A5FA", "#93C5FD"];
   const total = safeData.reduce((s, d) => s + d.value, 0);
 
   return (

@@ -300,7 +300,7 @@ export default function AnalyticsPage() {
                       <span className="text-gray-600 dark:text-gray-400 font-inter capitalize">
                         {fechaFormato} a las {m.horaFormato}
                       </span>
-                      <span className="font-bold text-[#EF4444] font-inter">
+                      <span className="font-bold text-[#25207E] font-inter">
                         {m.total} {m.total === 1 ? "ticket" : "tickets"}
                       </span>
                     </div>
@@ -380,7 +380,7 @@ export default function AnalyticsPage() {
             <span className="text-xs text-gray-500 dark:text-gray-400 font-inter">Pendientes</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-[#7C3AED]" />
+            <div className="w-3 h-3 rounded-sm bg-[#F59E0B]" />
             <span className="text-xs text-gray-500 dark:text-gray-400 font-inter">En Proceso</span>
           </div>
           <div className="flex items-center gap-1.5">

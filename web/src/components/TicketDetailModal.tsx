@@ -145,7 +145,7 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
                   {(incident as any).comments.map((comment: any, index: number) => (
                     <div key={comment.id || index} className="flex gap-3">
                       <div className="flex flex-col items-center">
-                        <div className="w-6 h-6 rounded-full bg-[#F3F0FF] flex items-center justify-center shrink-0">
+                        <div className="w-6 h-6 rounded-full bg-[#EEEDF8] flex items-center justify-center shrink-0">
                           <User size={12} color="#25207E" />
                         </div>
                         {index !== (incident as any).comments.length - 1 && (
@@ -237,7 +237,7 @@ function InfoBlock({
 }) {
   return (
     <div className="flex items-start gap-2.5">
-      <div className="w-8 h-8 rounded-lg bg-[#F3F0FF] flex items-center justify-center shrink-0 mt-0.5">
+      <div className="w-8 h-8 rounded-lg bg-[#EEEDF8] flex items-center justify-center shrink-0 mt-0.5">
         <Icon size={14} color="var(--brand)" strokeWidth={2} />
       </div>
       <div>

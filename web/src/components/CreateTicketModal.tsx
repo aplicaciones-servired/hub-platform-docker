@@ -267,7 +267,7 @@ export default function CreateTicketModal({ onClose, onCreated, showAlert }: Cre
             accept="image/*"
             multiple
             onChange={handleFileChange}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#F3F0FF] file:text-[#25207E] hover:file:bg-[#E5E0FF]"
+            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#EEEDF8] file:text-[#25207E] hover:file:bg-[#E5E0FF]"
           />
           {fotos.length > 0 && (
             <div className="flex gap-2 mt-2">

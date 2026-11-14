@@ -110,7 +110,7 @@ export default function SuccessScreen() {
               width: 40,
               height: 40,
               borderRadius: 20,
-              backgroundColor: "#DCD4FF",
+              backgroundColor: "#D9D7EE",
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -367,7 +367,7 @@ export default function SuccessScreen() {
             style={{
               height: 46,
               borderRadius: 10,
-              backgroundColor: "#DCD4FF",
+              backgroundColor: "#D9D7EE",
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "center",

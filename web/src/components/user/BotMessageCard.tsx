@@ -55,7 +55,7 @@ export function BotMessageCard({
               <button
                 key={item.action}
                 onClick={() => onSuggestedAction?.(item.action, item.label)}
-                className="bg-[#F3F0FF] border border-[#DCD4FF] rounded-lg h-11 flex items-center justify-center text-[#201A7A] text-sm font-medium hover:bg-[#E8E4FF] transition-colors"
+                className="bg-[#EEEDF8] border border-[#DCD4FF] rounded-lg h-11 flex items-center justify-center text-[#201A7A] text-sm font-medium hover:bg-[#E8E4FF] transition-colors"
               >
                 {item.label}
               </button>
@@ -67,7 +67,7 @@ export function BotMessageCard({
           <div className="mt-3">
             <button
               onClick={() => setShowMenu(true)}
-              className="bg-[#F3F0FF] border border-[#DCD4FF] rounded-lg h-11 flex items-center justify-center text-[#201A7A] text-sm hover:bg-[#E8E4FF] transition-colors w-full"
+              className="bg-[#EEEDF8] border border-[#DCD4FF] rounded-lg h-11 flex items-center justify-center text-[#201A7A] text-sm hover:bg-[#E8E4FF] transition-colors w-full"
             >
               Hacer otra petición
             </button>

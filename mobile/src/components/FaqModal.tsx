@@ -137,7 +137,7 @@ export default function FaqModal({ onClose }: FaqModalProps) {
                   alignItems: "center",
                   justifyContent: "space-between",
                   padding: 14,
-                  backgroundColor: isOpen ? "#F3F0FF" : "#FFFFFF",
+                  backgroundColor: isOpen ? "#EEEDF8" : "#FFFFFF",
                 }}
               >
                 <Text

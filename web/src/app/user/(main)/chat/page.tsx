@@ -168,7 +168,7 @@ export default function ChatPage() {
             {latestIncident && (
               <button
                 onClick={() => router.push(`/user/incidente/${latestIncident.id}`)}
-                className="flex items-center gap-2.5 mx-3.5 mb-2.5 bg-[#F3F0FF] border border-[#DCD4FF] rounded-xl px-3 py-3 w-[calc(100%-28px)] hover:bg-[#E8E4FF] transition-colors"
+                className="flex items-center gap-2.5 mx-3.5 mb-2.5 bg-[#EEEDF8] border border-[#DCD4FF] rounded-xl px-3 py-3 w-[calc(100%-28px)] hover:bg-[#E8E4FF] transition-colors"
               >
                 <Ticket size={18} color="#25207E" strokeWidth={2} />
                 <div className="flex-1 text-left">
