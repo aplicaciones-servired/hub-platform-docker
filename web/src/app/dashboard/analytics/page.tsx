@@ -275,7 +275,7 @@ export default function AnalyticsPage() {
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6">
           <div className="mb-5">
             <h3 className="text-base font-bold text-gray-800 dark:text-gray-100 font-inter">
-              🕐 Horas Pico
+               Horas Pico
             </h3>
             <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400 font-inter">
               Franjas horarias con mayor cantidad de reportes
@@ -285,7 +285,7 @@ export default function AnalyticsPage() {
                     {momentosPicoData.length > 0 && (
             <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800">
               <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 font-inter uppercase tracking-[0.3px] mb-3">
-                🔥 Los momentos más concurridos
+                 Los momentos más concurridos
               </p>
               <div className="space-y-2">
                 {momentosPicoData.map((m: any, i: number) => {
@@ -314,10 +314,10 @@ export default function AnalyticsPage() {
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6">
           <div className="mb-5">
             <h3 className="text-base font-bold text-gray-800 dark:text-gray-100 font-inter">
-              👨‍🔧 Tickets por Técnico
+               Tickets por Técnico
             </h3>
             <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400 font-inter">
-              Carga de trabajo por agente
+              Carga de trabajo por Tecnico
             </p>
           </div>
           {chartsLoading ? <ChartSkeleton /> : <TecnicoPieChart data={tecnicoData} />}
@@ -328,7 +328,7 @@ export default function AnalyticsPage() {
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 mb-6">
         <div className="mb-5">
           <h3 className="text-base font-bold text-gray-800 dark:text-gray-100 font-inter">
-            ⏱️ Tiempo Promedio de Resolución por Técnico
+             Tiempo Promedio de Resolución por Técnico
           </h3>
           <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400 font-inter">
             Cuánto se demora cada técnico en cerrar un caso
