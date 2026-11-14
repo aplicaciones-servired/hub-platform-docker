@@ -7,11 +7,11 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Clock, User, Phone, MapPin, AlertCircle, Shield, MessageSquare, XCircle } from "lucide-react-native";
+import { Clock, User, Phone, MapPin, AlertCircle, Shield, XCircle } from "lucide-react-native";
 import { api } from "../../src/services/api";
 import AppHeader from "../../src/components/AppHeader";
 import IncidentPhoto from "../../src/components/IncidentPhoto";
-import { ESTADO_LABELS, ESTADO_COLORS, COLORS } from "../../src/constants/colors";
+import { ESTADO_LABELS, ESTADO_COLORS } from "../../src/constants/colors";
 import { getCategoriaLabel } from "../../src/constants/categorias";
 import { formatTicketId, formatDate } from "../../src/lib/format";
 
@@ -159,7 +159,6 @@ export default function IncidentDetailScreen() {
           <InfoRow icon={Phone} label="Teléfono" value={incident.telefono || "—"} />
           <InfoRow icon={MapPin} label="Punto de Venta" value={incident.punto_venta} />
           <InfoRow icon={AlertCircle} label="Tipo de problema" value={getCategoriaLabel(incident.categoria ?? undefined)} />
-          <InfoRow icon={AlertCircle} label="Urgencia" value={incident.urgencia.charAt(0).toUpperCase() + incident.urgencia.slice(1)} />
           <InfoRow icon={Clock} label="Estado" value={status} />
           <InfoRow icon={Shield} label="Técnico asignado" value={incident.agente || "Sin asignar"} />
         </View>
