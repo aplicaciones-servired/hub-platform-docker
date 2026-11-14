@@ -68,17 +68,17 @@ function colorTiempo(minutos: number | null): string {
 // Estilos reutilizables
 // ─────────────────────────────────────────────────────────────
 
-const PURPLE = "FF25207E";
+const AZUL = "FF25207E";
 const BLUE = "FF03A9F3";
 const GREEN = "FF16A34A";
 const DARK = "FF262626";
 const GRAY = "FF7F7F7F";
-const LIGHT_PURPLE = "FFEEEDF8";
+const LIGHT_AZUL = "FFEEEDF8";
 const LIGHT_BLUE = "FFEAF8FF";
 const ZEBRA = "FFF9FAFB";
 const BORDER = "FFD9D9D9";
 
-function headerStyle(fill: string = PURPLE) {
+function headerStyle(fill: string = AZUL) {
   return {
     font: { bold: true, color: { argb: "FFFFFFFF" }, size: 10, name: "Calibri" },
     fill: { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: fill } },
@@ -225,7 +225,7 @@ async function handleExport(
   // ═══════════════════════════════════════════════════════════
   const wsDash = wb.addWorksheet("Dashboard", {
     views: [{ showGridLines: false, zoomScale: 90 }],
-    properties: { tabColor: { argb: PURPLE } },
+    properties: { tabColor: { argb: AZUL } },
   });
 
   wsDash.getColumn(1).width = 2;
@@ -236,7 +236,7 @@ async function handleExport(
   const titleCell = wsDash.getCell("B2");
   titleCell.value = "HUB Platform — Reporte de Analítica";
   titleCell.font = { bold: true, size: 24, color: { argb: "FFFFFFFF" }, name: "Calibri" };
-  titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: PURPLE } };
+  titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: AZUL } };
   titleCell.alignment = { horizontal: "left", vertical: "middle", indent: 1 };
 
   wsDash.mergeCells("B4:Q4");
@@ -247,9 +247,9 @@ async function handleExport(
   rangeCell.alignment = { horizontal: "left", vertical: "middle", indent: 1 };
 
   const kpis = [
-    { label: "INCIDENTES REPORTADOS", value: totalIncidents, desc: "Total registrados", color: PURPLE },
+    { label: "INCIDENTES REPORTADOS", value: totalIncidents, desc: "Total registrados", color: AZUL },
     { label: "PENDIENTES", value: estadoMap.pendiente, desc: "Esperando asignación", color: BLUE },
-    { label: "EN PROCESO", value: estadoMap.en_proceso, desc: "Siendo atendidos", color: PURPLE },
+    { label: "EN PROCESO", value: estadoMap.en_proceso, desc: "Siendo atendidos", color: AZUL },
     { label: "RESUELTOS", value: estadoMap.resuelto, desc: "Cerrados con éxito", color: GREEN },
     { label: "TASA DE RESOLUCIÓN", value: resolutionRate, desc: "Resueltos ÷ creados", color: BLUE, isPct: true },
     { label: "TIEMPO PROMEDIO", value: fmtDuracion(Math.round(tiempoPromGlobal)), desc: "Tickets resueltos", color: BLUE },
@@ -285,7 +285,7 @@ async function handleExport(
     v.fill = {
       type: "pattern",
       pattern: "solid",
-      fgColor: { argb: i < 4 ? LIGHT_PURPLE : LIGHT_BLUE },
+      fgColor: { argb: i < 4 ? LIGHT_AZUL : LIGHT_BLUE },
     };
     v.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
     Object.assign(v, cellBorder);
@@ -298,7 +298,7 @@ async function handleExport(
     d.fill = {
       type: "pattern",
       pattern: "solid",
-      fgColor: { argb: i < 4 ? LIGHT_PURPLE : LIGHT_BLUE },
+      fgColor: { argb: i < 4 ? LIGHT_AZUL : LIGHT_BLUE },
     };
     d.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
     Object.assign(d, cellBorder);
@@ -331,7 +331,7 @@ async function handleExport(
   const tRes = wsRes.getCell("B2");
   tRes.value = "HUB Platform — Resumen de Datos";
   tRes.font = { bold: true, size: 20, color: { argb: "FFFFFFFF" }, name: "Calibri" };
-  tRes.fill = { type: "pattern", pattern: "solid", fgColor: { argb: PURPLE } };
+  tRes.fill = { type: "pattern", pattern: "solid", fgColor: { argb: AZUL } };
   tRes.alignment = { horizontal: "left", vertical: "middle", indent: 1 };
 
   wsRes.mergeCells("B4:N4");
@@ -344,14 +344,14 @@ async function handleExport(
   const indHeader = wsRes.getCell("B6");
   indHeader.value = "INDICADORES";
   indHeader.font = { bold: true, size: 11, color: { argb: "FFFFFFFF" }, name: "Calibri" };
-  indHeader.fill = { type: "pattern", pattern: "solid", fgColor: { argb: PURPLE } };
+  indHeader.fill = { type: "pattern", pattern: "solid", fgColor: { argb: AZUL } };
   indHeader.alignment = { horizontal: "center", vertical: "middle" };
 
   ["Métrica", "Valor", "Descripción"].forEach((l, i) => {
     const c = wsRes.getCell(7, 2 + i);
     c.value = l;
-    Object.assign(c, headerStyle(LIGHT_PURPLE));
-    c.font = { bold: true, size: 10, color: { argb: PURPLE }, name: "Calibri" };
+    Object.assign(c, headerStyle(LIGHT_AZUL));
+    c.font = { bold: true, size: 10, color: { argb: AZUL }, name: "Calibri" };
   });
 
   const indicadores = [
@@ -369,8 +369,8 @@ async function handleExport(
   indicadores.forEach((ind, i) => {
     const r = 8 + i;
     wsRes.getCell(r, 2).value = ind.metrica;
-    wsRes.getCell(r, 2).font = { bold: true, size: 10, color: { argb: PURPLE }, name: "Calibri" };
-    wsRes.getCell(r, 2).fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT_PURPLE } };
+    wsRes.getCell(r, 2).font = { bold: true, size: 10, color: { argb: AZUL }, name: "Calibri" };
+    wsRes.getCell(r, 2).fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT_AZUL } };
     Object.assign(wsRes.getCell(r, 2), cellBorder);
 
     wsRes.getCell(r, 3).value = { formula: ind.formula };
@@ -389,22 +389,22 @@ async function handleExport(
   const pvH = wsRes.getCell("H6");
   pvH.value = "INCIDENTES POR PUNTO DE VENTA";
   pvH.font = { bold: true, size: 11, color: { argb: "FFFFFFFF" }, name: "Calibri" };
-  pvH.fill = { type: "pattern", pattern: "solid", fgColor: { argb: PURPLE } };
+  pvH.fill = { type: "pattern", pattern: "solid", fgColor: { argb: AZUL } };
   pvH.alignment = { horizontal: "center", vertical: "middle" };
 
   ["Punto de Venta", "Cant.", "%", "T. Prom. (h)"].forEach((l, i) => {
     const c = wsRes.getCell(7, 8 + i);
     c.value = l;
-    Object.assign(c, headerStyle(LIGHT_PURPLE));
-    c.font = { bold: true, size: 10, color: { argb: PURPLE }, name: "Calibri" };
+    Object.assign(c, headerStyle(LIGHT_AZUL));
+    c.font = { bold: true, size: 10, color: { argb: AZUL }, name: "Calibri" };
   });
 
   const pvSorted = Array.from(pvMap.entries()).sort((a, b) => b[1].count - a[1].count);
   pvSorted.forEach(([name], i) => {
     const r = 8 + i;
     wsRes.getCell(r, 8).value = name;
-    wsRes.getCell(r, 8).font = { bold: true, size: 10, color: { argb: PURPLE }, name: "Calibri" };
-    wsRes.getCell(r, 8).fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT_PURPLE } };
+    wsRes.getCell(r, 8).font = { bold: true, size: 10, color: { argb: AZUL }, name: "Calibri" };
+    wsRes.getCell(r, 8).fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT_AZUL } };
     Object.assign(wsRes.getCell(r, 8), cellBorder);
 
     wsRes.getCell(r, 9).value = { formula: `=COUNTIF(Detalle!C6:C1000,H${r})` };
@@ -427,7 +427,7 @@ async function handleExport(
 
   const totPvRow = 8 + pvSorted.length;
   wsRes.getCell(totPvRow, 8).value = "TOTAL";
-  wsRes.getCell(totPvRow, 8).font = { bold: true, size: 10, color: { argb: PURPLE }, name: "Calibri" };
+  wsRes.getCell(totPvRow, 8).font = { bold: true, size: 10, color: { argb: AZUL }, name: "Calibri" };
   wsRes.getCell(totPvRow, 8).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF2F2F2" } };
   Object.assign(wsRes.getCell(totPvRow, 8), cellBorder);
   wsRes.getCell(totPvRow, 9).value = { formula: `=SUM(I8:I${totPvRow - 1})` };
@@ -445,26 +445,26 @@ async function handleExport(
   const estH = wsRes.getCell("H15");
   estH.value = "INCIDENTES POR ESTADO";
   estH.font = { bold: true, size: 11, color: { argb: "FFFFFFFF" }, name: "Calibri" };
-  estH.fill = { type: "pattern", pattern: "solid", fgColor: { argb: PURPLE } };
+  estH.fill = { type: "pattern", pattern: "solid", fgColor: { argb: AZUL } };
   estH.alignment = { horizontal: "center" };
 
   ["Estado", "Cant.", "%"].forEach((l, i) => {
     const c = wsRes.getCell(16, 8 + i);
     c.value = l;
-    Object.assign(c, headerStyle(LIGHT_PURPLE));
-    c.font = { bold: true, size: 10, color: { argb: PURPLE }, name: "Calibri" };
+    Object.assign(c, headerStyle(LIGHT_AZUL));
+    c.font = { bold: true, size: 10, color: { argb: AZUL }, name: "Calibri" };
   });
 
   const estados = [
     { name: "Pendiente", key: "pendiente", color: BLUE },
-    { name: "En Proceso", key: "en_proceso", color: PURPLE },
+    { name: "En Proceso", key: "en_proceso", color: AZUL },
     { name: "Resuelto", key: "resuelto", color: GREEN },
   ];
   estados.forEach((e, i) => {
     const r = 17 + i;
     wsRes.getCell(r, 8).value = e.name;
     wsRes.getCell(r, 8).font = { bold: true, size: 10, color: { argb: e.color }, name: "Calibri" };
-    wsRes.getCell(r, 8).fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT_PURPLE } };
+    wsRes.getCell(r, 8).fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT_AZUL } };
     Object.assign(wsRes.getCell(r, 8), cellBorder);
 
     wsRes.getCell(r, 9).value = { formula: `=COUNTIF(Detalle!D6:D1000,"${e.key}")` };
@@ -479,7 +479,7 @@ async function handleExport(
   });
 
   wsRes.getCell(20, 8).value = "TOTAL";
-  wsRes.getCell(20, 8).font = { bold: true, size: 10, color: { argb: PURPLE }, name: "Calibri" };
+  wsRes.getCell(20, 8).font = { bold: true, size: 10, color: { argb: AZUL }, name: "Calibri" };
   wsRes.getCell(20, 8).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF2F2F2" } };
   Object.assign(wsRes.getCell(20, 8), cellBorder);
   wsRes.getCell(20, 9).value = { formula: "=SUM(I17:I19)" };
@@ -497,14 +497,14 @@ async function handleExport(
   const agH = wsRes.getCell("H22");
   agH.value = "RESUMEN POR Tecnico";
   agH.font = { bold: true, size: 11, color: { argb: "FFFFFFFF" }, name: "Calibri" };
-  agH.fill = { type: "pattern", pattern: "solid", fgColor: { argb: PURPLE } };
+  agH.fill = { type: "pattern", pattern: "solid", fgColor: { argb: AZUL } };
   agH.alignment = { horizontal: "center" };
 
   ["Técnico", "Pend.", "Proceso", "Res.", "Total", "T. Prom.", "T. Prom. (h)"].forEach((l, i) => {
     const c = wsRes.getCell(23, 8 + i);
     c.value = l;
-    Object.assign(c, headerStyle(LIGHT_PURPLE));
-    c.font = { bold: true, size: 10, color: { argb: PURPLE }, name: "Calibri" };
+    Object.assign(c, headerStyle(LIGHT_AZUL));
+    c.font = { bold: true, size: 10, color: { argb: AZUL }, name: "Calibri" };
   });
 
   const agRows = Array.from(agMap.entries()).map(([ag, c]) => ({
@@ -524,8 +524,8 @@ async function handleExport(
   agRows.forEach((row, i) => {
     const r = 24 + i;
     wsRes.getCell(r, 8).value = row.ag;
-    wsRes.getCell(r, 8).font = { bold: true, size: 10, color: { argb: PURPLE }, name: "Calibri" };
-    wsRes.getCell(r, 8).fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT_PURPLE } };
+    wsRes.getCell(r, 8).font = { bold: true, size: 10, color: { argb: AZUL }, name: "Calibri" };
+    wsRes.getCell(r, 8).fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT_AZUL } };
     Object.assign(wsRes.getCell(r, 8), cellBorder);
 
     wsRes.getCell(r, 9).value = {
@@ -569,7 +569,7 @@ async function handleExport(
 
   const totAgRow = 24 + agRows.length;
   wsRes.getCell(totAgRow, 8).value = "TOTAL";
-  wsRes.getCell(totAgRow, 8).font = { bold: true, size: 10, color: { argb: PURPLE }, name: "Calibri" };
+  wsRes.getCell(totAgRow, 8).font = { bold: true, size: 10, color: { argb: AZUL }, name: "Calibri" };
   wsRes.getCell(totAgRow, 8).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF2F2F2" } };
   Object.assign(wsRes.getCell(totAgRow, 8), cellBorder);
   ["I", "J", "K", "L"].forEach((col) => {
@@ -586,14 +586,14 @@ async function handleExport(
   const estPerH = wsRes.getCell("B18");
   estPerH.value = "ESTADÍSTICAS DEL PERÍODO";
   estPerH.font = { bold: true, size: 11, color: { argb: "FFFFFFFF" }, name: "Calibri" };
-  estPerH.fill = { type: "pattern", pattern: "solid", fgColor: { argb: PURPLE } };
+  estPerH.fill = { type: "pattern", pattern: "solid", fgColor: { argb: AZUL } };
   estPerH.alignment = { horizontal: "center" };
 
   ["Métrica", "Valor", "Detalle"].forEach((l, i) => {
     const c = wsRes.getCell(19, 2 + i);
     c.value = l;
-    Object.assign(c, headerStyle(LIGHT_PURPLE));
-    c.font = { bold: true, size: 10, color: { argb: PURPLE }, name: "Calibri" };
+    Object.assign(c, headerStyle(LIGHT_AZUL));
+    c.font = { bold: true, size: 10, color: { argb: AZUL }, name: "Calibri" };
   });
 
   const statsPeriodo = [
@@ -612,8 +612,8 @@ async function handleExport(
   statsPeriodo.forEach((s, i) => {
     const r = 20 + i;
     wsRes.getCell(r, 2).value = s.m;
-    wsRes.getCell(r, 2).font = { bold: true, size: 10, color: { argb: PURPLE }, name: "Calibri" };
-    wsRes.getCell(r, 2).fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT_PURPLE } };
+    wsRes.getCell(r, 2).font = { bold: true, size: 10, color: { argb: AZUL }, name: "Calibri" };
+    wsRes.getCell(r, 2).fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT_AZUL } };
     Object.assign(wsRes.getCell(r, 2), cellBorder);
 
     wsRes.getCell(r, 3).value = s.v as any;
@@ -633,14 +633,14 @@ async function handleExport(
   const evoH = wsRes.getCell("B27");
   evoH.value = "EVOLUCIÓN DIARIA";
   evoH.font = { bold: true, size: 11, color: { argb: "FFFFFFFF" }, name: "Calibri" };
-  evoH.fill = { type: "pattern", pattern: "solid", fgColor: { argb: PURPLE } };
+  evoH.fill = { type: "pattern", pattern: "solid", fgColor: { argb: AZUL } };
   evoH.alignment = { horizontal: "center" };
 
   ["Fecha", "Creados", "Resueltos", "Netos", "Acumulado"].forEach((l, i) => {
     const c = wsRes.getCell(28, 2 + i);
     c.value = l;
-    Object.assign(c, headerStyle(LIGHT_PURPLE));
-    c.font = { bold: true, size: 10, color: { argb: PURPLE }, name: "Calibri" };
+    Object.assign(c, headerStyle(LIGHT_AZUL));
+    c.font = { bold: true, size: 10, color: { argb: AZUL }, name: "Calibri" };
   });
 
   let running = 0;
@@ -650,8 +650,8 @@ async function handleExport(
     running += netos;
 
     wsRes.getCell(r, 2).value = d.name;
-    wsRes.getCell(r, 2).font = { bold: true, size: 10, color: { argb: PURPLE }, name: "Calibri" };
-    wsRes.getCell(r, 2).fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT_PURPLE } };
+    wsRes.getCell(r, 2).font = { bold: true, size: 10, color: { argb: AZUL }, name: "Calibri" };
+    wsRes.getCell(r, 2).fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT_AZUL } };
     Object.assign(wsRes.getCell(r, 2), cellBorder);
 
     wsRes.getCell(r, 3).value = d.trafico;
@@ -675,14 +675,14 @@ async function handleExport(
 
     wsRes.getCell(r, 6).value = running;
     wsRes.getCell(r, 6).numFmt = "#,##0";
-    wsRes.getCell(r, 6).font = { bold: true, color: { argb: PURPLE }, name: "Calibri" };
+    wsRes.getCell(r, 6).font = { bold: true, color: { argb: AZUL }, name: "Calibri" };
     wsRes.getCell(r, 6).alignment = { horizontal: "center" };
     Object.assign(wsRes.getCell(r, 6), cellBorder);
   });
 
   const totEvo = 29 + areaData.length;
   wsRes.getCell(totEvo, 2).value = "TOTAL";
-  wsRes.getCell(totEvo, 2).font = { bold: true, size: 10, color: { argb: PURPLE }, name: "Calibri" };
+  wsRes.getCell(totEvo, 2).font = { bold: true, size: 10, color: { argb: AZUL }, name: "Calibri" };
   wsRes.getCell(totEvo, 2).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF2F2F2" } };
   Object.assign(wsRes.getCell(totEvo, 2), cellBorder);
   wsRes.getCell(totEvo, 3).value = sumCreated;
@@ -698,7 +698,7 @@ async function handleExport(
   wsRes.getCell(totEvo, 5).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF2F2F2" } };
   Object.assign(wsRes.getCell(totEvo, 5), cellBorder);
   wsRes.getCell(totEvo, 6).value = running;
-  wsRes.getCell(totEvo, 6).font = { bold: true, color: { argb: PURPLE } };
+  wsRes.getCell(totEvo, 6).font = { bold: true, color: { argb: AZUL } };
   wsRes.getCell(totEvo, 6).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF2F2F2" } };
   Object.assign(wsRes.getCell(totEvo, 6), cellBorder);
 
@@ -856,7 +856,7 @@ async function handleExport(
   detHeaders.forEach((h, i) => {
     const cell = wsDet.getCell(5, i + 1);
     cell.value = h;
-    Object.assign(cell, headerStyle(PURPLE));
+    Object.assign(cell, headerStyle(AZUL));
     cell.font = { bold: true, size: 10, color: { argb: "FFFFFFFF" }, name: "Calibri" };
   });
   wsDet.getRow(5).height = 22;
