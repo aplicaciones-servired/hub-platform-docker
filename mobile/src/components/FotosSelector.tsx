@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, Image, Alert, Modal, Platform } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as Clipboard from "expo-clipboard";
@@ -74,6 +74,37 @@ export default function FotosSelector({ fotos, onChange }: FotosSelectorProps) {
     onChange(fotos.filter((_, i) => i !== index));
   };
 
+  // En el computador: si la persona presiona Ctrl + V con una imagen copiada,
+  // la foto se agrega sola, sin pedir permisos al navegador.
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+
+    const alPegar = (evento: ClipboardEvent) => {
+      const items = Array.from(evento.clipboardData?.items ?? []);
+      const imagen = items.find((item) => item.type.startsWith("image/"));
+      if (!imagen) return; // Si es texto, se pega normal en la casilla
+
+      evento.preventDefault();
+      if (fotos.length >= MAX_FOTOS) {
+        setPasteError("Ya agregaste el máximo de 3 fotos.");
+        return;
+      }
+      const archivo = imagen.getAsFile();
+      if (!archivo) return;
+
+      const lector = new FileReader();
+      lector.onload = () => {
+        if (typeof lector.result === "string") {
+          setPasteError("");
+          onChange([...fotos, lector.result].slice(0, MAX_FOTOS));
+        }
+      };
+      lector.readAsDataURL(archivo);
+    };
+
+    document.addEventListener("paste", alPegar);
+    return () => document.removeEventListener("paste", alPegar);
+  }, [fotos, onChange]);
   return (
     <View style={{ marginBottom: 14 }}>
       <Text
@@ -82,6 +113,12 @@ export default function FotosSelector({ fotos, onChange }: FotosSelectorProps) {
       >
         Fotos del problema (opcional)
       </Text>
+
+            {Platform.OS === "web" ? (
+        <Text style={{ fontSize: 13, color: "#6B7280", fontFamily: "Inter_400Regular", marginLeft: 4, marginBottom: 8 }}>
+          Para pegar un pantallazo: presiona la tecla Impr Pant y luego Ctrl + V aquí.
+        </Text>
+      ) : null}
 
       {/* Miniaturas de las fotos elegidas */}
       {fotos.length > 0 ? (
