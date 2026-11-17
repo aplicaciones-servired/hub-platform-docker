@@ -1,15 +1,17 @@
-import React from "react";
-import { View, Text, ScrollView, TouchableOpacity, Linking } from "react-native";
+import React, { useState } from "react";
+import { View, Text, ScrollView, TouchableOpacity, Modal } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CirclePlay, Clock } from "lucide-react-native";
 import AppHeader from "../src/components/AppHeader";
 import BottomTab from "../src/components/BottomTab";
 import { VIDEOS_CAPACITACION } from "../src/constants/videos";
+import VideoCapacitacion from "../src/components/VideoCapacitacion";
 
 export default function CapacitacionScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+    const [videoAbierto, setVideoAbierto] = useState<(typeof VIDEOS_CAPACITACION)[number] | null>(null);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F5F6FA" }}>
@@ -23,14 +25,14 @@ export default function CapacitacionScreen() {
         showsVerticalScrollIndicator={false}
       >
         {VIDEOS_CAPACITACION.map((video, index) => {
-          // Si el video todavía no tiene dirección, se muestra como "Próximamente"
-          const disponible = video.url !== "";
+          // Si el video todavía no tiene archivo, se muestra como "Próximamente"
+          const disponible = video.archivo !== "";
 
           return (
             <TouchableOpacity
               key={video.id}
               disabled={!disponible}
-              onPress={() => Linking.openURL(video.url)}
+              onPress={() => setVideoAbierto(video)}
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel={`Video ${index + 1}: ${video.titulo}`}
@@ -119,6 +121,21 @@ export default function CapacitacionScreen() {
           );
         })}
       </ScrollView>
+
+              {/* Ventana donde se ve el video */}
+      <Modal
+        visible={videoAbierto !== null}
+        animationType="fade"
+        onRequestClose={() => setVideoAbierto(null)}
+      >
+        {videoAbierto ? (
+          <VideoCapacitacion
+            archivo={videoAbierto.archivo}
+            titulo={videoAbierto.titulo}
+            onCerrar={() => setVideoAbierto(null)}
+          />
+        ) : null}
+      </Modal>
 
       <BottomTab
         activeTab="capacitacion"
