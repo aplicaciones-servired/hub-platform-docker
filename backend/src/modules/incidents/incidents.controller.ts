@@ -797,26 +797,33 @@ export async function getStats(
       totalResueltos: row.totalResueltos,
     }));
 
-    // ── NUEVO: Horas pico (en qué hora del día se crean más tickets) ──
-    const horaRows = await db
+        // ── Horas pico por franjas de atención (hora de Colombia) ──
+    // Mañana 6:00 a. m. a 12:00 p. m., tarde 12:00 p. m. a 6:00 p. m.,
+    // noche 6:00 p. m. a 8:30 p. m. Lo demás cuenta como "Fuera de horario".
+    const horaLocal = sql`(${incidents.created_at} AT TIME ZONE 'America/Bogota')::time`;
+    const franjaRows = await db
       .select({
-        hora: sql<number>`EXTRACT(HOUR FROM ${incidents.created_at} AT TIME ZONE 'America/Bogota')::int`,
+        franja: sql<string>`CASE
+          WHEN ${horaLocal} >= '06:00' AND ${horaLocal} < '12:00' THEN 'manana'
+          WHEN ${horaLocal} >= '12:00' AND ${horaLocal} < '18:00' THEN 'tarde'
+          WHEN ${horaLocal} >= '18:00' AND ${horaLocal} < '20:30' THEN 'noche'
+          ELSE 'fuera' END`,
         total: sql<number>`count(*)::int`,
       })
       .from(incidents)
       .where(whereClause)
-      .groupBy(sql`EXTRACT(HOUR FROM ${incidents.created_at} AT TIME ZONE 'America/Bogota')`)
-      .orderBy(sql`EXTRACT(HOUR FROM ${incidents.created_at} AT TIME ZONE 'America/Bogota')`);
+      .groupBy(sql`1`);
 
-    // Formatear a "08:00", "09:00", etc.
-    const horasPico = Array.from({ length: 24 }, (_, i) => {
-      const row = horaRows.find((r) => r.hora === i);
-      return {
-        name: `${String(i).padStart(2, "0")}:00`,
-        hora: i,
-        total: row?.total || 0,
-      };
-    });
+    const FRANJAS = [
+      { clave: "manana", name: "6:00 a. m. – 12:00 p. m." },
+      { clave: "tarde", name: "12:00 p. m. – 6:00 p. m." },
+      { clave: "noche", name: "6:00 p. m. – 8:30 p. m." },
+      { clave: "fuera", name: "Fuera de horario" },
+    ];
+    const horasPico = FRANJAS.map((f) => ({
+      name: f.name,
+      total: franjaRows.find((r) => r.franja === f.clave)?.total || 0,
+    }));
         // ── NUEVO: Top 5 momentos más concurridos (día + hora) ──
     const momentosRows = await db
       .select({
