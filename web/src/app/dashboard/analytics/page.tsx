@@ -47,7 +47,8 @@ export default function AnalyticsPage() {
   
   const [agentes, setAgentes] = useState<string[]>([]);
   const [selectedAgente, setSelectedAgente] = useState("");
-  const [allPvNames, setAllPvNames] = useState<string[]>([]);
+    const [allPvNames, setAllPvNames] = useState<string[]>([]);
+  const [puntosReales, setPuntosReales] = useState<{ documento: string; nombre: string }[]>([]);
   const [chartsLoading, setChartsLoading] = useState(false);
 
   useEffect(() => {
@@ -57,6 +58,9 @@ export default function AnalyticsPage() {
     api.get<{ nombre: string }[]>("/puntos-venta")
       .then((list) => setAllPvNames(list.map((p) => p.nombre)))
       .catch((err) => logger.error("Error fetching puntos-venta", { error: (err as Error).message }));
+    api.get<{ documento: string; nombre: string }[]>("/puntos-venta/reales")
+      .then(setPuntosReales)
+      .catch((err) => logger.error("Error fetching puntos reales", { error: (err as Error).message }));
   }, []);
 
   const fetchData = useCallback((start: string, end: string, agente?: string) => {
@@ -266,7 +270,7 @@ export default function AnalyticsPage() {
               Distribución de tickets por sucursal
             </p>
           </div>
-          {chartsLoading ? <ChartSkeleton /> : <DonutChart data={donutData} allPvNames={allPvNames} />}
+          {chartsLoading ? <ChartSkeleton /> : <DonutChart data={donutData} allPvNames={allPvNames} puntosReales={puntosReales} />}
         </div>
       </div>
 

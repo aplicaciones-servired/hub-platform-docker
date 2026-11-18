@@ -89,25 +89,33 @@ export const TrafficChart = memo(function TrafficChart({ data }: TrafficChartPro
 interface DonutChartProps {
   data: DonutDataPoint[];
   allPvNames?: string[];
+    puntosReales?: { documento: string; nombre: string }[]; // Puntos creados en Gestión de Usuarios
 }
 
-export const DonutChart = memo(function DonutChart({ data, allPvNames }: DonutChartProps) {
+export const DonutChart = memo(function DonutChart({ data, allPvNames, puntosReales = [] }: DonutChartProps) {
   const { theme } = useTheme();
   const safeData = Array.isArray(data) ? data : [];
   const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
   const tooltipColor = theme === "dark" ? "#e2e8f0" : undefined;
 
-  const pvColorMap = new Map(safeData.map((d) => [d.name, d.color]));
   const pvValueMap = new Map(safeData.map((d) => [d.name, d.value]));
   const allPvs = allPvNames || [];
-    // Buscador: con la casilla vacía se ven los 5 puntos con más reportes;
-  // al escribir, solo los que coinciden (hasta 10)
+  // Buscador: con la casilla vacía se ven los 5 puntos con más reportes;
+  // al escribir, sugerencias de los puntos reales (por nombre o código);
+  // al tocar una, se muestra la tarjeta de ese punto.
   const [busqueda, setBusqueda] = useState("");
-  const textoBusqueda = busqueda.trim().toLowerCase();
-  const resultados = textoBusqueda === ""
-    ? [...safeData].sort((a, b) => b.value - a.value).slice(0, 5).map((d) => d.name)
-    : allPvs.filter((name) => name.toLowerCase().includes(textoBusqueda)).slice(0, 10);
-    const colors = ["#25207E", "#3B348B", "#1E40AF", "#2563EB", "#3B82F6", "#0EA5E9", "#60A5FA", "#93C5FD"];
+  const [seleccionado, setSeleccionado] = useState<{ documento: string; nombre: string } | null>(null);
+  const texto = busqueda.trim().toLowerCase();
+  // Si no llegaron los puntos reales, se usa la lista anterior para no quedar vacío
+  const listaPuntos = puntosReales.length > 0
+    ? puntosReales
+    : allPvs.map((nombre) => ({ documento: "", nombre }));
+  const sugerencias = texto === ""
+    ? []
+    : listaPuntos
+        .filter((p) => p.nombre.toLowerCase().includes(texto) || p.documento.toLowerCase().includes(texto))
+        .slice(0, 8);
+  const top5 = [...safeData].sort((a, b) => b.value - a.value).slice(0, 5);
 
   return (
     <div className="flex flex-col items-center gap-5">
@@ -138,45 +146,87 @@ export const DonutChart = memo(function DonutChart({ data, allPvNames }: DonutCh
           />
         </PieChart>
       </ResponsiveContainer>
-            {/* Buscador de puntos: en vez de mostrar todos, se busca el que se necesita */}
+            {/* Buscador de puntos: escribir nombre o código, elegir uno de la lista */}
       <div className="w-full">
         <input
           type="text"
           value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
+          onChange={(e) => {
+            setBusqueda(e.target.value);
+            setSeleccionado(null);
+          }}
           placeholder="Buscar punto por código o nombre..."
           aria-label="Buscar punto de venta"
           className="w-full px-3 py-2 text-[13px] font-inter border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-[#25207E]"
         />
-        <p className="mt-2 mb-1 text-[11px] font-inter text-gray-400">
-          {textoBusqueda === ""
-            ? "Los 5 puntos con más reportes"
-            : `${resultados.length} ${resultados.length === 1 ? "punto encontrado" : "puntos encontrados"}`}
-        </p>
-        <div className="flex flex-col gap-0.5">
-          {resultados.length === 0 ? (
-            <span className="text-[12px] font-inter text-gray-400">
-              {textoBusqueda === "" ? "No hay reportes en este periodo." : "No hay puntos con ese nombre."}
-            </span>
-          ) : (
-            resultados.map((name, i) => {
-              const hasData = pvColorMap.has(name);
-              const color = hasData ? (pvColorMap.get(name) || colors[i % colors.length]) : "#E5E7EB";
-              const valor = hasData ? pvValueMap.get(name) : 0;
-              return (
-                <div key={name} className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                  <span className="text-[11px] truncate font-inter text-gray-500 dark:text-gray-400">
-                    {name}
-                  </span>
-                  <span className={`text-[11px] shrink-0 font-inter text-gray-300 ${hasData ? "font-semibold" : "font-normal"}`} style={{ color: hasData ? color : undefined }}>
-                    {hasData ? `${valor}%` : "0%"}
-                  </span>
-                </div>
-              );
-            })
-          )}
-        </div>
+
+        {seleccionado ? (
+          // Tarjeta del punto elegido
+          <div className="mt-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-[#EEEDF8] dark:bg-gray-800">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[13px] font-semibold font-inter text-[#25207E] dark:text-gray-100 truncate">
+                  {seleccionado.documento ? `${seleccionado.documento} · ` : ""}{seleccionado.nombre}
+                </p>
+                <p className="mt-1 text-[12px] font-inter text-gray-600 dark:text-gray-300">
+                  {pvValueMap.has(seleccionado.nombre)
+                    ? `${pvValueMap.get(seleccionado.nombre)}% de los reportes del periodo`
+                    : "Sin reportes en este periodo"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSeleccionado(null)}
+                className="shrink-0 text-[12px] font-semibold font-inter text-[#25207E] hover:underline"
+              >
+                Quitar
+              </button>
+            </div>
+          </div>
+        ) : texto !== "" ? (
+          // Sugerencias mientras escribe
+          <div className="mt-2 flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            {sugerencias.length === 0 ? (
+              <span className="px-3 py-2 text-[12px] font-inter text-gray-400">
+                No hay puntos con ese nombre o código.
+              </span>
+            ) : (
+              sugerencias.map((p) => (
+                <button
+                  key={`${p.documento}-${p.nombre}`}
+                  type="button"
+                  onClick={() => {
+                    setSeleccionado(p);
+                    setBusqueda("");
+                  }}
+                  className="text-left px-3 py-2 text-[12px] font-inter text-gray-700 dark:text-gray-200 hover:bg-[#EEEDF8] dark:hover:bg-gray-800 border-b last:border-b-0 border-gray-100 dark:border-gray-700"
+                >
+                  {p.documento ? `${p.documento} · ` : ""}{p.nombre}
+                </button>
+              ))
+            )}
+          </div>
+        ) : (
+          // Casilla vacía: los 5 puntos con más reportes
+          <>
+            <p className="mt-2 mb-1 text-[11px] font-inter text-gray-400">Los 5 puntos con más reportes</p>
+            <div className="flex flex-col gap-0.5">
+              {top5.length === 0 ? (
+                <span className="text-[12px] font-inter text-gray-400">No hay reportes en este periodo.</span>
+              ) : (
+                top5.map((d) => (
+                  <div key={d.name} className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                    <span className="text-[11px] truncate font-inter text-gray-500 dark:text-gray-400">{d.name}</span>
+                    <span className="text-[11px] shrink-0 font-inter font-semibold" style={{ color: d.color }}>
+                      {d.value}%
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
