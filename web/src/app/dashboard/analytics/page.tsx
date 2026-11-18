@@ -48,11 +48,6 @@ export default function AnalyticsPage() {
   const [agentes, setAgentes] = useState<string[]>([]);
   const [selectedAgente, setSelectedAgente] = useState("");
   const [allPvNames, setAllPvNames] = useState<string[]>([]);
-      api.get<{ nombre: string; documento: string }[]>("/puntos-venta")
-      .then((list) => {
-        setAllPvNames(list.map((p) => p.nombre));
-        setPvCodigos(Object.fromEntries(list.map((p) => [p.nombre, p.documento])));
-      })
   const [chartsLoading, setChartsLoading] = useState(false);
 
   useEffect(() => {
@@ -271,7 +266,7 @@ export default function AnalyticsPage() {
               Distribución de tickets por sucursal
             </p>
           </div>
-          {chartsLoading ? <ChartSkeleton /> : <DonutChart data={donutData} allPvNames={allPvNames} pvCodigos={pvCodigos} />}
+          {chartsLoading ? <ChartSkeleton /> : <DonutChart data={donutData} allPvNames={allPvNames} />}
         </div>
       </div>
 
