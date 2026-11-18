@@ -100,11 +100,17 @@ app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 app.use(csrfProtection);
 
+// Límite de llamadas por IP. En una oficina varias personas comparten la misma IP
+// y el panel hace muchas llamadas (Analítica, notificaciones cada 30 s), así que
+// 100 por minuto se llenaba rápido. El inicio de sesión tiene su propia protección
+// (bloqueo de la cuenta tras varios intentos fallidos).
 const globalLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 100,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
+  // La revisión de conexión de la app y de Docker no cuenta para el límite
+  skip: (req) => req.path === "/api/health",
   message: { error: "Demasiadas solicitudes. Intenta de nuevo en 1 minuto." },
 });
 
