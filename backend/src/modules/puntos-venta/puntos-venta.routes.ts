@@ -6,7 +6,7 @@ import { adminOnly } from "../../middlewares/admin";
 const router = Router();
 
 router.use(authMiddleware);
-router.get("/", listPuntosVenta);
+router.get("/", adminOnly, listPuntosVenta);
 router.post("/seed", adminOnly, seedPuntosVenta);
 
 export default router;

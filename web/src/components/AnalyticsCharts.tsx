@@ -89,9 +89,10 @@ export const TrafficChart = memo(function TrafficChart({ data }: TrafficChartPro
 interface DonutChartProps {
   data: DonutDataPoint[];
   allPvNames?: string[];
+    pvCodigos?: Record<string, string>; // nombre del punto -> su código, para buscar por código
 }
 
-export const DonutChart = memo(function DonutChart({ data, allPvNames }: DonutChartProps) {
+export const DonutChart = memo(function DonutChart({ data, allPvNames, pvCodigos = {} }: DonutChartProps) {
   const { theme } = useTheme();
   const safeData = Array.isArray(data) ? data : [];
   const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
@@ -106,7 +107,9 @@ export const DonutChart = memo(function DonutChart({ data, allPvNames }: DonutCh
   const textoBusqueda = busqueda.trim().toLowerCase();
   const resultados = textoBusqueda === ""
     ? [...safeData].sort((a, b) => b.value - a.value).slice(0, 5).map((d) => d.name)
-    : allPvs.filter((name) => name.toLowerCase().includes(textoBusqueda)).slice(0, 10);
+    : allPvs
+        .filter((name) => `${pvCodigos[name] ?? ""} ${name}`.toLowerCase().includes(textoBusqueda))
+        .slice(0, 10);
     const colors = ["#25207E", "#3B348B", "#1E40AF", "#2563EB", "#3B82F6", "#0EA5E9", "#60A5FA", "#93C5FD"];
 
   return (
@@ -167,7 +170,7 @@ export const DonutChart = memo(function DonutChart({ data, allPvNames }: DonutCh
                 <div key={name} className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
                   <span className="text-[11px] truncate font-inter text-gray-500 dark:text-gray-400">
-                    {name}
+                    {pvCodigos[name] ? `${pvCodigos[name]} · ${name}` : name}
                   </span>
                   <span className={`text-[11px] shrink-0 font-inter text-gray-300 ${hasData ? "font-semibold" : "font-normal"}`} style={{ color: hasData ? color : undefined }}>
                     {hasData ? `${valor}%` : "0%"}
