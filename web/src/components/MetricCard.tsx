@@ -9,7 +9,7 @@ interface MetricCardProps {
 export default function MetricCard({ icon, title, value }: MetricCardProps) {
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5 w-full min-h-[130px] flex flex-col justify-center gap-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-      <div className="w-10 h-10 rounded-[10px] bg-[#F3F0FF] dark:bg-[#F3F0FF]/10 flex items-center justify-center">
+      <div className="w-10 h-10 rounded-[10px] bg-[#EEEDF8] dark:bg-[#EEEDF8]/10 flex items-center justify-center">
         {icon}
       </div>
       <div>

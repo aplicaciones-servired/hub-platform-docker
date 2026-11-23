@@ -153,14 +153,14 @@ export default function ReportScreen() {
         
         for (const fotoUri of fotos) {
           const formData = new FormData();
-          const filename = fotoUri.startsWith("data:image/png")
-            ? `foto-portapapeles-${Date.now()}.png`
+                   // Si la foto viene como texto (data:image/...), se le inventa un nombre con su tipo
+          const tipoData = fotoUri.match(/^data:image\/(png|jpe?g|webp)/)?.[1];
+          const filename = tipoData
+            ? `foto-${Date.now()}.${tipoData === "jpeg" ? "jpg" : tipoData}`
             : fotoUri.split("/").pop() || `foto-${Date.now()}.jpg`;
 
-          if (Platform.OS === "web") {
-            const blob = await fetch(fotoUri).then(r => r.blob());
-            formData.append('file', blob, filename);
-          } else if (fotoUri.startsWith("data:image/")) {
+          if (fotoUri.startsWith("data:image/")) {
+            // Foto pegada o elegida en el navegador: se convierte a archivo sin usar fetch
             const [metadata, base64] = fotoUri.split(",", 2);
             const mimeType = metadata.match(/^data:(.*?);base64$/)?.[1];
             if (!base64 || !mimeType) {
@@ -168,6 +168,10 @@ export default function ReportScreen() {
             }
             const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
             formData.append("file", new Blob([bytes], { type: mimeType }), filename);
+          } else if (Platform.OS === "web") {
+            // En el navegador, las fotos que no son data: llegan como blob:, que sí está permitido
+            const blob = await fetch(fotoUri).then(r => r.blob());
+            formData.append('file', blob, filename);
           } else {
             // En el celular, la foto es una URI file://...
             formData.append('file', {
@@ -176,8 +180,6 @@ export default function ReportScreen() {
               type: 'image/jpeg',
             } as any);
           }
-
-          // Enviamos al backend
           const uploadRes = await api.upload<{ url?: string; filename?: string; name?: string }>(
             "/upload/incidente", 
             formData

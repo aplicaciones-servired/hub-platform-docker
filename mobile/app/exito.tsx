@@ -11,7 +11,7 @@ import * as Clipboard from "expo-clipboard";
 import {
   Check,
   Copy,
-  MessageSquare,
+  Home,
 } from "lucide-react-native";
 import BottomTab from "../src/components/BottomTab";
 import { useAuth } from "../src/contexts/AuthContext";
@@ -110,7 +110,7 @@ export default function SuccessScreen() {
               width: 40,
               height: 40,
               borderRadius: 20,
-              backgroundColor: "#DCD4FF",
+              backgroundColor: "#D9D7EE",
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -202,9 +202,9 @@ export default function SuccessScreen() {
               marginBottom: 24,
             }}
           >
-            Hemos recibido tu reporte. Un agente técnico revisará los detalles y
-            se pondrá en contacto contigo a través del chat o una llamada en la
-            brevedad.
+            Hemos recibido tu reporte. Un técnico revisará los detalles y se
+            pondrá en contacto contigo lo antes posible. Puedes ver cómo va en
+            Mis Reportes.
           </Text>
         </Animated.View>
 
@@ -323,7 +323,7 @@ export default function SuccessScreen() {
               marginBottom: 16,
             }}
           >
-            Puedes seguir hablando con nosotros si necesitas ayuda adicional.
+            Si tienes otro problema, puedes enviar otro reporte desde el Inicio.
           </Text>
 
           <TouchableOpacity
@@ -339,7 +339,7 @@ export default function SuccessScreen() {
               gap: 8,
             }}
           >
-            <MessageSquare size={16} color="#FFFFFF" strokeWidth={2} />
+            <Home size={16} color="#FFFFFF" strokeWidth={2} />
             <Text
               style={{
                 fontSize: 14,
@@ -367,7 +367,7 @@ export default function SuccessScreen() {
             style={{
               height: 46,
               borderRadius: 10,
-              backgroundColor: "#DCD4FF",
+              backgroundColor: "#D9D7EE",
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "center",

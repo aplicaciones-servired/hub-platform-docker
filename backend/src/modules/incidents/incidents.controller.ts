@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { eq, ilike, or, and, desc, gte, lte, isNotNull, ne, inArray, isNull, sql } from "drizzle-orm";
+import { eq, ilike, or, and, desc, gte, lte, isNotNull, ne, inArray, isNull, sql, getTableColumns } from "drizzle-orm";
 import { db } from "../../db";
 import { incidents, incidentComments, users, messages, pushTokens } from "../../db/schema";
 import { logger } from "../../lib/logger";
@@ -197,8 +197,11 @@ export async function listIncidents(
       whereClause
     );
 
-    const items = await db
-      .select()
+   const items = await db
+      .select({
+        ...getTableColumns(incidents),
+        comments_count: sql<number>`(SELECT COUNT(*)::int FROM ${incidentComments} WHERE ${incidentComments.incident_id} = ${incidents.id})`,
+      })
       .from(incidents)
       .where(whereClause)
       .orderBy(desc(incidents.created_at))
@@ -271,16 +274,15 @@ export async function getIncident(
 const VALID_TRANSITIONS: Record<string, string[]> = {
   pendiente: ["en_proceso", "resuelto"],
   en_proceso: ["resuelto"],
-  resuelto: [],
+  resuelto: ["pendiente", "en_proceso"], 
 };
-
 export async function updateIncident(
   req: Request,
   res: Response
 ): Promise<void> {
   try {
     const { id } = req.params as { id: string };
-    const { estado, agente, tecnico_id, solucion, imagen_url } = req.body;
+    const { estado, agente, tecnico_id, solucion, imagen_url, comentario } = req.body;
 
     if ((tecnico_id !== undefined || agente !== undefined) && !isAdminRole(req.user!.rol)) {
       res.status(403).json({ error: "Solo un administrador o técnico puede asignar técnicos" });
@@ -345,6 +347,10 @@ export async function updateIncident(
     if (estado === "resuelto") {
       updateData.cerrado_por = req.user!.userId;
       updateData.fecha_cierre = new Date();
+    }else if (estado === "pendiente" || estado === "en_proceso") {
+      // Si se reabre, limpiamos los datos de cierre
+      updateData.cerrado_por = null;
+      updateData.fecha_cierre = null;
     }
 
     const updateConditions = [eq(incidents.id, id), isNull(incidents.deleted_at)];
@@ -432,6 +438,24 @@ export async function updateIncident(
         }
       } catch (notifyErr) {
         logger.error("Resolved notification error", { error: (notifyErr as Error).message });
+      }
+    }
+        // Guardar el comentario de seguimiento si viene en la petición
+    if (comentario && comentario.trim()) {
+      try {
+        const [user] = await db
+          .select({ nombre: users.nombre })
+          .from(users)
+          .where(eq(users.id, req.user!.userId))
+          .limit(1);
+
+        await db.insert(incidentComments).values({
+          incident_id: id,
+          autor: user?.nombre || req.user!.documento,
+          texto: comentario,
+        });
+      } catch (err) {
+        logger.error("Error guardando comentario de seguimiento", { error: (err as Error).message });
       }
     }
 
@@ -686,14 +710,15 @@ export async function getStats(
       resueltos,
     }));
 
-    const pvRows = await db
+        const pvRows = await db
       .select({
+        documento: incidents.documento,
         punto_venta: incidents.punto_venta,
         total: sql<number>`count(*)::int`,
       })
       .from(incidents)
       .where(whereClause)
-      .groupBy(incidents.punto_venta);
+      .groupBy(incidents.documento, incidents.punto_venta);
 
     const pvCount = new Map<string, number>();
     for (const row of pvRows) {
@@ -724,6 +749,19 @@ export async function getStats(
           color: colors[i % colors.length],
         }));
 
+
+            // Todos los puntos del período, por código, para el buscador de la tarjeta
+    // (la dona solo muestra el top 8; esta lista no tiene límite)
+    const porCodigo = new Map<string, { documento: string; nombre: string; total: number }>();
+    for (const row of pvRows) {
+      const actual = porCodigo.get(row.documento);
+      if (actual) actual.total += row.total;
+      else porCodigo.set(row.documento, { documento: row.documento, nombre: row.punto_venta || "Sin especificar", total: row.total });
+    }
+    const puntosTotales = Array.from(porCodigo.values())
+      .map((p) => ({ ...p, porcentaje: total > 0 ? Math.round((p.total / total) * 100) : 0 }))
+      .sort((a, b) => b.total - a.total);
+
     const statusCounts = {
       pendientes: 0,
       enProceso: 0,
@@ -734,8 +772,107 @@ export async function getStats(
       else if (row.estado === "en_proceso") statusCounts.enProceso += row.total;
       else if (row.estado === "resuelto") statusCounts.resueltos += row.total;
     }
+        // ── NUEVO: Tickets por técnico (para gráfica circular) ──
+    const tecnicoRows = await db
+      .select({
+        agente: incidents.agente,
+        total: sql<number>`count(*)::int`,
+      })
+      .from(incidents)
+      .where(and(whereClause, isNotNull(incidents.agente), ne(incidents.agente, "")))
+      .groupBy(incidents.agente)
+      .orderBy(sql`count(*) desc`);
 
-    res.json({ timeline, distribution, statusCounts });
+    const ticketsPorTecnico = tecnicoRows.map((row) => ({
+      name: row.agente || "Sin asignar",
+      value: row.total,
+    }));
+
+    // ── NUEVO: Tiempo promedio de resolución por técnico ──
+    const tiempoRows = await db
+      .select({
+        agente: incidents.agente,
+        promedioHoras: sql<string>`ROUND(AVG(EXTRACT(EPOCH FROM (${incidents.fecha_cierre} - ${incidents.created_at})) / 3600)::numeric, 1)`,
+        totalResueltos: sql<number>`count(*)::int`,
+      })
+      .from(incidents)
+      .where(and(
+        whereClause,
+        eq(incidents.estado, "resuelto"),
+        isNotNull(incidents.fecha_cierre),
+        isNotNull(incidents.agente),
+      ))
+      .groupBy(incidents.agente)
+      .orderBy(sql`count(*) desc`);
+
+    const tiempoPorTecnico = tiempoRows.map((row) => ({
+      agente: row.agente || "Sin asignar",
+      promedioHoras: Number(row.promedioHoras),
+      totalResueltos: row.totalResueltos,
+    }));
+
+        // ── Horas pico por franjas de atención (hora de Colombia) ──
+    // Mañana 6:00 a. m. a 12:00 p. m., tarde 12:00 p. m. a 6:00 p. m.,
+    // noche 6:00 p. m. a 8:30 p. m. Lo demás cuenta como "Fuera de horario".
+    const horaLocal = sql`(${incidents.created_at} AT TIME ZONE 'America/Bogota')::time`;
+    const franjaRows = await db
+      .select({
+        franja: sql<string>`CASE
+          WHEN ${horaLocal} >= '06:00' AND ${horaLocal} < '12:00' THEN 'manana'
+          WHEN ${horaLocal} >= '12:00' AND ${horaLocal} < '18:00' THEN 'tarde'
+          WHEN ${horaLocal} >= '18:00' AND ${horaLocal} < '20:30' THEN 'noche'
+          ELSE 'fuera' END`,
+        total: sql<number>`count(*)::int`,
+      })
+      .from(incidents)
+      .where(whereClause)
+      .groupBy(sql`1`);
+
+    const FRANJAS = [
+      { clave: "manana", name: "6:00 a. m. – 12:00 p. m." },
+      { clave: "tarde", name: "12:00 p. m. – 6:00 p. m." },
+      { clave: "noche", name: "6:00 p. m. – 8:30 p. m." },
+      { clave: "fuera", name: "Fuera de horario" },
+    ];
+    const horasPico = FRANJAS.map((f) => ({
+      name: f.name,
+      total: franjaRows.find((r) => r.franja === f.clave)?.total || 0,
+    }));
+        // ── NUEVO: Top 5 momentos más concurridos (día + hora) ──
+    const momentosRows = await db
+      .select({
+        fecha: sql<string>`to_char(${incidents.created_at} AT TIME ZONE 'America/Bogota', 'YYYY-MM-DD')`,
+        hora: sql<number>`EXTRACT(HOUR FROM ${incidents.created_at} AT TIME ZONE 'America/Bogota')::int`,
+        total: sql<number>`count(*)::int`,
+      })
+      .from(incidents)
+      .where(whereClause)
+      .groupBy(
+        sql`to_char(${incidents.created_at} AT TIME ZONE 'America/Bogota', 'YYYY-MM-DD')`,
+        sql`EXTRACT(HOUR FROM ${incidents.created_at} AT TIME ZONE 'America/Bogota')`
+      )
+      .orderBy(sql`count(*) desc`)
+      .limit(5);
+
+    const momentosPico = momentosRows.map((row) => ({
+      fecha: row.fecha,
+      hora: row.hora,
+      horaFormato: `${String(row.hora).padStart(2, "0")}:00`,
+      total: row.total,
+    }));
+
+    res.json({
+      timeline,
+      distribution,
+      statusCounts,
+      ticketsPorTecnico,
+      tiempoPorTecnico,
+      horasPico,
+      momentosPico,
+       puntosTotales,
+    });
+
+    
   } catch (error) {
     logger.error("Get stats error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al obtener estadísticas" });
@@ -820,5 +957,59 @@ export async function deleteIncident(
   } catch (error) {
     logger.error("Delete incident error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al eliminar el incidente" });
+  }
+}export async function updateComment(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { id, commentId } = req.params as { id: string; commentId: string };
+    const { texto } = req.body;
+
+    if (!texto || !texto.trim()) {
+      res.status(400).json({ error: "El comentario no puede estar vacío" });
+      return;
+    }
+
+    const [comment] = await db
+      .select()
+      .from(incidentComments)
+      .where(eq(incidentComments.id, commentId))
+      .limit(1);
+
+    if (!comment) {
+      res.status(404).json({ error: "Comentario no encontrado" });
+      return;
+    }
+
+    if (comment.incident_id !== id) {
+      res.status(400).json({ error: "El comentario no pertenece a este ticket" });
+      return;
+    }
+
+    const [user] = await db
+      .select({ nombre: users.nombre })
+      .from(users)
+      .where(eq(users.id, req.user!.userId))
+      .limit(1);
+
+    const autorActual = user?.nombre || req.user!.documento;
+    const esAdmin = isAdminRole(req.user!.rol);
+
+    if (comment.autor !== autorActual && !esAdmin) {
+      res.status(403).json({ error: "Solo puedes editar tus propios comentarios" });
+      return;
+    }
+
+    const [updated] = await db
+      .update(incidentComments)
+      .set({ texto: texto.trim(), edited_at: new Date() })
+      .where(eq(incidentComments.id, commentId))
+      .returning();
+
+    res.json(updated);
+  } catch (error) {
+    logger.error("Update comment error", { error: (error as Error).message });
+    res.status(500).json({ error: "Error al editar el comentario" });
   }
 }

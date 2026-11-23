@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useState } from "react";
 import {
   AreaChart,
   Area,
@@ -89,19 +89,42 @@ export const TrafficChart = memo(function TrafficChart({ data }: TrafficChartPro
 interface DonutChartProps {
   data: DonutDataPoint[];
   allPvNames?: string[];
-}
+    puntosReales?: { documento: string; nombre: string }[]; // Puntos creados en Gestión de Usuarios
+      puntosTotales?: { documento: string; nombre: string; total: number; porcentaje: number }[]; // Todos los puntos del período con su cantidad
+  }
 
-export const DonutChart = memo(function DonutChart({ data, allPvNames }: DonutChartProps) {
+export const DonutChart = memo(function DonutChart({ data, allPvNames, puntosReales = [], puntosTotales = [] }: DonutChartProps) {
   const { theme } = useTheme();
   const safeData = Array.isArray(data) ? data : [];
   const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
   const tooltipColor = theme === "dark" ? "#e2e8f0" : undefined;
 
-  const pvColorMap = new Map(safeData.map((d) => [d.name, d.color]));
   const pvValueMap = new Map(safeData.map((d) => [d.name, d.value]));
   const allPvs = allPvNames || [];
-  const colors = ["#25207E", "#7C3AED", "#3B82F6", "#F59E0B", "#EF4444", "#22C55E", "#EC4899", "#14B8A6"];
-
+  // Buscador: con la casilla vacía se ven los 5 puntos con más reportes;
+  // al escribir, sugerencias de los puntos reales (por nombre o código);
+  // al tocar una, se muestra la tarjeta de ese punto.
+  const [busqueda, setBusqueda] = useState("");
+  const [seleccionado, setSeleccionado] = useState<{ documento: string; nombre: string } | null>(null);
+  const texto = busqueda.trim().toLowerCase();
+  // Si no llegaron los puntos reales, se usa la lista anterior para no quedar vacío
+  const listaPuntos = puntosReales.length > 0
+    ? puntosReales
+    : allPvs.map((nombre) => ({ documento: "", nombre }));
+  const sugerencias = texto === ""
+    ? []
+    : listaPuntos
+        .filter((p) => p.nombre.toLowerCase().includes(texto) || p.documento.toLowerCase().includes(texto))
+        .slice(0, 8);
+  const top5 = [...safeData].sort((a, b) => b.value - a.value).slice(0, 5);
+  // Cantidad real del punto elegido (por código), con los filtros de Analítica
+  const conteoPorCodigo = new Map(puntosTotales.map((p) => [p.documento, p]));
+  const infoSel = seleccionado?.documento ? conteoPorCodigo.get(seleccionado.documento) : undefined;
+  const textoSel = infoSel
+    ? `${infoSel.total} ${infoSel.total === 1 ? "ticket" : "tickets"} · ${infoSel.porcentaje}% del periodo`
+    : !seleccionado?.documento && seleccionado && pvValueMap.has(seleccionado.nombre)
+      ? `${pvValueMap.get(seleccionado.nombre)}% de los reportes del periodo`
+      : "Sin reportes en este periodo";
   return (
     <div className="flex flex-col items-center gap-5">
       <ResponsiveContainer width="100%" height={240}>
@@ -131,25 +154,85 @@ export const DonutChart = memo(function DonutChart({ data, allPvNames }: DonutCh
           />
         </PieChart>
       </ResponsiveContainer>
-      <div className="w-full max-h-40 overflow-y-auto">
-        <div className="flex flex-col gap-0.5">
-          {allPvs.map((name, i) => {
-            const hasData = pvColorMap.has(name);
-            const color = hasData ? (pvColorMap.get(name) || colors[i % colors.length]) : "#E5E7EB";
-            const valor = hasData ? pvValueMap.get(name) : 0;
-            return (
-              <div key={name} className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                <span className="text-[11px] truncate font-inter text-gray-500 dark:text-gray-400">
-                  {name}
-                </span>
-                <span className={`text-[11px] shrink-0 font-inter text-gray-300 ${hasData ? "font-semibold" : "font-normal"}`} style={{ color: hasData ? color : undefined }}>
-                  {hasData ? `${valor}%` : "0%"}
-                </span>
+            {/* Buscador de puntos: escribir nombre o código, elegir uno de la lista */}
+      <div className="w-full">
+        <input
+          type="text"
+          value={busqueda}
+          onChange={(e) => {
+            setBusqueda(e.target.value);
+            setSeleccionado(null);
+          }}
+          placeholder="Buscar punto por código o nombre..."
+          aria-label="Buscar punto de venta"
+          className="w-full px-3 py-2 text-[13px] font-inter border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-[#25207E]"
+        />
+
+        {seleccionado ? (
+          // Tarjeta del punto elegido
+          <div className="mt-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-[#EEEDF8] dark:bg-gray-800">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[13px] font-semibold font-inter text-[#25207E] dark:text-gray-100 truncate">
+                  {seleccionado.documento ? `${seleccionado.documento} · ` : ""}{seleccionado.nombre}
+                </p>
+                <p className="mt-1 text-[12px] font-inter text-gray-600 dark:text-gray-300">
+                 {textoSel}
+                </p>
               </div>
-            );
-          })}
-        </div>
+              <button
+                type="button"
+                onClick={() => setSeleccionado(null)}
+                className="shrink-0 text-[12px] font-semibold font-inter text-[#25207E] hover:underline"
+              >
+                Quitar
+              </button>
+            </div>
+          </div>
+        ) : texto !== "" ? (
+          // Sugerencias mientras escribe
+          <div className="mt-2 flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            {sugerencias.length === 0 ? (
+              <span className="px-3 py-2 text-[12px] font-inter text-gray-400">
+                No hay puntos con ese nombre o código.
+              </span>
+            ) : (
+              sugerencias.map((p) => (
+                <button
+                  key={`${p.documento}-${p.nombre}`}
+                  type="button"
+                  onClick={() => {
+                    setSeleccionado(p);
+                    setBusqueda("");
+                  }}
+                  className="text-left px-3 py-2 text-[12px] font-inter text-gray-700 dark:text-gray-200 hover:bg-[#EEEDF8] dark:hover:bg-gray-800 border-b last:border-b-0 border-gray-100 dark:border-gray-700"
+                >
+                  {p.documento ? `${p.documento} · ` : ""}{p.nombre}
+                </button>
+              ))
+            )}
+          </div>
+        ) : (
+          // Casilla vacía: los 5 puntos con más reportes
+          <>
+            <p className="mt-2 mb-1 text-[11px] font-inter text-gray-400">Los 5 puntos con más reportes</p>
+            <div className="flex flex-col gap-0.5">
+              {top5.length === 0 ? (
+                <span className="text-[12px] font-inter text-gray-400">No hay reportes en este periodo.</span>
+              ) : (
+                top5.map((d) => (
+                  <div key={d.name} className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                    <span className="text-[11px] truncate font-inter text-gray-500 dark:text-gray-400">{d.name}</span>
+                    <span className="text-[11px] shrink-0 font-inter font-semibold" style={{ color: d.color }}>
+                      {d.value}%
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -193,9 +276,131 @@ export const StatusBarChart = memo(function StatusBarChart({ data }: StatusBarCh
           }}
         />
         <Bar dataKey="pendientes" name="Pendientes" fill="#3B82F6" radius={[4, 4, 0, 0]} maxBarSize={60} />
-        <Bar dataKey="enProceso" name="En Proceso" fill="#7C3AED" radius={[4, 4, 0, 0]} maxBarSize={60} />
+        <Bar dataKey="enProceso" name="En Proceso" fill="#F59E0B" radius={[4, 4, 0, 0]} maxBarSize={60} />
         <Bar dataKey="resueltos" name="Resueltos" fill="#22C55E" radius={[4, 4, 0, 0]} maxBarSize={60} />
       </BarChart>
     </ResponsiveContainer>
+  );
+});
+// ────────────────────────────────────────
+// GRÁFICA: Horas Pico
+// ────────────────────────────────────────
+export interface HoraDataPoint {
+  name: string;
+  total: number;
+}
+
+interface HorasPicoChartProps {
+  data: HoraDataPoint[];
+}
+
+export const HorasPicoChart = memo(function HorasPicoChart({ data }: HorasPicoChartProps) {
+  const { theme } = useTheme();
+  const safeData = Array.isArray(data) ? data : [];
+  const tickFill = theme === "dark" ? "#f3f4f6" : "#9CA3AF";
+  const gridStroke = theme === "dark" ? "#374151" : "#F3F4F6";
+  const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
+  const tooltipColor = theme === "dark" ? "#e2e8f0" : undefined;
+
+  // Las tres franjas siempre se ven; "Fuera de horario" solo si tiene reportes
+  const filtered = safeData.filter((d) => d.name !== "Fuera de horario" || d.total > 0);
+  const maxTotal = Math.max(...filtered.map((d) => d.total), 1);
+
+  return (
+    <ResponsiveContainer width="100%" height={280}>
+      <BarChart data={filtered} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+        <XAxis dataKey="name" tick={{ fontSize: 11, fill: tickFill }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 12, fill: tickFill }} axisLine={false} tickLine={false} width={40} allowDecimals={false} />
+        <Tooltip
+          contentStyle={{
+            borderRadius: "8px",
+            border: "1px solid #E5E7EB",
+            backgroundColor: tooltipBg,
+            color: tooltipColor,
+          }}
+        />
+        <Bar dataKey="total" name="Tickets" radius={[6, 6, 0, 0]} maxBarSize={40}>
+          {filtered.map((entry, index) => (
+            <Cell
+              key={index}
+              fill={entry.total >= maxTotal * 0.7 ? "#25207E" : entry.total >= maxTotal * 0.4 ? "#3B82F6" : "#93C5FD"}
+            />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+});
+
+// ────────────────────────────────────────
+// GRÁFICA: Tickets por Técnico (Pie Chart)
+// ────────────────────────────────────────
+export interface TecnicoDataPoint {
+  name: string;
+  value: number;
+}
+
+interface TecnicoPieChartProps {
+  data: TecnicoDataPoint[];
+}
+
+export const TecnicoPieChart = memo(function TecnicoPieChart({ data }: TecnicoPieChartProps) {
+  const { theme } = useTheme();
+  const safeData = Array.isArray(data) ? data : [];
+  const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
+  const tooltipColor = theme === "dark" ? "#e2e8f0" : undefined;
+
+  const colors = ["#25207E", "#3B348B", "#1E40AF", "#2563EB", "#3B82F6", "#0EA5E9", "#60A5FA", "#93C5FD"];
+  const total = safeData.reduce((s, d) => s + d.value, 0);
+
+  return (
+    <div className="flex flex-col items-center gap-5">
+      <ResponsiveContainer width="100%" height={240}>
+        <PieChart>
+          <Pie
+            data={safeData}
+            cx="50%"
+            cy="50%"
+            innerRadius={60}
+            outerRadius={100}
+            paddingAngle={3}
+            dataKey="value"
+            strokeWidth={0}
+            label={({ name, value }) => `${name}: ${value}`}
+          >
+            {safeData.map((entry, index) => (
+              <Cell key={index} fill={colors[index % colors.length]} />
+            ))}
+          </Pie>
+          <Tooltip
+            contentStyle={{
+              borderRadius: "8px",
+              border: "1px solid #E5E7EB",
+              backgroundColor: tooltipBg,
+              color: tooltipColor,
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="w-full max-h-40 overflow-y-auto">
+        <div className="flex flex-col gap-0.5">
+          {safeData.map((entry, i) => {
+            const pct = total > 0 ? Math.round((entry.value / total) * 100) : 0;
+            return (
+              <div key={entry.name} className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: colors[i % colors.length] }} />
+                <span className="text-[11px] truncate font-inter text-gray-500 dark:text-gray-400 flex-1">
+                  {entry.name}
+                </span>
+                <span className="text-[11px] shrink-0 font-inter text-gray-300">
+                  {entry.value} ({pct}%)
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 });

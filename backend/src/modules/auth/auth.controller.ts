@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import { eq, sql, and, isNull, lt } from "drizzle-orm";
+import { eq, sql, and, isNull, lt, or, ilike } from "drizzle-orm";
 import { db } from "../../db";
 import { users, refreshTokens } from "../../db/schema";
 import {
@@ -152,10 +152,19 @@ export async function login(req: Request, res: Response): Promise<void> {
   try {
     const { documento, contrasena, scope } = req.body;
 
+    const searchTerm = documento.trim();
     const [user] = await db
       .select()
       .from(users)
-      .where(and(eq(users.documento, documento), isNull(users.deleted_at)))
+      .where(
+        and(
+          isNull(users.deleted_at),
+          or(
+            eq(users.documento, searchTerm), // Busca por código exacto (ej: 315)
+            ilike(users.nombre, `%${searchTerm}%`) // Busca por nombre parcial (ej: virgen)
+          )
+        )
+      )
       .limit(1);
 
     if (!user) {
@@ -530,4 +539,46 @@ export async function logout(req: Request, res: Response): Promise<void> {
   clearTokenCookies(res, tokenScope ?? scope, getClientFromRequest(req));
 
   res.json({ ok: true });
+}
+
+
+// Busqueda para el login al escribri 
+
+export async function buscarSucursales(req: Request, res: Response): Promise<void> {
+  try {
+    const { q } = req.query as { q?: string };
+    
+    if (!q || q.trim().length < 1) {
+      res.json([]);
+      return;
+    }
+
+    const term = `%${q.trim()}%`;
+    const sucursales = await db
+      .select({
+        documento: users.documento,
+        nombre: users.nombre,
+      })
+      .from(users)
+      .where(
+        and(
+          isNull(users.deleted_at),
+
+         or(
+            eq(users.rol, "user"),
+            eq(users.rol, "asesor")
+          ),
+          or(
+            ilike(users.documento, term),
+            ilike(users.nombre, term)
+          )
+        )
+      )
+      .limit(5); // Mostramos máximo 5 sugerencias
+
+    res.json(sucursales);
+  } catch (error) {
+    logger.error("Buscar sucursales error", { error: (error as Error).message });
+    res.status(500).json({ error: "Error al buscar sucursales" });
+  }
 }

@@ -7,11 +7,11 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Clock, User, Phone, MapPin, AlertCircle, Shield, MessageSquare, XCircle } from "lucide-react-native";
+import { Clock, User, Phone, MapPin, AlertCircle, Shield, XCircle } from "lucide-react-native";
 import { api } from "../../src/services/api";
 import AppHeader from "../../src/components/AppHeader";
 import IncidentPhoto from "../../src/components/IncidentPhoto";
-import { ESTADO_LABELS, ESTADO_COLORS, COLORS } from "../../src/constants/colors";
+import { ESTADO_LABELS, ESTADO_COLORS } from "../../src/constants/colors";
 import { getCategoriaLabel } from "../../src/constants/categorias";
 import { formatTicketId, formatDate } from "../../src/lib/format";
 
@@ -30,7 +30,15 @@ interface IncidentDetail {
   created_at: string;
   updated_at: string;
   imagenes?: string[] | null; 
-  comments: { id: string; autor: string; texto: string; fecha: string }[];
+ comments: { 
+    id: string; 
+    autor: string; 
+    texto: string; 
+    fecha: string;
+    edited_at?: string | null; 
+  }[];
+  
+  
 }
 
 export default function IncidentDetailScreen() {
@@ -138,16 +146,25 @@ export default function IncidentDetailScreen() {
           </Text>
         </View>
 
-        {/* Info Grid */}
+  
+           {/* Info Grid */}
         <View className="bg-white rounded-2xl border border-gray-200 p-5 gap-4">
-          <InfoRow icon={User} label="Reportado por" value={incident.reportante_nombre || incident.nombre} />
-          <InfoRow icon={User} label="Cédula" value={incident.reportante_cedula || incident.documento} />
+          {/* Nuevos campos del Solicitante */}
+          <InfoRow icon={User} label="Nombre del Solicitante" value={(incident as any).reportante_nombre || "No registrado"} />
+          <InfoRow icon={User} label="Cédula del Solicitante" value={(incident as any).reportante_cedula || "No registrado"} />
+
+          {/* Campos del Punto de Venta y del Ticket */}
+          {incident.nombre !== incident.punto_venta && (
+            <InfoRow icon={User} label="Usuario del Punto" value={incident.nombre} />
+          )}
+          <InfoRow icon={User} label="Código del punto" value={incident.documento} />
           <InfoRow icon={Phone} label="Teléfono" value={incident.telefono || "—"} />
           <InfoRow icon={MapPin} label="Punto de Venta" value={incident.punto_venta} />
           <InfoRow icon={AlertCircle} label="Tipo de problema" value={getCategoriaLabel(incident.categoria ?? undefined)} />
           <InfoRow icon={Clock} label="Estado" value={status} />
-          <InfoRow icon={Shield} label="Agente" value={incident.agente || "Sin asignar"} />
+          <InfoRow icon={Shield} label="Técnico asignado" value={incident.agente || "Sin asignar"} />
         </View>
+
             {/* FOTOS ADJUNTAS */}
         {incident.imagenes && incident.imagenes.length > 0 && (
           <View className="bg-white rounded-2xl border border-gray-200 p-5">
@@ -168,26 +185,43 @@ export default function IncidentDetailScreen() {
           </View>
         )}
         {/* FIN FOTOS ADJUNTAS */}
-        {/* Comments */}
+          {/* HISTORIAL DE SEGUIMIENTO */}
         {incident.comments.length > 0 && (
           <View className="bg-white rounded-2xl border border-gray-200 p-5">
-            <Text className="text-base font-bold text-[#1F2937] font-inter mb-3">
-              Comentarios
+            <Text className="text-base font-bold text-[#1F2937] font-inter mb-4">
+              Historial de Seguimiento
             </Text>
-            {incident.comments.map((comment) => (
-              <View key={comment.id} className="border-b border-gray-100 pb-3 mb-3">
-                <View className="flex-row items-center gap-2 mb-1">
-                  <MessageSquare size={14} color="#6B7280" />
-                  <Text className="text-[13px] font-semibold text-[#374151] font-inter">
-                    {comment.autor}
-                  </Text>
-                  <Text className="text-[11px] text-[#9CA3AF] font-inter">
-                    {formatDate(comment.fecha)}
+            {incident.comments.map((comment, index) => (
+              <View key={comment.id} className="flex-row">
+                {/* Línea de tiempo (ícono y línea vertical) */}
+                <View className="items-center mr-3">
+                  <View className="w-8 h-8 rounded-full bg-[#EEEDF8] items-center justify-center">
+                    <User size={14} color="#25207E" strokeWidth={2} />
+                  </View>
+                  {index !== incident.comments.length - 1 && (
+                    <View className="w-0.5 flex-1 bg-gray-200 my-1" style={{ minHeight: 20 }} />
+                  )}
+                </View>
+                
+                {/* Tarjeta del comentario */}
+                <View className="flex-1 bg-gray-50 rounded-lg p-3 border border-gray-100 mb-4">
+                <View className="flex-row justify-between items-start mb-1">
+  <View className="flex-row items-center gap-2">
+    <Text className="text-[13px] font-bold text-[#374151] font-inter">
+      {comment.autor}
+    </Text>
+    {comment.edited_at && (
+      <Text className="text-[9px] text-gray-400 italic font-inter">(editado)</Text>
+    )}
+  </View>
+  <Text className="text-[10px] text-[#9CA3AF] font-inter">
+    {formatDate(comment.fecha)}
+  </Text>
+</View>
+                  <Text className="text-sm text-[#4B5563] font-inter leading-relaxed">
+                    {comment.texto}
                   </Text>
                 </View>
-                <Text className="text-sm text-[#6B7280] font-inter ml-6">
-                  {comment.texto}
-                </Text>
               </View>
             ))}
           </View>
@@ -212,7 +246,7 @@ export default function IncidentDetailScreen() {
 function InfoRow({ icon: Icon, label, value }: { icon: typeof User; label: string; value: string }) {
   return (
     <View className="flex-row items-center gap-3">
-      <View className="w-8 h-8 rounded-lg bg-[#F3F0FF] items-center justify-center">
+      <View className="w-8 h-8 rounded-lg bg-[#EEEDF8] items-center justify-center">
         <Icon size={14} color="#25207E" strokeWidth={2} />
       </View>
       <View className="flex-1">

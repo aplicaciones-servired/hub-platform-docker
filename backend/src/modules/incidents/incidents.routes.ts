@@ -6,6 +6,7 @@ import {
   getIncident,
   updateIncident,
   addComment,
+  updateComment,
   getStats,
   getAgentes,
   getTechnicians,
@@ -26,6 +27,7 @@ import {
 } from "./incidents.schema";
 import { authMiddleware } from "../../middlewares/auth";
 import { adminOnly } from "../../middlewares/admin";
+import { z } from "zod";
 
 const router = Router();
 
@@ -52,5 +54,10 @@ router.get("/:id", validate({ params: uuidParamsSchema }), getIncident);
 router.patch("/:id", adminOnly, validate({ body: updateIncidentSchema, params: uuidParamsSchema }), updateIncident);
 router.delete("/:id", adminOnly, validate({ params: uuidParamsSchema }), deleteIncident);
 router.post("/:id/comments", validate({ body: commentSchema, params: uuidParamsSchema }), addComment);
+router.patch(
+  "/:id/comments/:commentId",
+  validate({ body: commentSchema, params: z.object({ id: z.string().uuid(), commentId: z.string().uuid() }) }),
+  updateComment
+);
 
 export default router;

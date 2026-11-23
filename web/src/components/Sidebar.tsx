@@ -86,7 +86,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
                 key={item.label}
                 href={item.path}
                 className={`flex items-center h-12 rounded-lg px-3 gap-3 relative font-inter text-sm no-underline w-full transition-colors duration-150 ${
-                  isActive ? "bg-[#F3F0FF] text-[var(--brand)] font-semibold" : "bg-transparent text-gray-500 font-normal"
+                  isActive ? "bg-[#EEEDF8] text-[var(--brand)] font-semibold" : "bg-transparent text-gray-500 font-normal"
                 }`}
               >
                 {isActive && (

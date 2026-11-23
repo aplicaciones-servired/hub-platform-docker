@@ -93,7 +93,7 @@ export default function UserManagement() {
                 key={user.id}
                 className="flex items-center p-3 sm:p-[14px_16px] border border-gray-100 dark:border-gray-700 rounded-xl gap-3 sm:gap-[14px]"
               >
-                <div className="w-9 h-9 sm:w-[42px] sm:h-[42px] rounded-full bg-[#F3F0FF] dark:bg-[#F3F0FF]/10 flex items-center justify-center text-[#25207E] dark:text-[#25207E] text-sm sm:text-[15px] font-semibold font-inter shrink-0">
+                <div className="w-9 h-9 sm:w-[42px] sm:h-[42px] rounded-full bg-[#EEEDF8] dark:bg-[#EEEDF8]/10 flex items-center justify-center text-[#25207E] dark:text-[#25207E] text-sm sm:text-[15px] font-semibold font-inter shrink-0">
                   {getInitials(user)}
                 </div>
 

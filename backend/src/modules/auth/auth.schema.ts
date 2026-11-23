@@ -3,12 +3,12 @@ import { z } from "zod";
 export const loginSchema = z.object({
   documento: z
     .string()
-    .min(1, "El documento es requerido")
-    .max(20)
-    .regex(/^\d+$/, "El documento debe contener solo números"),
+    .min(1, "Escribe el código de tu punto de venta")
+    .max(50, "El nombre o código es demasiado largo"), 
   contrasena: z.string().min(6, "Mínimo 6 caracteres"),
   scope: z.enum(["admin", "user"]).optional(),
 });
+
 
 export const registerSchema = z.object({
   documento: z

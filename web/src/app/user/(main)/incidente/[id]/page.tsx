@@ -20,7 +20,7 @@ interface IncidentDetail {
 function InfoRow({ icon: Icon, label, value }: { icon: typeof User; label: string; value: string }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="w-8 h-8 rounded-lg bg-[#F3F0FF] flex items-center justify-center">
+      <div className="w-8 h-8 rounded-lg bg-[#EEEDF8] flex items-center justify-center">
         <Icon size={14} color="#25207E" strokeWidth={2} />
       </div>
       <div className="flex-1">
@@ -107,7 +107,7 @@ export default function IncidenteDetailPage() {
           <InfoRow icon={MapPin} label="Punto de Venta" value={incident.punto_venta} />
           <InfoRow icon={AlertCircle} label="Urgencia" value={incident.urgencia.charAt(0).toUpperCase() + incident.urgencia.slice(1)} />
           <InfoRow icon={Clock} label="Estado" value={status} />
-          <InfoRow icon={Shield} label="Agente" value={incident.agente || "Sin asignar"} />
+          <InfoRow icon={Shield} label="Técnico" value={incident.agente || "Sin asignar"} />
         </div>
 
         {incident.comments.length > 0 && (

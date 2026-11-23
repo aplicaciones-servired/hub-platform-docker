@@ -51,7 +51,7 @@ const PROBLEM_RESPONSES: Record<string, ChatResponse> = {
     autoAction: "reportar",
   },
   problema_acceso: {
-    text: "Entiendo que tienes problemas para acceder. Te llevo al formulario para que reportes el problema de acceso y un agente te ayude a restablecerlo.",
+    text: "Entiendo que tienes problemas para acceder. Te llevo al formulario para que reportes el problema de acceso y un técnico te ayude a restablecerlo.",
     actions: [],
     autoAction: "reportar",
   },
@@ -267,7 +267,7 @@ function detectIntent(text: string): ChatResponse | null {
 
 function getDefaultResponse(): ChatResponse {
   return {
-    text: "No entendi tu mensaje. Un agente revisara tu consulta y te respondera pronto. Mientras tanto, puedes seleccionar una opcion:",
+    text: "No entendi tu mensaje. un técnico revisara tu consulta y te respondera pronto. Mientras tanto, puedes seleccionar una opcion:",
     actions: [
       { label: "Volver al menu principal", action: "menu_principal" },
       { label: "Reportar incidente", action: "reportar" },

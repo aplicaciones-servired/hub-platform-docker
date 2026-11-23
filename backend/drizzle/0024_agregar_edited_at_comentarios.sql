@@ -1,0 +1,1 @@
+ALTER TABLE "incident_comments" ADD COLUMN IF NOT EXISTS "edited_at" timestamp;

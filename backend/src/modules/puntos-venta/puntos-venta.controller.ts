@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { ilike, eq } from "drizzle-orm";
+import { ilike, eq, and, or, isNull } from "drizzle-orm";
 import { db } from "../../db";
-import { puntosVenta } from "../../db/schema";
+import { puntosVenta, users } from "../../db/schema";
 import { logger } from "../../lib/logger";
 import { escapeLike } from "../../lib/like";
 import { PV_SEED_NAMES } from "../../db/constants";
@@ -51,5 +51,28 @@ export async function listPuntosVenta(
   } catch (error) {
     logger.error("List puntos venta error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al listar puntos de venta" });
+  }
+
+
+}
+
+// Puntos de venta REALES para el buscador de Analítica:
+// los usuarios con rol "user" creados en Gestión de Usuarios.
+// Es una ruta aparte para no cambiar /api/puntos-venta.
+export async function listPuntosReales(
+  _req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const items = await db
+      .select({ documento: users.documento, nombre: users.nombre })
+      .from(users)
+    .where(and(or(eq(users.rol, "user"), eq(users.rol, "asesor")), isNull(users.deleted_at)))
+      .orderBy(users.nombre);
+
+    res.json(items);
+  } catch (error) {
+    logger.error("List puntos reales error", { error: (error as Error).message });
+    res.status(500).json({ error: "Error al listar los puntos de venta" });
   }
 }

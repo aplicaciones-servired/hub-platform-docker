@@ -51,7 +51,7 @@ export function FaqModal({ onClose }: FaqModalProps) {
               <button
                 onClick={() => setExpanded(isOpen ? null : i)}
                 className={`flex items-center justify-between w-full p-3.5 text-left ${
-                  isOpen ? "bg-[#F3F0FF]" : "bg-white"
+                  isOpen ? "bg-[#EEEDF8]" : "bg-white"
                 }`}
               >
                 <span

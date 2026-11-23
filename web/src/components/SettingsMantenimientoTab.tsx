@@ -64,7 +64,7 @@ export default function SettingsMantenimientoTab({ cacheStats, showAlert, showCo
                   <Database size={12} color="#6B7280" />
                   <span className="text-[12px] text-[#6B7280] dark:text-gray-400 font-inter font-medium">{cacheStats.ssItems} sessionStorage</span>
                 </div>
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#F3F0FF] rounded-md">
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#EEEDF8] rounded-md">
                   <Trash2 size={12} color="#25207E" />
                   <span className="text-[12px] text-[#25207E] font-inter font-semibold">{cacheStats.size}</span>
                 </div>

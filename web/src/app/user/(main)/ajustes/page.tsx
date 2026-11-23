@@ -89,7 +89,7 @@ export default function AjustesPage() {
               <p className="text-base font-bold text-[#1F2937] dark:text-gray-100 mt-1">{cacheInfo.items}</p>
               <p className="text-[11px] text-[#9CA3AF] dark:text-gray-400">ítems</p>
             </div>
-            <div className="flex-1 bg-[#F3F0FF] dark:bg-gray-700 rounded-lg p-2.5 text-center">
+            <div className="flex-1 bg-[#EEEDF8] dark:bg-gray-700 rounded-lg p-2.5 text-center">
               <Trash2 size={16} color="#25207E" className="mx-auto dark:text-gray-300" strokeWidth={2} />
               <p className="text-base font-bold text-[#25207E] dark:text-gray-100 mt-1">{cacheInfo.size}</p>
               <p className="text-[11px] text-[#9CA3AF] dark:text-gray-400">tamaño</p>

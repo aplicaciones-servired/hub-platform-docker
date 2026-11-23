@@ -56,7 +56,7 @@ export function ExpandableMenu({ onSubmenuPress, onMenuPress }: ExpandableMenuPr
                   <button
                     key={item.label}
                     onClick={() => onSubmenuPress?.(item.label)}
-                    className="bg-[#F3F0FF] border border-[#DCD4FF] rounded-lg h-10 text-[#201A7A] text-sm font-medium hover:bg-[#E8E4FF] transition-colors"
+                    className="bg-[#EEEDF8] border border-[#DCD4FF] rounded-lg h-10 text-[#201A7A] text-sm font-medium hover:bg-[#E8E4FF] transition-colors"
                   >
                     {item.label}
                   </button>

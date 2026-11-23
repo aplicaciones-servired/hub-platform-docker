@@ -28,7 +28,7 @@ export default function TicketSummaryCards({
       icon: Ticket,
       title: "Total Tickets",
       value: loading ? "..." : total.toLocaleString(),
-      iconBg: "bg-[#F3F0FF]",
+      iconBg: "bg-[#EEEDF8]",
       iconColor: "#25207E",
     },
     {
@@ -42,14 +42,14 @@ export default function TicketSummaryCards({
       icon: Loader,
       title: "En Proceso",
       value: loading ? "..." : enProceso.toLocaleString(),
-      iconBg: "bg-[#F3F0FF]",
+      iconBg: "bg-[#EEEDF8]",
       iconColor: "#25207E",
     },
     {
       icon: CheckCircle,
       title: "Resueltos",
       value: loading ? "..." : resueltos.toLocaleString(),
-      iconBg: "bg-[#F3F0FF]",
+      iconBg: "bg-[#EEEDF8]",
       iconColor: "#25207E",
     },
   ];

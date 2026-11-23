@@ -1,4 +1,3 @@
-import { sql } from "drizzle-orm";
 import {
   pgTable,
   uuid,
@@ -121,6 +120,7 @@ export const incidentComments = pgTable(
     autor: varchar("autor", { length: 100 }).notNull(),
     texto: text("texto").notNull(),
     fecha: timestamp("fecha").defaultNow().notNull(),
+    edited_at: timestamp("edited_at"),
   },
   (table) => [index("incident_comments_incident_id_idx").on(table.incident_id)]
 );
