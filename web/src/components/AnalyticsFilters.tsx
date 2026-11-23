@@ -142,7 +142,7 @@ async function handleExport(
   // ── Fetch datos ──
   let incidents: IncidentExport[] = [];
   try {
-    const qs = `?start=${effectiveRange.start}&end=${effectiveRange.end}`;
+        const qs = `?start=${effectiveRange.start}&end=${effectiveRange.end}&limit=2000`;
     const incData = await api.get<{ items: IncidentExport[] }>(`/incidents/export-data${qs}`);
     incidents = incData.items || [];
         if (selectedAgente) incidents = incidents.filter((inc) => inc.agente === selectedAgente);
@@ -151,6 +151,8 @@ async function handleExport(
   }
 
   const totalIncidents = incidents.length;
+    // Última fila con datos en la hoja Detalle (los datos empiezan en la fila 6)
+  const lastRow = Math.max(6, 5 + incidents.length);
 
   // ── Cálculos previos ──
   const tiemposGlobales: number[] = [];
@@ -356,15 +358,15 @@ async function handleExport(
   });
 
   const indicadores = [
-    { metrica: "Incidentes Reportados", formula: `=COUNTA(Detalle!D6:D1000)`, desc: "Total de incidentes registrados" },
-    { metrica: "Pendientes", formula: `=COUNTIF(Detalle!D6:D1000,"pendiente")`, desc: "A la espera de asignación" },
-    { metrica: "En Proceso", formula: `=COUNTIF(Detalle!D6:D1000,"en_proceso")`, desc: "Siendo atendidos actualmente" },
-    { metrica: "Resueltos", formula: `=COUNTIF(Detalle!D6:D1000,"resuelto")`, desc: "Cerrados exitosamente" },
+        { metrica: "Incidentes Reportados", formula: `=COUNTA(Detalle!D6:D${lastRow})`, desc: "Total de incidentes registrados" },
+    { metrica: "Pendientes", formula: `=COUNTIF(Detalle!D6:D${lastRow},"pendiente")`, desc: "A la espera de asignación" },
+    { metrica: "En Proceso", formula: `=COUNTIF(Detalle!D6:D${lastRow},"en_proceso")`, desc: "Siendo atendidos actualmente" },
+    { metrica: "Resueltos", formula: `=COUNTIF(Detalle!D6:D${lastRow},"resuelto")`, desc: "Cerrados exitosamente" },
     { metrica: "Tecnicos que atendieron", formula: `=COUNTIFS(H24:H27,"<>Sin asignar",L24:L27,">0")`, desc: "Técnicos con incidentes asignados" },
-    { metrica: "Resueltos con solución", formula: `=COUNTIFS(Detalle!D6:D1000,"resuelto",Detalle!G6:G1000,"<>")`, desc: "Tickets cerrados con descripción de solución" },
-    { metrica: "Tiempo promedio global", formula: `=IFERROR(INT(ROUND(AVERAGE(Detalle!J6:J1000)*60,0)/60)&" h "&MOD(ROUND(AVERAGE(Detalle!J6:J1000)*60,0),60)&" min","—")`, desc: "Promedio de todos los tickets resueltos" },
-    { metrica: "Ticket más rápido", formula: `=IFERROR(INT(ROUND(MIN(Detalle!J6:J1000)*60,0)/60)&" h "&MOD(ROUND(MIN(Detalle!J6:J1000)*60,0),60)&" min","—")`, desc: "Menor tiempo de resolución" },
-    { metrica: "Ticket más lento", formula: `=IFERROR(INT(ROUND(MAX(Detalle!J6:J1000)*60,0)/60)&" h "&MOD(ROUND(MAX(Detalle!J6:J1000)*60,0),60)&" min","—")`, desc: "Mayor tiempo de resolución" },
+    { metrica: "Resueltos con solución", formula: `=COUNTIFS(Detalle!D6:D${lastRow},"resuelto",Detalle!G6:G${lastRow},"<>")`, desc: "Tickets cerrados con descripción de solución" },
+    { metrica: "Tiempo promedio global", formula: `=IFERROR(INT(ROUND(AVERAGE(Detalle!J6:J${lastRow})*60,0)/60)&" h "&MOD(ROUND(AVERAGE(Detalle!J6:J${lastRow})*60,0),60)&" min","—")`, desc: "Promedio de todos los tickets resueltos" },
+    { metrica: "Ticket más rápido", formula: `=IFERROR(INT(ROUND(MIN(Detalle!J6:J${lastRow})*60,0)/60)&" h "&MOD(ROUND(MIN(Detalle!J6:J${lastRow})*60,0),60)&" min","—")`, desc: "Menor tiempo de resolución" },
+    { metrica: "Ticket más lento", formula: `=IFERROR(INT(ROUND(MAX(Detalle!J6:J${lastRow})*60,0)/60)&" h "&MOD(ROUND(MAX(Detalle!J6:J${lastRow})*60,0),60)&" min","—")`, desc: "Mayor tiempo de resolución" },
   ];
 
   indicadores.forEach((ind, i) => {
@@ -408,7 +410,7 @@ async function handleExport(
     wsRes.getCell(r, 8).fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT_AZUL } };
     Object.assign(wsRes.getCell(r, 8), cellBorder);
 
-    wsRes.getCell(r, 9).value = { formula: `=COUNTIF(Detalle!C6:C1000,H${r})` };
+       wsRes.getCell(r, 9).value = { formula: `=COUNTIF(Detalle!C6:C${lastRow},H${r})` }; 
     wsRes.getCell(r, 9).alignment = { horizontal: "center" };
     Object.assign(wsRes.getCell(r, 9), cellBorder);
 
@@ -419,7 +421,7 @@ async function handleExport(
     Object.assign(wsRes.getCell(r, 10), cellBorder);
 
     wsRes.getCell(r, 11).value = {
-      formula: `=IFERROR(AVERAGEIFS(Detalle!J6:J1000,Detalle!C6:C1000,H${r}),"—")`,
+           formula: `=IFERROR(AVERAGEIFS(Detalle!J6:J${lastRow},Detalle!C6:C${lastRow},H${r}),"—")`,
     };
     wsRes.getCell(r, 11).numFmt = '0.0 "h"';
     wsRes.getCell(r, 11).alignment = { horizontal: "center" };
@@ -468,7 +470,7 @@ async function handleExport(
     wsRes.getCell(r, 8).fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT_AZUL } };
     Object.assign(wsRes.getCell(r, 8), cellBorder);
 
-    wsRes.getCell(r, 9).value = { formula: `=COUNTIF(Detalle!D6:D1000,"${e.key}")` };
+       wsRes.getCell(r, 9).value = { formula: `=COUNTIF(Detalle!D6:D${lastRow},"${e.key}")` };
     wsRes.getCell(r, 9).alignment = { horizontal: "center" };
     Object.assign(wsRes.getCell(r, 9), cellBorder);
 
@@ -530,19 +532,19 @@ async function handleExport(
     Object.assign(wsRes.getCell(r, 8), cellBorder);
 
     wsRes.getCell(r, 9).value = {
-      formula: `=COUNTIFS(Detalle!E6:E1000,$H${r},Detalle!D6:D1000,"pendiente")`,
+           formula: `=COUNTIFS(Detalle!E6:E${lastRow},$H${r},Detalle!D6:D${lastRow},"pendiente")`,
     };
     wsRes.getCell(r, 9).alignment = { horizontal: "center" };
     Object.assign(wsRes.getCell(r, 9), cellBorder);
 
     wsRes.getCell(r, 10).value = {
-      formula: `=COUNTIFS(Detalle!E6:E1000,$H${r},Detalle!D6:D1000,"en_proceso")`,
+          formula: `=COUNTIFS(Detalle!E6:E${lastRow},$H${r},Detalle!D6:D${lastRow},"en_proceso")`,
     };
     wsRes.getCell(r, 10).alignment = { horizontal: "center" };
     Object.assign(wsRes.getCell(r, 10), cellBorder);
 
     wsRes.getCell(r, 11).value = {
-      formula: `=COUNTIFS(Detalle!E6:E1000,$H${r},Detalle!D6:D1000,"resuelto")`,
+      formula: `=COUNTIFS(Detalle!E6:E${lastRow},$H${r},Detalle!D6:D${lastRow},"resuelto")`,
     };
     wsRes.getCell(r, 11).alignment = { horizontal: "center" };
     Object.assign(wsRes.getCell(r, 11), cellBorder);
@@ -560,7 +562,7 @@ async function handleExport(
     Object.assign(wsRes.getCell(r, 13), cellBorder);
 
     wsRes.getCell(r, 14).value = {
-      formula: `=IFERROR(AVERAGEIFS(Detalle!J6:J1000,Detalle!E6:E1000,$H${r}),"")`,
+            formula: `=IFERROR(AVERAGEIFS(Detalle!J6:J${lastRow},Detalle!E6:E${lastRow},$H${r}),"")`,
     };
     wsRes.getCell(r, 14).numFmt = "0.0";
     wsRes.getCell(r, 14).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF2F2F2" } };
@@ -846,7 +848,7 @@ async function handleExport(
 
     wsDet.mergeCells("A4:K4");
   wsDet.getCell("A4").value =
-    "Tiempo de resolución:  verde < 30 min  ·  ámbar < 2 h  ·  rojo ≥ 2 h.   Las columnas en gris (J–N) se calculan solas con fórmulas.";
+    "Tiempo de resolución:  verde < 30 min  ·  ámbar < 2 h  ·  rojo ≥ 2 h.   Las columnas en gris (J–K) se calculan solas con fórmulas.";
   wsDet.getCell("A4").font = { size: 9, color: { argb: GRAY }, name: "Calibri" };
 
   const detHeaders = [
@@ -951,7 +953,7 @@ async function handleExportPDF(
   const effectiveRange = appliedRange || getDateRange(filter);
   let incidents: IncidentExport[] = [];
   try {
-    const qs = `?start=${effectiveRange.start}&end=${effectiveRange.end}`;
+       const qs = `?start=${effectiveRange.start}&end=${effectiveRange.end}&limit=2000`;  
     const incData = await api.get<{ items: IncidentExport[] }>(`/incidents/export-data${qs}`);
     incidents = incData.items || [];
     if (selectedAgente) incidents = incidents.filter((inc) => inc.agente === selectedAgente);
