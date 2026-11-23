@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { ilike, eq, and, isNull } from "drizzle-orm";
+import { ilike, eq, and, or, isNull } from "drizzle-orm";
 import { db } from "../../db";
 import { puntosVenta, users } from "../../db/schema";
 import { logger } from "../../lib/logger";
@@ -67,7 +67,7 @@ export async function listPuntosReales(
     const items = await db
       .select({ documento: users.documento, nombre: users.nombre })
       .from(users)
-      .where(and(eq(users.rol, "user"), isNull(users.deleted_at)))
+    .where(and(or(eq(users.rol, "user"), eq(users.rol, "asesor")), isNull(users.deleted_at)))
       .orderBy(users.nombre);
 
     res.json(items);
