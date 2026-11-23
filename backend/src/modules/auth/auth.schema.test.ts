@@ -17,10 +17,10 @@ describe("loginSchema", () => {
     ).toThrow();
   });
 
-  it("rejects documento over 20 characters", () => {
+  it("rejects documento over 50 characters", () => {
     expect(() =>
       loginSchema.parse({
-        documento: "a".repeat(21),
+        documento: "a".repeat(51),
         contrasena: "password",
       })
     ).toThrow();
