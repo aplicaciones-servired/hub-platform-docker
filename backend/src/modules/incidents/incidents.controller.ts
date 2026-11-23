@@ -710,14 +710,15 @@ export async function getStats(
       resueltos,
     }));
 
-    const pvRows = await db
+        const pvRows = await db
       .select({
+        documento: incidents.documento,
         punto_venta: incidents.punto_venta,
         total: sql<number>`count(*)::int`,
       })
       .from(incidents)
       .where(whereClause)
-      .groupBy(incidents.punto_venta);
+      .groupBy(incidents.documento, incidents.punto_venta);
 
     const pvCount = new Map<string, number>();
     for (const row of pvRows) {
@@ -747,6 +748,19 @@ export async function getStats(
           value: Math.round((count / total) * 100),
           color: colors[i % colors.length],
         }));
+
+
+            // Todos los puntos del período, por código, para el buscador de la tarjeta
+    // (la dona solo muestra el top 8; esta lista no tiene límite)
+    const porCodigo = new Map<string, { documento: string; nombre: string; total: number }>();
+    for (const row of pvRows) {
+      const actual = porCodigo.get(row.documento);
+      if (actual) actual.total += row.total;
+      else porCodigo.set(row.documento, { documento: row.documento, nombre: row.punto_venta || "Sin especificar", total: row.total });
+    }
+    const puntosTotales = Array.from(porCodigo.values())
+      .map((p) => ({ ...p, porcentaje: total > 0 ? Math.round((p.total / total) * 100) : 0 }))
+      .sort((a, b) => b.total - a.total);
 
     const statusCounts = {
       pendientes: 0,
@@ -855,6 +869,7 @@ export async function getStats(
       tiempoPorTecnico,
       horasPico,
       momentosPico,
+       puntosTotales,
     });
 
     

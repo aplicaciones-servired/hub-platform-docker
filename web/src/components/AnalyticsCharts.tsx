@@ -90,9 +90,10 @@ interface DonutChartProps {
   data: DonutDataPoint[];
   allPvNames?: string[];
     puntosReales?: { documento: string; nombre: string }[]; // Puntos creados en Gestión de Usuarios
-}
+      puntosTotales?: { documento: string; nombre: string; total: number; porcentaje: number }[]; // Todos los puntos del período con su cantidad
+  }
 
-export const DonutChart = memo(function DonutChart({ data, allPvNames, puntosReales = [] }: DonutChartProps) {
+export const DonutChart = memo(function DonutChart({ data, allPvNames, puntosReales = [], puntosTotales = [] }: DonutChartProps) {
   const { theme } = useTheme();
   const safeData = Array.isArray(data) ? data : [];
   const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
@@ -116,7 +117,14 @@ export const DonutChart = memo(function DonutChart({ data, allPvNames, puntosRea
         .filter((p) => p.nombre.toLowerCase().includes(texto) || p.documento.toLowerCase().includes(texto))
         .slice(0, 8);
   const top5 = [...safeData].sort((a, b) => b.value - a.value).slice(0, 5);
-
+  // Cantidad real del punto elegido (por código), con los filtros de Analítica
+  const conteoPorCodigo = new Map(puntosTotales.map((p) => [p.documento, p]));
+  const infoSel = seleccionado?.documento ? conteoPorCodigo.get(seleccionado.documento) : undefined;
+  const textoSel = infoSel
+    ? `${infoSel.total} ${infoSel.total === 1 ? "ticket" : "tickets"} · ${infoSel.porcentaje}% del periodo`
+    : !seleccionado?.documento && seleccionado && pvValueMap.has(seleccionado.nombre)
+      ? `${pvValueMap.get(seleccionado.nombre)}% de los reportes del periodo`
+      : "Sin reportes en este periodo";
   return (
     <div className="flex flex-col items-center gap-5">
       <ResponsiveContainer width="100%" height={240}>
@@ -169,9 +177,7 @@ export const DonutChart = memo(function DonutChart({ data, allPvNames, puntosRea
                   {seleccionado.documento ? `${seleccionado.documento} · ` : ""}{seleccionado.nombre}
                 </p>
                 <p className="mt-1 text-[12px] font-inter text-gray-600 dark:text-gray-300">
-                  {pvValueMap.has(seleccionado.nombre)
-                    ? `${pvValueMap.get(seleccionado.nombre)}% de los reportes del periodo`
-                    : "Sin reportes en este periodo"}
+                 {textoSel}
                 </p>
               </div>
               <button

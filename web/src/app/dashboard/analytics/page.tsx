@@ -49,6 +49,7 @@ export default function AnalyticsPage() {
   const [selectedAgente, setSelectedAgente] = useState("");
     const [allPvNames, setAllPvNames] = useState<string[]>([]);
   const [puntosReales, setPuntosReales] = useState<{ documento: string; nombre: string }[]>([]);
+    const [puntosTotales, setPuntosTotales] = useState<{ documento: string; nombre: string; total: number; porcentaje: number }[]>([]);
   const [chartsLoading, setChartsLoading] = useState(false);
 
   useEffect(() => {
@@ -99,6 +100,7 @@ export default function AnalyticsPage() {
           }))
         );
         setDonutData(stats.distribution || []);
+         setPuntosTotales(stats.puntosTotales || []);
         
         if (stats.statusCounts) {
           setStatusData([{
@@ -270,7 +272,7 @@ export default function AnalyticsPage() {
               Distribución de tickets por sucursal
             </p>
           </div>
-          {chartsLoading ? <ChartSkeleton /> : <DonutChart data={donutData} allPvNames={allPvNames} puntosReales={puntosReales} />}
+          {chartsLoading ? <ChartSkeleton /> : <DonutChart data={donutData} allPvNames={allPvNames} puntosReales={puntosReales} puntosTotales={puntosTotales} />}
         </div>
       </div>
 
