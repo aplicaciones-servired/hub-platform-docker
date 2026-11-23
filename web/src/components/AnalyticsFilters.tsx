@@ -750,16 +750,17 @@ async function handleExport(
     Object.assign(wsRes.getCell(r, 10), cellBorder);
   });
 
-  // DÍA DE LA SEMANA
-  wsRes.mergeCells("B40:D40");
-  const dowH = wsRes.getCell("B40");
+   // DÍA DE LA SEMANA (empieza después de la evolución diaria para no chocar con ella)
+  const dowRow = Math.max(40, totEvo + 3);
+  wsRes.mergeCells(dowRow, 2, dowRow, 4);
+  const dowH = wsRes.getCell(dowRow, 2);
   dowH.value = "INCIDENTES POR DÍA DE LA SEMANA";
   dowH.font = { bold: true, size: 11, color: { argb: "FFFFFFFF" }, name: "Calibri" };
   dowH.fill = { type: "pattern", pattern: "solid", fgColor: { argb: BLUE } };
   dowH.alignment = { horizontal: "center" };
 
   ["Día", "Cant.", "%"].forEach((l, i) => {
-    const c = wsRes.getCell(41, 2 + i);
+    const c = wsRes.getCell(dowRow + 1, 2 + i);
     c.value = l;
     Object.assign(c, headerStyle("FFCAEFFF"));
     c.font = { bold: true, size: 10, color: { argb: "FF0287D0" }, name: "Calibri" };
@@ -768,7 +769,7 @@ async function handleExport(
   const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
   const totalDow = dayOfWeek.reduce((a, b) => a + b, 0) || 1;
   dias.forEach((dia, i) => {
-    const r = 42 + i;
+    const r = dowRow + 2 + i;
     wsRes.getCell(r, 2).value = dia;
     wsRes.getCell(r, 2).font = { bold: true, size: 10, color: { argb: "FF0287D0" }, name: "Calibri" };
     wsRes.getCell(r, 2).fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT_BLUE } };
@@ -834,16 +835,16 @@ async function handleExport(
     properties: { tabColor: { argb: BLUE } },
   });
 
-  const detWidths = [16, 22, 24, 14, 22, 40, 40, 20, 20, 12, 18, 14, 10, 8];
+   const detWidths = [16, 22, 24, 14, 22, 40, 40, 20, 20, 12, 18];
   detWidths.forEach((w, i) => (wsDet.getColumn(i + 1).width = w));
 
-  wsDet.mergeCells("A3:N3");
+    wsDet.mergeCells("A3:K3");  
   const detTitle = wsDet.getCell("A3");
   detTitle.value = "Detalle de Incidentes";
   detTitle.font = { size: 22, color: { argb: BLUE }, name: "Calibri Light" };
   detTitle.alignment = { horizontal: "left", vertical: "middle" };
 
-  wsDet.mergeCells("A4:N4");
+    wsDet.mergeCells("A4:K4");
   wsDet.getCell("A4").value =
     "Tiempo de resolución:  verde < 30 min  ·  ámbar < 2 h  ·  rojo ≥ 2 h.   Las columnas en gris (J–N) se calculan solas con fórmulas.";
   wsDet.getCell("A4").font = { size: 9, color: { argb: GRAY }, name: "Calibri" };
@@ -851,7 +852,7 @@ async function handleExport(
   const detHeaders = [
     "Código del punto", "Nombre", "Punto de Venta", "Estado", "Técnico",
     "Descripción", "Solución", "Creado", "Cierre",
-    "Tiempo (h)", "Tiempo de Resolución", "Fecha creación", "Día (1=Lun)", "Hora",
+        "Tiempo (h)", "Tiempo de Resolución", 
   ];
 
   detHeaders.forEach((h, i) => {
@@ -887,17 +888,9 @@ async function handleExport(
     };
     wsDet.getCell(r, 11).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF5F2F2" } };
 
-    wsDet.getCell(r, 12).value = { formula: `=INT(H${r})` };
-    wsDet.getCell(r, 12).numFmt = 'd "de" mmm';
-    wsDet.getCell(r, 12).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF5F2F2" } };
+   
 
-    wsDet.getCell(r, 13).value = { formula: `=WEEKDAY(H${r},2)` };
-    wsDet.getCell(r, 13).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF5F2F2" } };
-
-    wsDet.getCell(r, 14).value = { formula: `=HOUR(H${r})` };
-    wsDet.getCell(r, 14).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF5F2F2" } };
-
-    for (let c = 1; c <= 14; c++) {
+        for (let c = 1; c <= 11; c++) {
       const cell = wsDet.getCell(r, c);
       cell.font = { size: 10, color: { argb: "FF404040" }, name: "Calibri" };
       cell.alignment = {
@@ -925,7 +918,7 @@ async function handleExport(
   if (incidents.length > 0) {
     wsDet.autoFilter = {
       from: { row: 5, column: 1 },
-      to: { row: 5 + incidents.length, column: 14 },
+            to: { row: 5 + incidents.length, column: 11 },
     };
   }
 
@@ -1001,6 +994,8 @@ async function handleExportPDF(
   const tiempoProm = tiempos.length ? tiempos.reduce((a, b) => a + b, 0) / tiempos.length : 0;
   const tiempoMin = tiempos.length ? Math.min(...tiempos) : 0;
   const tiempoMax = tiempos.length ? Math.max(...tiempos) : 0;
+    const hayResueltos = tiempos.length > 0;
+  const fmtT = (min: number) => (hayResueltos ? fmtDuracion(Math.round(min)) : "Sin tickets resueltos");
   const agentesReales = [...agMap.keys()].filter((a) => a !== "Sin asignar").length;
   const resueltosConSolucion = incidents.filter((i) => i.estado === "resuelto" && i.solucion).length;
 
@@ -1069,6 +1064,18 @@ async function handleExportPDF(
     y += lines.length * 4.5 + 2;
   };
 
+    // Pie de página + guardar (se usa al final y también cuando no hay datos)
+  const finalizar = () => {
+    y += 6;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(margin, y, pageW - margin, y);
+    y += 6;
+    small(
+      `Informe generado a partir de los datos del período ${formatDateRange(effectiveRange.start, effectiveRange.end)}. Fuente: HUB Platform.`
+    );
+    doc.save(`informe_analitica_hub_${effectiveRange.start}_${effectiveRange.end}.pdf`);
+  };
+
   // ── Portada / Encabezado ──
   doc.setFillColor(37, 32, 126);
   doc.rect(0, 0, pageW, 28, "F");
@@ -1116,11 +1123,18 @@ async function handleExportPDF(
 
   // ── 1. Resumen Ejecutivo ──
   title("1. Resumen Ejecutivo");
+    if (total === 0) {
+    body("Durante el período seleccionado no se registraron incidentes, por lo que no hay métricas, distribuciones ni recomendaciones que mostrar.");
+    finalizar();
+    return;
+  }
   body(
-    `Durante el período analizado se registraron ${total} incidentes en la plataforma HUB, de los cuales ${estadoMap.resuelto} fueron resueltos (${pct(estadoMap.resuelto)}%), ${estadoMap.pendiente} permanecen pendientes (${pct(estadoMap.pendiente)}%) y ${estadoMap.en_proceso} se encuentran en proceso (${pct(estadoMap.en_proceso)}%). Se contó con la participación de ${agentesReales} técnicos que atendieron incidentes asignados.`
+    `Durante el período analizado se registraron ${total} incidentes en la plataforma HUB, de los cuales ${estadoMap.resuelto} fueron resueltos (${pct(estadoMap.resuelto)}%), ${estadoMap.pendiente} permanecen pendientes (${pct(estadoMap.pendiente)}%) y ${estadoMap.en_proceso} se encuentran en proceso (${pct(estadoMap.en_proceso)}%). Se contó con la participación de ${agentesReales} ${agentesReales === 1 ? "técnico que atendió" : "técnicos que atendieron"} incidentes asignados.`
   );
-  body(
-    `El tiempo promedio global de resolución fue de ${fmtDuracion(Math.round(tiempoProm))}, con un ticket más rápido resuelto en ${fmtDuracion(Math.round(tiempoMin))} y uno más lento que tomó ${fmtDuracion(Math.round(tiempoMax))}. La actividad se concentró en ${daysWithData} días, con un promedio de ${avgPerDay} incidentes diarios${busiestDay ? `, siendo el ${busiestDay.name} el día más activo con ${busiestDay.trafico} incidentes reportados` : ""}.`
+   body(
+    `${hayResueltos
+      ? `El tiempo promedio global de resolución fue de ${fmtT(tiempoProm)}, con un ticket más rápido resuelto en ${fmtT(tiempoMin)} y uno más lento que tomó ${fmtT(tiempoMax)}.`
+      : "En el período no hay tickets resueltos, por lo que no se pueden calcular tiempos de resolución."} La actividad se concentró en ${daysWithData} días, con un promedio de ${avgPerDay} incidentes diarios${busiestDay ? `, siendo el ${busiestDay.name} el día más activo con ${busiestDay.trafico} incidentes reportados` : ""}.`
   );
 
   // ── 2. Métricas Generales ──
@@ -1130,11 +1144,11 @@ async function handleExportPDF(
     ["Pendientes", `${estadoMap.pendiente} (${pct(estadoMap.pendiente)}%)`],
     ["En proceso", `${estadoMap.en_proceso} (${pct(estadoMap.en_proceso)}%)`],
     ["Resueltos", `${estadoMap.resuelto} (${pct(estadoMap.resuelto)}%)`],
-    ["Agentes que atendieron", String(agentesReales)],
+       ["Técnicos que atendieron", String(agentesReales)],
     ["Resueltos con solución documentada", `${resueltosConSolucion} (${estadoMap.resuelto ? Math.round((resueltosConSolucion / estadoMap.resuelto) * 100) : 0}% de los resueltos)`],
-    ["Tiempo promedio global", fmtDuracion(Math.round(tiempoProm))],
-    ["Ticket más rápido", fmtDuracion(Math.round(tiempoMin))],
-    ["Ticket más lento", fmtDuracion(Math.round(tiempoMax))],
+       ["Tiempo promedio global", fmtT(tiempoProm)],
+    ["Ticket más rápido", fmtT(tiempoMin)],
+    ["Ticket más lento", fmtT(tiempoMax)],
     ["Días con actividad", `${daysWithData} días`],
     ["Promedio diario", `${avgPerDay} incidentes/día`],
     ["Tasa de resolución", `${pct(estadoMap.resuelto)}%`],
@@ -1205,8 +1219,8 @@ async function handleExportPDF(
   y += 10;
 
   if (pvSorted[0] && pct(pvSorted[0][1]) >= 50) {
-    small(
-      `Observación: El ${pct(pvSorted[0][1])}% de los incidentes se concentran en "${pvSorted[0][0]}", lo que sugiere que una parte importante de los registros puede corresponder a pruebas del sistema más que a operaciones reales en puntos de venta productivos.`
+        small(
+      `Observación: el ${pct(pvSorted[0][1])}% de los incidentes se concentra en "${pvSorted[0][0]}". Conviene revisar qué está ocurriendo en ese punto.`
     );
   }
 
@@ -1292,14 +1306,17 @@ async function handleExportPDF(
     .sort((a, b) => (a.prom! - b.prom!))[0];
   const sinAsignar = agRows.find((a) => a.ag === "Sin asignar");
 
-  if (mejorAgente) {
+  const tecnicosConTiempo = agRows.filter((a) => a.ag !== "Sin asignar" && a.prom !== null).length;
+  if (mejorAgente && tecnicosConTiempo >= 2) {
     body(
       `Análisis: ${mejorAgente.ag} presenta el mejor tiempo promedio de resolución (${fmtDuracion(Math.round(mejorAgente.prom!))}), atendiendo ${mejorAgente.total} incidentes.`
     );
   }
+
   if (sinAsignar) {
+    const esLaMayor = agRows.every((a) => a.total <= sinAsignar.total);
     body(
-      `Sin asignar concentra la mayor carga (${sinAsignar.total} incidentes, ${pct(sinAsignar.total)}%), incluyendo ${sinAsignar.p} pendientes y ${sinAsignar.ep} en proceso${sinAsignar.prom !== null ? `, con un tiempo promedio de ${fmtDuracion(Math.round(sinAsignar.prom))}` : ""}.`
+      `${esLaMayor ? "Sin asignar concentra la mayor carga" : "Hay incidentes sin técnico asignado"} (${sinAsignar.total} incidentes, ${pct(sinAsignar.total)}%), incluyendo ${sinAsignar.p} pendientes y ${sinAsignar.ep} en proceso${sinAsignar.prom !== null ? `, con un tiempo promedio de ${fmtDuracion(Math.round(sinAsignar.prom))}` : ""}.`
     );
   }
 
@@ -1345,53 +1362,76 @@ async function handleExportPDF(
     );
   }
 
-  // ── 7. Análisis de Tiempos ──
+      // ── 7. Análisis de Tiempos ──
   title("7. Análisis de Tiempos de Resolución");
   body(
-    `Ticket más rápido: ${fmtDuracion(Math.round(tiempoMin))}. Ticket más lento: ${fmtDuracion(Math.round(tiempoMax))}. Tiempo promedio global: ${fmtDuracion(Math.round(tiempoProm))}.`
+    hayResueltos
+      ? `Ticket más rápido: ${fmtT(tiempoMin)}. Ticket más lento: ${fmtT(tiempoMax)}. Tiempo promedio global: ${fmtT(tiempoProm)}.`
+      : "En el período no hay tickets resueltos, por lo que no se pueden analizar tiempos de resolución."
   );
-  body(
-    `Se observa dispersión en los tiempos de resolución. Los tickets sin técnico asignado y los asociados a puntos de prueba tienden a presentar tiempos significativamente mayores, mientras que los atendidos por técnicos activos se resuelven más rápido.`
-  );
+
+  // Comparación real: sin asignar vs. atendidos por técnicos
+  const tiemposTecnicos = [...agMap.entries()]
+    .filter(([ag]) => ag !== "Sin asignar")
+    .flatMap(([, c]) => c.tiempos);
+  const promTecnicos = tiemposTecnicos.length
+    ? tiemposTecnicos.reduce((a, b) => a + b, 0) / tiemposTecnicos.length
+    : null;
+  const promSinAsignar = sinAsignar?.prom ?? null;
+
+  if (promSinAsignar !== null && promTecnicos !== null) {
+    const diff = promSinAsignar - promTecnicos;
+    body(
+      Math.abs(diff) < 1
+        ? `Los tickets sin técnico asignado y los atendidos por técnicos tienen un tiempo promedio similar (${fmtT(promTecnicos)}).`
+        : diff > 0
+          ? `Los tickets sin técnico asignado tardan más en resolverse (${fmtT(promSinAsignar)} en promedio) que los atendidos por técnicos (${fmtT(promTecnicos)}).`
+          : `Los tickets atendidos por técnicos tardan más en promedio (${fmtT(promTecnicos)}) que los que no tienen técnico asignado (${fmtT(promSinAsignar)}).`
+    );
+  }
 
   // ── 8. Alertas y Recomendaciones ──
   title("8. Alertas y Recomendaciones");
 
   if (pvSorted[0] && pct(pvSorted[0][1]) >= 50) {
-    body(
-      `• Alta concentración en "${pvSorted[0][0]}" (${pct(pvSorted[0][1])}%): Se recomienda depurar los registros de prueba para obtener métricas más representativas de la operación real.`
+      body(
+      `• Alta concentración en "${pvSorted[0][0]}" (${pct(pvSorted[0][1])}%): se recomienda revisar las causas de los reportes en ese punto.`
     );
   }
-  body(
-    `• Tasa de resolución del ${pct(estadoMap.resuelto)}%: Un ${100 - pct(estadoMap.resuelto)}% de los incidentes (${estadoMap.pendiente + estadoMap.en_proceso}) no han sido cerrados. Se sugiere priorizar la asignación de los ${estadoMap.pendiente} pendientes y dar seguimiento a los ${estadoMap.en_proceso} en proceso.`
-  );
+    const abiertos = estadoMap.pendiente + estadoMap.en_proceso;
+  if (abiertos > 0) {
+    body(
+      `• Tasa de resolución del ${pct(estadoMap.resuelto)}%: quedan ${abiertos} sin cerrar (${estadoMap.pendiente} pendientes y ${estadoMap.en_proceso} en proceso). Se sugiere priorizar su asignación y seguimiento.`
+    );
+  }
   if (sinAsignar && sinAsignar.total > total * 0.3) {
     body(
       `• Incidentes sin asignar (${sinAsignar.total} de ${total}): El ${pct(sinAsignar.total)}% de los incidentes no tienen técnico asignado, lo que impacta directamente en los tiempos de resolución. Se recomienda implementar un flujo de asignación automática o manual oportuna.`
     );
   }
-  body(
-    `• Documentación de soluciones: El ${estadoMap.resuelto ? Math.round((resueltosConSolucion / estadoMap.resuelto) * 100) : 0}% de los tickets resueltos cuentan con descripción de solución, lo cual es positivo para la trazabilidad.`
-  );
+  if (estadoMap.resuelto > 0) {
+    const pctDoc = Math.round((resueltosConSolucion / estadoMap.resuelto) * 100);
+    body(
+      pctDoc >= 80
+        ? `• Documentación de soluciones: el ${pctDoc}% de los tickets resueltos tiene descripción de la solución, lo cual es positivo para la trazabilidad.`
+        : `• Documentación de soluciones: solo el ${pctDoc}% de los tickets resueltos tiene descripción de la solución. Se recomienda documentar la solución al cerrar cada ticket.`
+    );
+  }
 
   // ── 9. Conclusión ──
   title("9. Conclusión");
+    const netoFinal = sumCreated - sumResolved;
+  const concentra = !!pvSorted[0] && pct(pvSorted[0][1]) >= 50;
+  const muchosSinAsignar = !!sinAsignar && sinAsignar.total > total * 0.3;
   body(
-    `El período analizado muestra un volumen de ${total} incidentes con una tasa de resolución del ${pct(estadoMap.resuelto)}%. ${pvSorted[0] && pct(pvSorted[0][1]) >= 50 ? `La operación se concentra en "${pvSorted[0][0]}" (${pct(pvSorted[0][1])}%), lo que puede distorsionar la lectura de los indicadores operativos reales. ` : ""}El acumulado neto de ${sumCreated - sumResolved} incidentes sin resolver al cierre del período${sinAsignar && sinAsignar.total > total * 0.3 ? `, junto con el alto porcentaje de incidentes sin asignar (${pct(sinAsignar.total)}%)` : ""}, representa el principal riesgo operativo. Se recomienda enfocar esfuerzos en la asignación oportuna de incidentes, la depuración de datos de prueba y el seguimiento a los tiempos de resolución.`
+    `El período analizado muestra un volumen de ${total} incidentes con una tasa de resolución del ${pct(estadoMap.resuelto)}%. ` +
+      (concentra ? `La operación se concentra en "${pvSorted[0][0]}" (${pct(pvSorted[0][1])}%). ` : "") +
+      (netoFinal > 0
+        ? `El acumulado neto de ${netoFinal} incidentes sin resolver al cierre del período${muchosSinAsignar ? `, junto con el alto porcentaje de incidentes sin asignar (${pct(sinAsignar!.total)}%)` : ""}, representa el principal riesgo operativo. Se recomienda enfocar esfuerzos en la asignación oportuna de incidentes, la revisión de los puntos con más reportes y el seguimiento a los tiempos de resolución.`
+        : `Todos los incidentes del período fueron resueltos.${concentra ? " Se recomienda revisar las causas de los reportes en el punto con mayor concentración." : ""}`)
   );
 
-  // Pie
-  y += 6;
-  doc.setDrawColor(200, 200, 200);
-  doc.line(margin, y, pageW - margin, y);
-  y += 6;
-  small(
-    `Informe generado a partir de los datos del período ${formatDateRange(effectiveRange.start, effectiveRange.end)}. Fuente: HUB Platform.`
-  );
-
-  // Guardar
-  const suffix = `_${effectiveRange.start}_${effectiveRange.end}`;
-  doc.save(`informe_analitica_hub${suffix}.pdf`);
+   finalizar(); 
 }
 // ─────────────────────────────────────────────────────────────
 // Componente
