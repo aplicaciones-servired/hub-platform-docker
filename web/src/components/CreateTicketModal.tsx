@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
-import { CATEGORIAS } from "@/lib/categorias"; // Asegúrate de que exista este archivo
+import { CATEGORIAS } from "@/lib/categorias"; 
 
 interface CreateTicketModalProps {
   onClose: () => void;
@@ -13,8 +13,6 @@ interface CreateTicketModalProps {
 }
 
 export default function CreateTicketModal({ onClose, onCreated, showAlert }: CreateTicketModalProps) {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-
   const [newTicket, setNewTicket] = useState({
     sucursalCodigo: "",
     punto_venta: "",
@@ -42,14 +40,13 @@ export default function CreateTicketModal({ onClose, onCreated, showAlert }: Cre
       
       setBuscandoSucursal(true);
       try {
-        const res = await fetch(`${apiUrl}/auth/sucursales?q=${encodeURIComponent(newTicket.sucursalCodigo)}`, {
-          credentials: "include"
-        });
-        const data = await res.json();
+        const data = await api.get<{ documento: string; nombre: string }[]>(
+          `/auth/sucursales?q=${encodeURIComponent(newTicket.sucursalCodigo.trim())}`
+        );
         
         if (Array.isArray(data) && data.length > 0) {
           // Buscar la coincidencia exacta
-          const exactMatch = data.find((s: any) => s.documento === newTicket.sucursalCodigo);
+          const exactMatch = data.find((s) => s.documento === newTicket.sucursalCodigo.trim());
           if (exactMatch) {
             setNewTicket(prev => ({ ...prev, punto_venta: exactMatch.nombre }));
           } else {
@@ -67,7 +64,7 @@ export default function CreateTicketModal({ onClose, onCreated, showAlert }: Cre
 
     const timer = setTimeout(buscar, 500);
     return () => clearTimeout(timer);
-  }, [newTicket.sucursalCodigo, apiUrl]);
+  }, [newTicket.sucursalCodigo]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {

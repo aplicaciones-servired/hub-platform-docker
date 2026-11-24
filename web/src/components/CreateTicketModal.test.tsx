@@ -1,10 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import CreateTicketModal from "./CreateTicketModal";
 
 // Mock the api module
 vi.mock("@/lib/api", () => ({
   api: {
+    get: vi.fn().mockResolvedValue([{ documento: "315", nombre: "La Virgen" }]),
     post: vi.fn().mockResolvedValue({}),
     upload: vi.fn().mockResolvedValue({ key: "foto.jpg" }),
   },
@@ -15,20 +16,6 @@ vi.mock("@/lib/logger", () => ({
     error: vi.fn(),
   },
 }));
-
-// El modal busca el nombre del punto con fetch a /auth/sucursales
-beforeEach(() => {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockResolvedValue({
-      json: async () => [{ documento: "315", nombre: "La Virgen" }],
-    })
-  );
-});
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
 
 // Llena los campos obligatorios y espera a que se autocomplete el punto
 async function llenarFormulario() {
