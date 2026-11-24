@@ -568,11 +568,15 @@ export async function buscarSucursales(req: Request, res: Response): Promise<voi
             eq(users.rol, "user"),
             eq(users.rol, "asesor")
           ),
-          or(
+              or(
             ilike(users.documento, term),
             ilike(users.nombre, term)
           )
         )
+      )
+      .orderBy(
+        sql`CASE WHEN ${users.documento} = ${q.trim()} THEN 0 ELSE 1 END`,
+        users.documento
       )
       .limit(5); // Mostramos máximo 5 sugerencias
 
