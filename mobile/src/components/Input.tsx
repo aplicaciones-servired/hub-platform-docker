@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, type TextInputProps } from "react-native";
 import { Eye, EyeOff } from "lucide-react-native";
 
 interface InputProps {
@@ -11,6 +11,8 @@ interface InputProps {
   error?: string;
   keyboardType?: "default" | "email-address" | "numeric";
   autoComplete?: "off" | "username" | "password" | "new-password" | "current-password";
+  onBlur?: TextInputProps["onBlur"];
+  onFocus?: TextInputProps["onFocus"];
 }
 
 export default function Input({
@@ -22,6 +24,8 @@ export default function Input({
   error,
   keyboardType = "default",
   autoComplete = "off",
+  onBlur,
+  onFocus,
 }: InputProps) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -52,6 +56,8 @@ export default function Input({
           placeholderTextColor="#9CA3AF"
           value={value}
           onChangeText={onChangeText}
+          onBlur={onBlur}
+          onFocus={onFocus}
           secureTextEntry={isPassword && !showPassword}
           autoCapitalize="none"
           autoCorrect={false}
