@@ -212,6 +212,9 @@ async function handleExport(
   const tiempoMin = tiemposGlobales.length ? Math.min(...tiemposGlobales) : 0;
   const tiempoMax = tiemposGlobales.length ? Math.max(...tiemposGlobales) : 0;
 
+  // Sin tickets resueltos en el rango no hay tiempos: se muestra "Sin datos" y no "< 1 min"
+  const fmtTiempoKpi = (min: number) =>
+    tiemposGlobales.length > 0 ? fmtDuracion(Math.round(min)) : "Sin datos";
   const daysWithData = areaData.length;
   const sumCreated = areaData.reduce((s, d) => s + d.trafico, 0);
   const sumResolved = areaData.reduce((s, d) => s + d.conversiones, 0);
@@ -254,9 +257,9 @@ async function handleExport(
     { label: "EN PROCESO", value: estadoMap.en_proceso, desc: "Siendo atendidos", color: AMBER },
     { label: "RESUELTOS", value: estadoMap.resuelto, desc: "Cerrados con éxito", color: GREEN },
     { label: "TASA DE RESOLUCIÓN", value: resolutionRate, desc: "Resueltos ÷ creados", color: BLUE, isPct: true },
-    { label: "TIEMPO PROMEDIO", value: fmtDuracion(Math.round(tiempoPromGlobal)), desc: "Tickets resueltos", color: BLUE },
-    { label: "MÁS RÁPIDO", value: fmtDuracion(Math.round(tiempoMin)), desc: "Menor tiempo", color: GREEN },
-    { label: "MÁS LENTO", value: fmtDuracion(Math.round(tiempoMax)), desc: "Mayor tiempo", color: "FFDC2626" },
+    { label: "TIEMPO PROMEDIO", value: fmtTiempoKpi(tiempoPromGlobal), desc: "Tickets resueltos", color: BLUE },
+    { label: "MÁS RÁPIDO", value: fmtTiempoKpi(tiempoMin), desc: "Menor tiempo", color: GREEN },
+    { label: "MÁS LENTO", value: fmtTiempoKpi(tiempoMax), desc: "Mayor tiempo", color: "FFDC2626" },
   ];
 
   const kpiCols = [
