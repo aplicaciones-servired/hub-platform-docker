@@ -273,7 +273,6 @@ export default function InicioScreen() {
         onTabChange={(tab) => {
           if (tab === "reportar") router.push("/reportar");
           if (tab === "historial") router.push("/historial");
-          if (tab === "capacitacion") router.push("/capacitacion");
         }}
       />
     </View>

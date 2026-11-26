@@ -169,38 +169,3 @@ export async function obtenerImagenIncidente(req: Request, res: Response): Promi
     res.status(404).json({ error: "Imagen no encontrada" });
   }
 }
-
-// Videos de capacitación: carpeta capacitacion/ del mismo bucket de las fotos.
-// Solo los ve quien tiene sesión iniciada. Se entregan igual que las fotos.
-export async function obtenerVideoCapacitacion(req: Request, res: Response): Promise<void> {
-  const nombre = (req.params as { nombre?: string }).nombre;
-
-  // Solo nombres como "inicio.mp4": evita que pidan otros archivos del bucket
-  if (!nombre || !/^[a-z0-9-]+\.mp4$/.test(nombre)) {
-    res.status(400).json({ error: "Nombre de video inválido" });
-    return;
-  }
-
-  try {
-    const { contenido } = await obtenerArchivo(`capacitacion/${nombre}`);
-
-    if (!contenido) {
-      res.status(404).json({ error: "Video no encontrado" });
-      return;
-    }
-
-    res.setHeader("Content-Type", "video/mp4");
-    res.setHeader("Cache-Control", "private, max-age=3600");
-    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-    if (contenido instanceof Readable) {
-      contenido.pipe(res);
-    } else if (typeof contenido === "object" && "transformToWebStream" in contenido) {
-      Readable.fromWeb((contenido as any).transformToWebStream()).pipe(res);
-    } else {
-      res.send(contenido);
-    }
-  } catch (error) {
-    logger.error("Error obteniendo video de MinIO", { error: (error as Error).message });
-    res.status(404).json({ error: "Video no encontrado" });
-  }
-}

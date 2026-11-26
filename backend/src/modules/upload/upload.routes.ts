@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import { uploadFile, subirImagenIncidente, obtenerImagenIncidente, obtenerVideoCapacitacion} from "./upload.controller";
+import { uploadFile, subirImagenIncidente, obtenerImagenIncidente } from "./upload.controller";
 import { authMiddleware } from "../../middlewares/auth";
 import { adminOnly } from "../../middlewares/admin";
 
@@ -17,6 +17,4 @@ router.post("/incidente", authMiddleware, upload.single("file"), subirImagenInci
 router.get("/incidente", authMiddleware, obtenerImagenIncidente);
 router.get("/incidente/:key(*)", authMiddleware, obtenerImagenIncidente);
 
-// Videos de capacitación: cualquier punto con sesión iniciada puede verlos
-router.get("/capacitacion/:nombre", authMiddleware, obtenerVideoCapacitacion);
 export default router;
