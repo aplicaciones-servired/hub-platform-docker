@@ -15,6 +15,7 @@ import Modal from "@/components/Modal";
 import { useModal } from "@/hooks/useModal";
 import { useToast } from "@/contexts/ToastContext";
 import { api } from "@/lib/api";
+import { obtenerTicketsExportacion } from "@/lib/exportar";
 import { logger } from "@/lib/logger";
 import { formatDateShort, formatDescription, getDateRange, isAdminRole, ESTADO_LABELS } from "@/lib/utils";
 import { getCategoriaLabel } from "@/lib/categorias";
@@ -230,16 +231,13 @@ export default function TicketsPage() {
 
   const handleExport = useCallback(async () => {
     const range = getDateRange(dateFilter);
-    const params = new URLSearchParams();
-    if (range.start) params.set("start", range.start);
-    if (range.end) params.set("end", range.end);
-    if (isTechnicianQueue) params.set("assignedOnly", "true");
-    const qs = params.toString() ? `?${params.toString()}` : "";
-
     let items: IncidentItem[] = [];
     try {
-      const data = await api.get<{ items: IncidentItem[] }>(`/incidents/export-data${qs}`);
-      items = data.items || [];
+      items = await obtenerTicketsExportacion<IncidentItem>({
+        start: range.start,
+        end: range.end,
+        assignedOnly: isTechnicianQueue ? "true" : undefined,
+      });
     } catch (err) {
       logger.error("Export incidents error", { error: (err as Error).message });
       return;
@@ -296,7 +294,7 @@ export default function TicketsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `tickets_hub${qs ? `_${range.start}_${range.end}` : ""}.xlsx`;
+    a.download = `tickets_hub${range.start || range.end ? `_${range.start}_${range.end}` : ""}.xlsx`;
     a.click();
     URL.revokeObjectURL(url);
     showToast(`Exportación lista: ${items.length} tickets`);

@@ -65,11 +65,6 @@ const FAQS: FaqItem[] = [
       "Hazlo siempre si el celular o el computador lo usan otras personas.",
   },
   {
-    pregunta: "¿Dónde aprendo a usar la app?",
-    respuesta:
-      "Toca \"Capacitación\" en la barra de abajo. Ahí encontrarás videos cortos que explican cada pantalla.",
-  },
-  {
     pregunta: "La app está lenta o no carga, ¿qué hago?",
     respuesta:
       "1. Revisa que tengas internet.\n" +

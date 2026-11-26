@@ -6,6 +6,7 @@ import DateRangePicker from "./DateRangePicker";
 import type { AreaDataPoint, DonutDataPoint } from "./AnalyticsCharts";
 import type { Incident } from "@hub/shared/types/incident";
 import { api } from "@/lib/api";
+import { obtenerTicketsExportacion } from "@/lib/exportar";
 import { logger } from "@/lib/logger";
 import { formatDateRange, getDateRange } from "@/lib/utils";
 
@@ -142,9 +143,7 @@ async function handleExport(
   // ── Fetch datos ──
   let incidents: IncidentExport[] = [];
   try {
-        const qs = `?start=${effectiveRange.start}&end=${effectiveRange.end}&limit=2000`;
-    const incData = await api.get<{ items: IncidentExport[] }>(`/incidents/export-data${qs}`);
-    incidents = incData.items || [];
+    incidents = await obtenerTicketsExportacion<IncidentExport>({ start: effectiveRange.start, end: effectiveRange.end });
         if (selectedAgente) incidents = incidents.filter((inc) => inc.agente === selectedAgente);
   } catch (err) {
     logger.warn("Export incidents fetch failed", { error: (err as Error).message });
@@ -213,6 +212,9 @@ async function handleExport(
   const tiempoMin = tiemposGlobales.length ? Math.min(...tiemposGlobales) : 0;
   const tiempoMax = tiemposGlobales.length ? Math.max(...tiemposGlobales) : 0;
 
+  // Sin tickets resueltos en el rango no hay tiempos: se muestra "Sin datos" y no "< 1 min"
+  const fmtTiempoKpi = (min: number) =>
+    tiemposGlobales.length > 0 ? fmtDuracion(Math.round(min)) : "Sin datos";
   const daysWithData = areaData.length;
   const sumCreated = areaData.reduce((s, d) => s + d.trafico, 0);
   const sumResolved = areaData.reduce((s, d) => s + d.conversiones, 0);
@@ -255,9 +257,9 @@ async function handleExport(
     { label: "EN PROCESO", value: estadoMap.en_proceso, desc: "Siendo atendidos", color: AMBER },
     { label: "RESUELTOS", value: estadoMap.resuelto, desc: "Cerrados con éxito", color: GREEN },
     { label: "TASA DE RESOLUCIÓN", value: resolutionRate, desc: "Resueltos ÷ creados", color: BLUE, isPct: true },
-    { label: "TIEMPO PROMEDIO", value: fmtDuracion(Math.round(tiempoPromGlobal)), desc: "Tickets resueltos", color: BLUE },
-    { label: "MÁS RÁPIDO", value: fmtDuracion(Math.round(tiempoMin)), desc: "Menor tiempo", color: GREEN },
-    { label: "MÁS LENTO", value: fmtDuracion(Math.round(tiempoMax)), desc: "Mayor tiempo", color: "FFDC2626" },
+    { label: "TIEMPO PROMEDIO", value: fmtTiempoKpi(tiempoPromGlobal), desc: "Tickets resueltos", color: BLUE },
+    { label: "MÁS RÁPIDO", value: fmtTiempoKpi(tiempoMin), desc: "Menor tiempo", color: GREEN },
+    { label: "MÁS LENTO", value: fmtTiempoKpi(tiempoMax), desc: "Mayor tiempo", color: "FFDC2626" },
   ];
 
   const kpiCols = [
@@ -953,9 +955,7 @@ async function handleExportPDF(
   const effectiveRange = appliedRange || getDateRange(filter);
   let incidents: IncidentExport[] = [];
   try {
-       const qs = `?start=${effectiveRange.start}&end=${effectiveRange.end}&limit=2000`;  
-    const incData = await api.get<{ items: IncidentExport[] }>(`/incidents/export-data${qs}`);
-    incidents = incData.items || [];
+    incidents = await obtenerTicketsExportacion<IncidentExport>({ start: effectiveRange.start, end: effectiveRange.end });
     if (selectedAgente) incidents = incidents.filter((inc) => inc.agente === selectedAgente);
   } catch (err) {
     logger.warn("PDF export fetch failed", { error: (err as Error).message });

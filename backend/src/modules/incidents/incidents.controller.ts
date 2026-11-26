@@ -578,11 +578,15 @@ export async function exportIncidents(
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
+    // Total de tickets del rango, para que el panel sepa cuántas páginas pedir
+    const total = await db.$count(incidents, whereClause);
+
     const allIncidents = await db
       .select()
       .from(incidents)
       .where(whereClause)
-      .orderBy(desc(incidents.created_at))
+      // El id desempata tickets creados al mismo tiempo, para que las páginas no se crucen
+      .orderBy(desc(incidents.created_at), desc(incidents.id))
       .limit(limit)
       .offset(offset);
 
@@ -608,7 +612,13 @@ export async function exportIncidents(
       comments: commentsByIncident.get(inc.id) || [],
     }));
 
-    res.json({ items: result, total: result.length });
+    res.json({
+      items: result,
+      total,
+      page,
+      limit,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    });
   } catch (error) {
     logger.error("Export incidents error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al exportar incidentes" });
