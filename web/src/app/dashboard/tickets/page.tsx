@@ -294,7 +294,7 @@ export default function TicketsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `tickets_hub${qs ? `_${range.start}_${range.end}` : ""}.xlsx`;
+    a.download = `tickets_hub${range.start || range.end ? `_${range.start}_${range.end}` : ""}.xlsx`;
     a.click();
     URL.revokeObjectURL(url);
     showToast(`Exportación lista: ${items.length} tickets`);
