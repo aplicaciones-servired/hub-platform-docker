@@ -6,6 +6,7 @@ import DateRangePicker from "./DateRangePicker";
 import type { AreaDataPoint, DonutDataPoint } from "./AnalyticsCharts";
 import type { Incident } from "@hub/shared/types/incident";
 import { api } from "@/lib/api";
+import { obtenerTicketsExportacion } from "@/lib/exportar";
 import { logger } from "@/lib/logger";
 import { formatDateRange, getDateRange } from "@/lib/utils";
 
@@ -142,9 +143,7 @@ async function handleExport(
   // ── Fetch datos ──
   let incidents: IncidentExport[] = [];
   try {
-        const qs = `?start=${effectiveRange.start}&end=${effectiveRange.end}&limit=2000`;
-    const incData = await api.get<{ items: IncidentExport[] }>(`/incidents/export-data${qs}`);
-    incidents = incData.items || [];
+    incidents = await obtenerTicketsExportacion<IncidentExport>({ start: effectiveRange.start, end: effectiveRange.end });
         if (selectedAgente) incidents = incidents.filter((inc) => inc.agente === selectedAgente);
   } catch (err) {
     logger.warn("Export incidents fetch failed", { error: (err as Error).message });
@@ -953,9 +952,7 @@ async function handleExportPDF(
   const effectiveRange = appliedRange || getDateRange(filter);
   let incidents: IncidentExport[] = [];
   try {
-       const qs = `?start=${effectiveRange.start}&end=${effectiveRange.end}&limit=2000`;  
-    const incData = await api.get<{ items: IncidentExport[] }>(`/incidents/export-data${qs}`);
-    incidents = incData.items || [];
+    incidents = await obtenerTicketsExportacion<IncidentExport>({ start: effectiveRange.start, end: effectiveRange.end });
     if (selectedAgente) incidents = incidents.filter((inc) => inc.agente === selectedAgente);
   } catch (err) {
     logger.warn("PDF export fetch failed", { error: (err as Error).message });
